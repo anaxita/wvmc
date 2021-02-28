@@ -9,13 +9,13 @@ import (
 
 // Server - структура http сервера
 type Server struct {
-	store  store.Storager
+	store  *store.Store
 	router *mux.Router
 }
 
 // New - создает новый сервер
-func New(store store.Storager) *Server {
-	return &Server{store: store}
+func New(storage *store.Store) *Server {
+	return &Server{store: storage}
 }
 
 // Start - запускает сервер

@@ -10,4 +10,8 @@ bc:
 run:
 	go run ./cmd/wvmc
 
+.PHONY test:
+test:
+	go test ./...
+
 .DEFAULT_GOAL := run
