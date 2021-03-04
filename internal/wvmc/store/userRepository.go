@@ -76,8 +76,7 @@ func (r *UserRepository) Delete(id string) error {
 
 // All возвращает массив из пользователей БД или ошибку
 func (r *UserRepository) All() ([]model.User, error) {
-	logit.Log("Получаем всех пользователей")
-
+	logit.Info("Получаем всех пользователей")
 	var users []model.User
 
 	rows, err := r.db.QueryContext(r.ctx, "SELECT id, name, email, role FROM users")
@@ -90,7 +89,7 @@ func (r *UserRepository) All() ([]model.User, error) {
 		var user model.User
 		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Role)
 		if err != nil {
-			continue
+			return users, err
 		}
 		users = append(users, user)
 	}
