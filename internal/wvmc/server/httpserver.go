@@ -18,6 +18,23 @@ func New(storage *store.Store) *Server {
 	return &Server{store: storage}
 }
 
+func (s *Server) configureRouter() {
+	r := mux.NewRouter()
+	r.Use(s.Cors)
+
+	r.Handle("/refresh", s.RefreshToken()).Methods("GET", "OPTIONS")
+
+	signin := r.NewRoute().Subrouter()
+	signin.Use(s.Cors)
+	signin.HandleFunc("/signing", s.SignIn()).Methods("OPTIONS, POST")
+
+	users := r.NewRoute().Subrouter()
+	users.Use(s.Cors, s.Auth)
+	users.HandleFunc("/users", s.GetUsers()).Methods("OPTIONS, GET")
+
+	s.router = r
+}
+
 // Start - запускает сервер
 func (s *Server) Start() error {
 	s.configureRouter()

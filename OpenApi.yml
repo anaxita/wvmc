@@ -1,12 +1,352 @@
-openapi: '3.0.2'
+openapi: 3.0.3
 info:
-  title: Windows Virtual Machines Control
-  version: '1.0'
+  title: WVMC
+  version: 1.0.0
 servers:
-  - url: http://localhost:8080
+  -
+    url: http://localhost:8080
+    description: Локальный сервер
+  -
+    url: https://dc.kmsys.ru:53326
+    description: Основной сервер
+components:
+  schemas:
+    Response:
+      title: Response
+      type: object
+      properties:
+        status:
+          description: Статус ответа
+          type: string
+          example: ok
+        message:
+          description: Обект с опциональными данными
+          type: object
+          example:
+            user:
+              id: 400
+              name: Alex
+    User:
+      title: User
+      type: object
+      properties:
+        id:
+          description: Уникальный идентификатор
+          type: string
+          example: 5
+        name:
+          description: Имя
+          type: string
+          example: anaxita
+        email:
+          description: Логин
+          type: string
+          example: support@mail.ru
+        company:
+          description: Компания
+          type: string
+          example: КМ Системс
+        role:
+          description: Уровень прав
+          type: integer
+          example: 5
+    Server:
+      title: Server
+      type: object
+      properties:
+        id:
+          description: Уникальный идентификатор
+          type: string
+          example: "sdfg-324df-bnn-df-df"
+        name:
+          description: Имя
+          type: string
+          example: SRV_SERVER_ONE
+        ip4:
+          description: IP4 адрес
+          type: string
+          example: 172.168.12.33
+        hv:
+          description: Гипервизор
+          type: string
+          example: HV07
+        user:
+          description: Учетная запись
+          type: string
+          example: Administrator
+        password:
+          description: Пароль учетной записи
+          type: string
+          example: qwerty123
+        power_status:
+          description: Статус работы
+          type: integer
+          example: 2
+        network:
+          description: Статус сети
+          type: integer
+          example: 2
+  securitySchemes:
+    token:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 paths:
-  /test:
-    get:
+  /signin:
+    post:
+      tags:
+        - Регистрация и аутентификация
+      summary: Вход
+      description: Вход по логину паролю
+      parameters:
+        - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/User'
+            example:
+              email: anaxita
+              password: qwerty123
       responses:
-        '200':
-          description: OK
+        200:
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                  status: ok
+                  message:
+                    token: fg3456.234hdfg856.345846h
+                    refresh_token: cv245.b3un8.bdf4568                  
+        401:
+          description: Неверный логин/пароль
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                status: err
+                message:
+                  error: Неверный логин или пароль
+                  meta: "no sql rows"
+        400:
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                  status: err
+                  message:
+                    err: Поля email, password  не могут быть пустыми
+                    meta: request has empty fields
+        500:
+          description: Ошибка БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                  status: err
+                  message:
+                    err: Ошибка записи в БД
+                    meta: table is not exist
+  /refresh:
+    post:
+      tags:
+        - Регистрация и аутентификация
+      summary: Обновление пары токенов
+      description: Обновление пары токенов
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              Bearer eyJhbGciOiJIUzI1NiIsIncCI6IkpXVCJ9.eyJleHAiOjEZXIiOnsiiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWn0.eeYhxcZcjbfrfqBvjSPPywU4qbbWpXdy-o
+          style: simple
+      responses:
+        200:
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                  status: ok
+                  message:
+                    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MTQxnsiaWQiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWNjZXNzIn0.eeYhxcZcj-jTI65svCbfrfqBvjSPPywU4qbbWpXdy-o
+                    refresh_token: eyJhbGciOiJIUzInR5cCI6IkpXVCJ9.eyJleHAiOjE2MTQxMDU4aWQiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeoiYWNjZXNzIn0.eeYhxcZcj-jTI65svCbfrfqBvjSPPywU4qbbW           
+        401:
+          description: Токен недействителен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                status: err
+                message:
+                  error: Токен недействителен
+                  meta: not valid signature
+        400:
+          description: Неверный тип токена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                status: err
+                message:
+                  error: Токен не refresh
+                  meta: Token type is not refresh
+        500:
+          description: Ошибка БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                  status: err
+                  message:
+                    err: Ошибка записи в БД
+                    meta: table is not exist
+  /users:
+      get:
+        tags:
+          - Пользователи
+        summary: Просмотр пользователей
+        description: Просмотр, создание, редактирование, удалением пользователей приложения
+        parameters:
+          - name: Authorization
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                Bearer eyJhbGciOiJIUzI1NiIsIncCI6IkpXVCJ9.eyJleHAiOjEZXIiOnsiiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWn0.eeYhxcZcjbfrfqBvjSPPywU4qbbWpXdy-o
+            style: simple
+          - name: Accept
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                application/json
+        requestBody:
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/User'
+              example:
+                name: "Саша"
+                company: "Фиксики"
+                email: anaxita
+                password: qwerty123
+                role: 1
+        responses:
+          201:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message:
+                      id: "74"        
+          401:
+            description: Токен недействителен
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Токен недействителен
+                    meta: not valid signature
+          500:
+            description: Ошибка БД
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: err
+                    message:
+                      err: Ошибка записи в БД
+                      meta: table is not exist
+      post:
+        tags:
+          - Пользователи
+        summary: CRUD пользователей
+        description: Просмотр, создание, редактирование, удалением пользователей приложения
+        parameters:
+          - name: Authorization
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                Bearer eyJhbGciOiJIUzI1NiIsIncCI6IkpXVCJ9.eyJleHAiOjEZXIiOnsiiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWn0.eeYhxcZcjbfrfqBvjSPPywU4qbbWpXdy-o
+            style: simple
+          - name: Accept
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                application/json
+        requestBody:
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/User'
+              example:
+                name: "Саша"
+                company: "Фиксики"
+                email: anaxita
+                password: qwerty123
+                role: 1
+        responses:
+          201:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message:
+                      id: "74"        
+          401:
+            description: Токен недействителен
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Токен недействителен
+                    meta: not valid signature
+          500:
+            description: Ошибка БД
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: err
+                    message:
+                      err: Ошибка записи в БД
+                      meta: table is not exist

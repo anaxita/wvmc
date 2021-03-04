@@ -23,7 +23,10 @@ func init() {
 }
 
 func main() {
-	logit.New(os.Getenv("LOG"))
+	err := logit.New(os.Getenv("LOG"))
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer logit.Close()
 
 	db, err := store.Connect(os.Getenv("DB_TYPE"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_ADDR"), os.Getenv("DB_NAME"))
