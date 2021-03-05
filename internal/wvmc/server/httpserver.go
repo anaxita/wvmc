@@ -31,7 +31,7 @@ func (s *Server) configureRouter() {
 	users := r.NewRoute().Subrouter()
 	users.Use(s.Cors, s.Auth)
 	users.HandleFunc("/users", s.GetUsers()).Methods("OPTIONS, GET")
-
+	users.HandleFunc("/users", s.CreateUser()).Methods("OPTIONS, POST")
 	s.router = r
 }
 
