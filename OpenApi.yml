@@ -234,26 +234,8 @@ paths:
               example:
                 Bearer eyJhbGciOiJIUzI1NiIsIncCI6IkpXVCJ9.eyJleHAiOjEZXIiOnsiiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWn0.eeYhxcZcjbfrfqBvjSPPywU4qbbWpXdy-o
             style: simple
-          - name: Accept
-            in: header
-            required: true
-            schema:
-              type: string
-              example:
-                application/json
-        requestBody:
-          content:
-            application/json:
-              schema:
-                  $ref: '#/components/schemas/User'
-              example:
-                name: "Саша"
-                company: "Фиксики"
-                email: anaxita
-                password: qwerty123
-                role: 1
         responses:
-          201:
+          200:
             description: Успешно
             content:
               application/json:
@@ -262,7 +244,25 @@ paths:
                 example:
                     status: ok
                     message:
-                      id: "74"        
+                      users:
+                        -
+                          id: 25
+                          name: Сашан
+                          email: anaxia@mail.ru
+                          company: Сашания
+                          role: 1
+                        -
+                          id: 26
+                          name: Катян
+                          email: anaxia@mail.ru
+                          company: Катяния
+                          role: 0
+                        -
+                          id: 33
+                          name: Ровшан
+                          email: anaxia@mail.ru
+                          company: Ровшания
+                          role: 1
           401:
             description: Токен недействителен
             content:
