@@ -34,6 +34,8 @@ func (s *Server) configureRouter() {
 	users.HandleFunc("/users", s.CreateUser()).Methods("OPTIONS, POST")
 	users.HandleFunc("/users", s.EditUser()).Methods("OPTIONS, PATCH")
 	users.HandleFunc("/users", s.DeleteUser()).Methods("OPTIONS, DELETE")
+	users.HandleFunc("/users", s.AddServerToUser()).Methods("OPTIONS, POST")
+
 	s.router = r
 }
 

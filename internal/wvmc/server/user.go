@@ -23,6 +23,7 @@ func (s *Server) GetUsers() http.HandlerFunc {
 			}
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 		}
+
 		SendOK(w, http.StatusOK, response{users})
 	}
 }
@@ -44,6 +45,7 @@ func (s *Server) CreateUser() http.HandlerFunc {
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 		}
+
 		SendOK(w, http.StatusCreated, response{createdID})
 	}
 }
@@ -72,6 +74,7 @@ func (s *Server) EditUser() http.HandlerFunc {
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 		}
+
 		SendOK(w, http.StatusOK, "Updated")
 	}
 }
@@ -100,6 +103,30 @@ func (s *Server) DeleteUser() http.HandlerFunc {
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 		}
+
 		SendOK(w, http.StatusOK, "Deleted")
+	}
+}
+
+// AddServerToUser добавляет пользователю сервер
+func (s *Server) AddServerToUser() http.HandlerFunc {
+	type request struct {
+		UserID  string         `json:"user_id"`
+		Servers []model.Server `json:"servers"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := request{}
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
+		}
+
+		err := s.store.User(r.Context()).AddServer(req.UserID, req.Servers)
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+		}
+
+		SendOK(w, http.StatusOK, "Added")
 	}
 }

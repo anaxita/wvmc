@@ -130,3 +130,25 @@ func (r *UserRepository) GetRefreshToken(token string) error {
 	logit.Log("Рефреш токен найден")
 	return nil
 }
+
+// AddServer создает пользователя и возвращает его ID, либо ошибку
+func (r *UserRepository) AddServer(userID string, servers []model.Server) error {
+	logit.Log("Добавляем сервера пользователю:", userID)
+
+	query := "INSERT INTO users_servers (user_id, server_id) VALUES(?, ?)"
+	stmt, _ := r.db.PrepareContext(r.ctx, query)
+
+	for _, v := range servers {
+		_, err := stmt.ExecContext(r.ctx, userID, v.ID)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := stmt.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
