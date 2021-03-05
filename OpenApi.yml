@@ -224,7 +224,7 @@ paths:
         tags:
           - Пользователи
         summary: Просмотр пользователей
-        description: Просмотр, создание, редактирование, удалением пользователей приложения
+        description: Просмотр пользователей приложения
         parameters:
           - name: Authorization
             in: header
@@ -289,7 +289,7 @@ paths:
         tags:
           - Пользователи
         summary: CRUD пользователей
-        description: Просмотр, создание, редактирование, удалением пользователей приложения
+        description: Cоздание пользователя приложения
         parameters:
           - name: Authorization
             in: header
@@ -339,6 +339,153 @@ paths:
                   message:
                     error: Токен недействителен
                     meta: not valid signature
+          500:
+            description: Ошибка БД
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: err
+                    message:
+                      err: Ошибка записи в БД
+                      meta: table is not exist
+      patch:
+        tags:
+          - Пользователи
+        summary: CRUD пользователей
+        description: Просмотр, создание, редактирование, удалением пользователей приложения
+        parameters:
+          - name: Authorization
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                Bearer eyJhbGciOiJIUzI1NiIsIncCI6IkpXVCJ9.eyJleHAiOjEZXIiOnsiiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWn0.eeYhxcZcjbfrfqBvjSPPywU4qbbWpXdy-o
+            style: simple
+          - name: Accept
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                application/json
+        requestBody:
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/User'
+              example:
+                id: 75
+                name: "Саша"
+                company: "Фиксики"
+                email: anaxita
+                password: qwerty123
+                role: 1
+        responses:
+          200:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message: updated     
+          401:
+            description: Токен недействителен
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Токен недействителен
+                    meta: not valid signature
+          404:
+            description: Пользователь не найден
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Пользователь не найден
+                    meta: no sql rows
+          500:
+            description: Ошибка БД
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: err
+                    message:
+                      err: Ошибка записи в БД
+                      meta: table is not exist
+      delete:
+        tags:
+          - Пользователи
+        summary: CRUD пользователей
+        description: Удаление пользователя приложения
+        parameters:
+          - name: Authorization
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                Bearer eyJhbGciOiJIUzI1NiIsIncCI6IkpXVCJ9.eyJleHAiOjEZXIiOnsiiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWn0.eeYhxcZcjbfrfqBvjSPPywU4qbbWpXdy-o
+            style: simple
+          - name: Accept
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                application/json
+        requestBody:
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/User'
+              example:
+                id: 75
+        responses:
+          200:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message: Deleted     
+          401:
+            description: Токен недействителен
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Токен недействителен
+                    meta: not valid signature
+          404:
+            description: Пользователь не найден
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Пользователь не найден
+                    meta: no sql rows
           500:
             description: Ошибка БД
             content:
