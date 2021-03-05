@@ -497,3 +497,82 @@ paths:
                     message:
                       err: Ошибка записи в БД
                       meta: table is not exist
+  /users/servers:                      
+      post:
+        tags:
+          - Пользователи
+        summary: Добавить/удалить сервер у пользователя
+        description: Изменение списка доступных пользователю серверов
+        parameters:
+          - name: Authorization
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                Bearer eyJhbGciOiJIUzI1NiIsIncCI6IkpXVCJ9.eyJleHAiOjEZXIiOnsiiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWn0.eeYhxcZcjbfrfqBvjSPPywU4qbbWpXdy-o
+            style: simple
+          - name: Accept
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                application/json
+        requestBody:
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                    user_id:
+                      type: string
+                      example: 34
+                    servers:
+                      type: array
+                      example: [
+                        dfg3456g-45-dfgh-7,
+                        dfg3456g-45-dfgh-7,
+                        dfg3456g-45-dfgh-7,
+                        dfg3456g-45-dfgh-7
+                        ]      
+              example:
+                user_id: 34
+                servers: [
+                  dfg3456g-45-dfgh-7,
+                  dfg3456g-45-dfgh-7,
+                  dfg3456g-45-dfgh-7,
+                  dfg3456g-45-dfgh-7
+                  ]
+        responses:
+          200:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message: added        
+          401:
+            description: Токен недействителен
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Токен недействителен
+                    meta: not valid signature
+          500:
+            description: Ошибка БД
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: err
+                    message:
+                      err: Ошибка записи в БД
+                      meta: table is not exist
