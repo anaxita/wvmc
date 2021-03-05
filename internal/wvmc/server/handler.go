@@ -33,7 +33,7 @@ func SendOK(w http.ResponseWriter, code int, data interface{}) {
 		logit.Log("Ошибка отправки ответа в JSON", err)
 		return
 	}
-	logit.Info("Response: ", fullResponse)
+	logit.Info(code, "Response: ", fullResponse)
 }
 
 // SendErr отправляет http ответ в формате JSON
@@ -53,5 +53,5 @@ func SendErr(w http.ResponseWriter, code int, meta error, err string) {
 		logit.Log("Ошибка отправки ответа в JSON", err)
 		return
 	}
-	logit.Info("Response: ", fullResponse)
+	logit.Info(code, "Response: ", fullResponse)
 }

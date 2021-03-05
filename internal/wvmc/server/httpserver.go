@@ -32,6 +32,8 @@ func (s *Server) configureRouter() {
 	users.Use(s.Cors, s.Auth)
 	users.HandleFunc("/users", s.GetUsers()).Methods("OPTIONS, GET")
 	users.HandleFunc("/users", s.CreateUser()).Methods("OPTIONS, POST")
+	users.HandleFunc("/users", s.EditUser()).Methods("OPTIONS, PATCH")
+	users.HandleFunc("/users", s.DeleteUser()).Methods("OPTIONS, DELETE")
 	s.router = r
 }
 

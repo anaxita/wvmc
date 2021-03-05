@@ -52,9 +52,8 @@ func (r *UserRepository) Create(u model.User) (int, error) {
 func (r *UserRepository) Edit(u model.User) error {
 	logit.Log("Обновляем поля пользователю:", u.Name)
 
-	query := "UPDATE users SET name = ?, email = ?, role = ? WHERE id = ? LIMIT 1"
-
-	_, err := r.db.ExecContext(r.ctx, query, u.Name, u.Email, u.Role, u.ID)
+	query := "UPDATE users SET name = ?, company = ?, role = ? WHERE id = ? LIMIT 1"
+	_, err := r.db.ExecContext(r.ctx, query, u.Name, u.Company, u.Role, u.ID)
 	if err != nil {
 		return err
 	}
