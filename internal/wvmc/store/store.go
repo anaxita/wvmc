@@ -89,22 +89,32 @@ func Migrate(db *sql.DB) error {
 		UNIQUE KEY user_id (user_id)
 	  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;`
 
-	_, err := db.Exec(fmt.Sprintf("%s", createUsersTable))
+	createHypervsTable := `CREATE TABLE IF NOT EXISTS hypervs (
+		name varchar(255) NOT NULL,
+		PRIMARY KEY (name)
+	  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;`
+
+	_, err := db.Exec(createUsersTable)
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec(fmt.Sprintf("%s", createServersTable))
+	_, err = db.Exec(createServersTable)
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec(fmt.Sprintf("%s", createUsersServersTable))
+	_, err = db.Exec(createUsersServersTable)
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec(fmt.Sprintf("%s", createRefreshTokkensTable))
+	_, err = db.Exec(createRefreshTokkensTable)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(createHypervsTable)
 	if err != nil {
 		return err
 	}

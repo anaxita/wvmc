@@ -7,19 +7,11 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
-CREATE TABLE IF NOT EXISTS `tasks` (
-  `id` INT unsigned NOT NULL AUTO_INCREMENT,
-  `title` VARCHAR(255) NOT NULL,
-  `description` TEXT NOT NULL,
-  `status` TINYINT NOT NULL DEFAULT 0,
-  `project_id` INT unsigned NOT NULL,
-  `creator_id` INT unsigned NOT NULL,
-  `responsible_id` INT unsigned NOT NULL,
-  `created` TIMESTAMP NOT NULL,
-  `updated` TIMESTAMP NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY (`project_id`)
+CREATE TABLE IF NOT EXISTS `hypervs` (
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`name`),
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
 
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
