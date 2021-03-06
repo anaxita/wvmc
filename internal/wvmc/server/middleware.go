@@ -56,7 +56,6 @@ func (s *Server) Auth(next http.Handler) http.Handler {
 func (s *Server) Cors(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logit.Info("REQUEST", r.Method, r.RemoteAddr, r.RequestURI)
 
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "*")
@@ -66,6 +65,8 @@ func (s *Server) Cors(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
+
+		logit.Info("REQUEST", r.Method, r.RemoteAddr, r.RequestURI)
 		next.ServeHTTP(w, r)
 	})
 }
@@ -146,8 +147,9 @@ func (s *Server) RefreshToken() http.Handler {
 // CheckIsAdmin проверяет является ли пользователь админом
 func (s *Server) CheckIsAdmin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var admin = 1
 		ctxUser := r.Context().Value(CtxString("user")).(*model.User)
-		if ctxUser.Role != 1 {
+		if ctxUser.Role != admin {
 			SendErr(w, http.StatusForbidden, errors.New("User is not admin"), "Неверный формат запроса")
 			return
 		}

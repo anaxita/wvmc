@@ -75,14 +75,14 @@ func Migrate(db *sql.DB) error {
 		PRIMARY KEY (id)
 	  ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;`
 
-	createUsersServersTable := `CREATE TABLE users_servers (
+	createUsersServersTable := `CREATE TABLE IF NOT EXISTS users_servers (
 		user_id int NOT NULL,
 		server_id varchar(255) NOT NULL,
 		KEY user_id (user_id),
 		KEY server_id (server_id) USING BTREE
 	) ENGINE = InnoDB DEFAULT CHARSET = utf8;`
 
-	createRefreshTokkensTable := `CREATE TABLE refresh_tokens (
+	createRefreshTokkensTable := `CREATE TABLE IF NOT EXISTS refresh_tokens (
 		user_id int NOT NULL,
 		token text NOT NULL,
 		PRIMARY KEY (user_id),

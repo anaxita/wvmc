@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/anaxita/wvmc/internal/wvmc/hasher"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 )
 
@@ -40,6 +41,13 @@ func (s *Server) CreateUser() http.HandlerFunc {
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
 		}
+
+		encPassword, err := hasher.Hash(req.Password)
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "Невозможно создать хеш")
+			return
+		}
+		req.EncPassword = string(encPassword)
 
 		createdID, err := s.store.User(r.Context()).Create(req)
 		if err != nil {

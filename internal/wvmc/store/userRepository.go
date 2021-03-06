@@ -17,11 +17,11 @@ type UserRepository struct {
 
 //Find ищет первое совпадение пользователя с заданным ключом и значением, возвращает модель либо ошибку
 func (r *UserRepository) Find(key, value string) (model.User, error) {
-	logit.Log("Ищем пользователя:", key, value)
+	logit.Info("Ищем пользователя:", key, value)
 
 	u := model.User{}
 
-	query := fmt.Sprintf("SELECT id, * FROM users WHERE %s = ?", key)
+	query := fmt.Sprintf("SELECT * FROM users WHERE %s = ?", key)
 	if err := r.db.QueryRowContext(r.ctx, query, value).Scan(
 		&u.ID,
 		&u.Name,
@@ -32,15 +32,21 @@ func (r *UserRepository) Find(key, value string) (model.User, error) {
 		return u, err
 	}
 
-	logit.Log("Нашли пользователя:", key, value)
+	logit.Info("Нашли пользователя:", key, value)
 	return u, nil
 }
 
 // Create создает пользователя и возвращает его ID, либо ошибку
 func (r *UserRepository) Create(u model.User) (int, error) {
-	logit.Log("Создааем пользователя:", u.Name)
-	query := "INSERT INTO users (name, email, password, role) VALUES(?, ?, ?, ?)"
-	result, err := r.db.ExecContext(r.ctx, query, u.Name, u.Email, u.EncPassword, u.Role)
+	logit.Info("Создааем пользователя:", u.Name)
+
+	query := "INSERT INTO users (name, email, company, password, role) VALUES (?, ?, ?, ?, ?)"
+
+	result, err := r.db.ExecContext(r.ctx, query, u.Name, u.Email, u.Company, u.EncPassword, u.Role)
+	if err != nil {
+		return 0, err
+	}
+
 	id, err := result.LastInsertId()
 	if err != nil {
 		return 0, err
@@ -50,7 +56,7 @@ func (r *UserRepository) Create(u model.User) (int, error) {
 
 // Edit обновляет данные пользователя, возвращает ошибку в случае неудачи
 func (r *UserRepository) Edit(u model.User) error {
-	logit.Log("Обновляем поля пользователю:", u.Name)
+	logit.Info("Обновляем поля пользователю:", u.Name)
 
 	query := "UPDATE users SET name = ?, company = ?, role = ? WHERE id = ? LIMIT 1"
 	_, err := r.db.ExecContext(r.ctx, query, u.Name, u.Company, u.Role, u.ID)
@@ -64,12 +70,12 @@ func (r *UserRepository) Edit(u model.User) error {
 
 // Delete удаляет пользователя, возвращает ошибку в случае неудачи
 func (r *UserRepository) Delete(id string) error {
-	logit.Log("Удаляем пользователя", id)
+	logit.Info("Удаляем пользователя", id)
 	_, err := r.db.ExecContext(r.ctx, "DELETE FROM users WHERE id = ? LIMIT 1", id)
 	if err != nil {
 		return err
 	}
-	logit.Log("Успешно удалили пользователя", id)
+	logit.Info("Успешно удалили пользователя", id)
 	return nil
 }
 
@@ -98,7 +104,7 @@ func (r *UserRepository) All() ([]model.User, error) {
 		return nil, err
 	}
 
-	logit.Log("Успешно получили всех пользователей")
+	logit.Info("Успешно получили всех пользователей")
 	return users, nil
 }
 
@@ -112,7 +118,7 @@ func (r *UserRepository) CreateRefreshToken(userID, refreshToken string) error {
 		return err
 	}
 
-	logit.Log("Успешно записали рефреш токен")
+	logit.Info("Успешно записали рефреш токен")
 	return nil
 }
 
@@ -127,13 +133,13 @@ func (r *UserRepository) GetRefreshToken(token string) error {
 		return err
 	}
 
-	logit.Log("Рефреш токен найден")
+	logit.Info("Рефреш токен найден")
 	return nil
 }
 
 // AddServer создает пользователя и возвращает его ID, либо ошибку
 func (r *UserRepository) AddServer(userID string, servers []model.Server) error {
-	logit.Log("Добавляем сервера пользователю:", userID)
+	logit.Info("Добавляем сервера пользователю:", userID)
 
 	query := "INSERT INTO users_servers (user_id, server_id) VALUES(?, ?)"
 	stmt, _ := r.db.PrepareContext(r.ctx, query)
@@ -150,5 +156,6 @@ func (r *UserRepository) AddServer(userID string, servers []model.Server) error 
 		return err
 	}
 
+	logit.Info("Успешно добавили сервера пользователю:", userID)
 	return nil
 }

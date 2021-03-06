@@ -6,7 +6,7 @@ import (
 
 // Hash возвращает хешированную строку
 func Hash(password string) ([]byte, error) {
-	return bcrypt.GenerateFromPassword([]byte(password), bcrypt.MaxCost)
+	return bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 }
 
 // Compare сравнивает хеш со строкой
