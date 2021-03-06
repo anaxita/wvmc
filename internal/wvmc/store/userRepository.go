@@ -21,12 +21,13 @@ func (r *UserRepository) Find(key, value string) (model.User, error) {
 
 	u := model.User{}
 
-	query := fmt.Sprintf("SELECT * FROM users WHERE %s = ?", key)
+	query := fmt.Sprintf("SELECT id, name, email, password, company, role FROM users WHERE %s = ?", key)
 	if err := r.db.QueryRowContext(r.ctx, query, value).Scan(
 		&u.ID,
 		&u.Name,
 		&u.Email,
 		&u.EncPassword,
+		&u.Company,
 		&u.Role,
 	); err != nil {
 		return u, err

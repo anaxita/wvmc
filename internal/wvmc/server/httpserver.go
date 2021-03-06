@@ -24,7 +24,7 @@ func New(storage *store.Store) *Server {
 func (s *Server) configureRouter() {
 	r := s.router
 	r.Use(s.Cors)
-	r.Handle("/refresh", s.RefreshToken()).Methods("GET", "OPTIONS")
+	r.Handle("/refresh", s.RefreshToken()).Methods("POST", "OPTIONS")
 	r.Handle("/signin", s.SignIn()).Methods("POST", "OPTIONS")
 
 	users := r.NewRoute().Subrouter()
@@ -33,7 +33,7 @@ func (s *Server) configureRouter() {
 	users.Handle("/users", s.CreateUser()).Methods("POST", "OPTIONS")
 	users.Handle("/users", s.EditUser()).Methods("OPTIONS", "PATCH")
 	users.Handle("/users", s.DeleteUser()).Methods("OPTIONS", "DELETE")
-	users.Handle("/users", s.AddServerToUser()).Methods("OPTIONS", "POST")
+	users.Handle("/users/servers", s.AddServerToUser()).Methods("OPTIONS", "POST")
 
 }
 

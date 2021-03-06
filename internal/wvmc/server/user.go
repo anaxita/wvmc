@@ -3,6 +3,7 @@ package server
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/anaxita/wvmc/internal/wvmc/hasher"
@@ -42,19 +43,29 @@ func (s *Server) CreateUser() http.HandlerFunc {
 			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
 		}
 
-		encPassword, err := hasher.Hash(req.Password)
-		if err != nil {
-			SendErr(w, http.StatusInternalServerError, err, "Невозможно создать хеш")
-			return
-		}
-		req.EncPassword = string(encPassword)
+		store := s.store.User(r.Context())
 
-		createdID, err := s.store.User(r.Context()).Create(req)
+		_, err := store.Find("email", req.Email)
 		if err != nil {
+			if err == sql.ErrNoRows {
+				encPassword, err := hasher.Hash(req.Password)
+				if err != nil {
+					SendErr(w, http.StatusInternalServerError, err, "Невозможно создать хеш")
+					return
+				}
+				req.EncPassword = string(encPassword)
+
+				createdID, err := store.Create(req)
+				if err != nil {
+					SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+				}
+
+				SendOK(w, http.StatusCreated, response{createdID})
+				return
+			}
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 		}
-
-		SendOK(w, http.StatusCreated, response{createdID})
+		SendErr(w, http.StatusBadRequest, errors.New("User is exists"), "Пользователь уже существует")
 	}
 }
 
@@ -76,11 +87,13 @@ func (s *Server) EditUser() http.HandlerFunc {
 				return
 			}
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
 		}
 
 		err = store.Edit(req)
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
 		}
 
 		SendOK(w, http.StatusOK, "Updated")

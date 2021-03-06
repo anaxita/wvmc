@@ -148,7 +148,7 @@ func (s *Server) RefreshToken() http.Handler {
 func (s *Server) CheckIsAdmin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var admin = 1
-		ctxUser := r.Context().Value(CtxString("user")).(*model.User)
+		ctxUser := r.Context().Value(CtxString("user")).(model.User)
 		if ctxUser.Role != admin {
 			SendErr(w, http.StatusForbidden, errors.New("User is not admin"), "Неверный формат запроса")
 			return
