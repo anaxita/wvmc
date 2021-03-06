@@ -51,3 +51,63 @@ func (s *Store) User(c context.Context) *UserRepository {
 		ctx: c,
 	}
 }
+
+// Migrate создает таблицы в БД, если их еще не существует
+func Migrate(db *sql.DB) error {
+	createUsersTable := `CREATE TABLE IF NOT EXISTS users (
+		id int unsigned NOT NULL AUTO_INCREMENT,
+		name varchar(255) NOT NULL,
+		email varchar(255) NOT NULL,
+		company varchar(255) NOT NULL,
+		role int NOT NULL,
+		password text NOT NULL,
+		PRIMARY KEY (id),
+		UNIQUE KEY email (email) USING BTREE
+	  ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;`
+
+	createServersTable := `CREATE TABLE IF NOT EXISTS servers (
+		id varchar(255) NOT NULL,
+		title varchar(255) NOT NULL,
+		hv varchar(255) NOT NULL,
+		ip4 varchar(255) NOT NULL,
+		user_name varchar(255) NOT NULL,
+		user_password varchar(255) NOT NULL,
+		PRIMARY KEY (id)
+	  ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;`
+
+	createUsersServersTable := `CREATE TABLE users_servers (
+		user_id int NOT NULL,
+		server_id varchar(255) NOT NULL,
+		KEY user_id (user_id),
+		KEY server_id (server_id) USING BTREE
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8;`
+
+	createRefreshTokkensTable := `CREATE TABLE refresh_tokens (
+		user_id int NOT NULL,
+		token text NOT NULL,
+		PRIMARY KEY (user_id),
+		UNIQUE KEY user_id (user_id)
+	  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;`
+
+	_, err := db.Exec(fmt.Sprintf("%s", createUsersTable))
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(fmt.Sprintf("%s", createServersTable))
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(fmt.Sprintf("%s", createUsersServersTable))
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(fmt.Sprintf("%s", createRefreshTokkensTable))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

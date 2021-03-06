@@ -35,6 +35,11 @@ func main() {
 	}
 	defer db.Close()
 
+	err = store.Migrate(db)
+	if err != nil {
+		logit.Fatal("Ошибка соединения с БД:", err)
+	}
+
 	store := store.New(db)
 	s := server.New(store)
 	if err = s.Start(); err != nil {
