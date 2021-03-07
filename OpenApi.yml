@@ -114,18 +114,7 @@ paths:
             example:
               email: anaxita
               password: qwerty123
-      responses:
-        200:
-          description: Успешно
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-              example:
-                  status: ok
-                  message:
-                    token: fg3456.234hdfg856.345846h
-                    refresh_token: cv245.b3un8.bdf4568                  
+      responses:              
         401:
           description: Неверный логин/пароль
           content:
@@ -159,6 +148,17 @@ paths:
                   message:
                     err: Ошибка записи в БД
                     meta: table is not exist
+        200:
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                  status: ok
+                  message:
+                    token: <token>
+                    refresh_token: <token>
   /refresh:
     post:
       tags:
@@ -180,21 +180,10 @@ paths:
             schema:
               type: object
               example:
-                refresh_token: JIUzI1NiIsIncCI6IkpXVCJ
+                refresh_token: <token>
       responses:
-        200:
-          description: Успешно
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-              example:
-                  status: ok
-                  message:
-                    token: <token>
-                    refresh_token: <token>
         401:
-          description: Токен недействителен
+          description: Токен истёк или недействителен
           content:
             application/json:
               schema:
@@ -205,7 +194,7 @@ paths:
                   error: Токен недействителен
                   meta: not valid signature
         400:
-          description: Неверный тип токена
+          description: Токен отсутствует или имеет неверный тип
           content:
             application/json:
               schema:
@@ -226,6 +215,17 @@ paths:
                   message:
                     err: Ошибка записи в БД
                     meta: table is not exist
+        200:
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                  status: ok
+                  message:
+                    token: <token>
+                    refresh_token: <token>
   /users:
       get:
         tags:
@@ -242,6 +242,28 @@ paths:
                 Bearer <token>
             style: simple
         responses:
+          401:
+            description: Токен истёк или недействителен
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Токен недействителен
+                    meta: not valid signature
+          500:
+            description: Ошибка БД
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: err
+                    message:
+                      err: Ошибка записи в БД
+                      meta: table is not exist
           200:
             description: Успешно
             content:
@@ -270,28 +292,6 @@ paths:
                           email: anaxia@mail.ru
                           company: Ровшания
                           role: 1
-          401:
-            description: Токен недействителен
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Response'
-                example:
-                  status: err
-                  message:
-                    error: Токен недействителен
-                    meta: not valid signature
-          500:
-            description: Ошибка БД
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Response'
-                example:
-                    status: err
-                    message:
-                      err: Ошибка записи в БД
-                      meta: table is not exist
       post:
         tags:
           - Пользователи
@@ -324,19 +324,9 @@ paths:
                 email: anaxita
                 password: qwerty123
                 role: 1
-        responses:
-          201:
-            description: Успешно
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Response'
-                example:
-                    status: ok
-                    message:
-                      id: "74"        
+        responses:      
           401:
-            description: Токен недействителен
+            description: Токен истёк или недействителен
             content:
               application/json:
                 schema:
@@ -357,6 +347,16 @@ paths:
                     message:
                       err: Ошибка записи в БД
                       meta: table is not exist
+          201:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message:
+                      id: "74"  
       patch:
         tags:
           - Пользователи
@@ -390,18 +390,9 @@ paths:
                 email: anaxita
                 password: qwerty123
                 role: 1
-        responses:
-          200:
-            description: Успешно
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Response'
-                example:
-                    status: ok
-                    message: updated     
+        responses:  
           401:
-            description: Токен недействителен
+            description: Токен истёк или недействителен
             content:
               application/json:
                 schema:
@@ -433,6 +424,15 @@ paths:
                     message:
                       err: Ошибка записи в БД
                       meta: table is not exist
+          200:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message: updated   
       delete:
         tags:
           - Пользователи
@@ -461,18 +461,9 @@ paths:
                   $ref: '#/components/schemas/User'
               example:
                 id: 75
-        responses:
-          200:
-            description: Успешно
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Response'
-                example:
-                    status: ok
-                    message: Deleted     
+        responses:    
           401:
-            description: Токен недействителен
+            description: Токен истёк или недействителен
             content:
               application/json:
                 schema:
@@ -504,6 +495,15 @@ paths:
                     message:
                       err: Ошибка записи в БД
                       meta: table is not exist
+          200:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message: Deleted 
   /users/servers:                      
       post:
         tags:
@@ -551,18 +551,9 @@ paths:
                   dfg3456g-45-dfgh-7,
                   dfg3456g-45-dfgh-7
                   ]
-        responses:
-          200:
-            description: Успешно
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Response'
-                example:
-                    status: ok
-                    message: added        
+        responses:      
           401:
-            description: Токен недействителен
+            description: Токен истёк или недействителен
             content:
               application/json:
                 schema:
@@ -583,3 +574,12 @@ paths:
                     message:
                       err: Ошибка записи в БД
                       meta: table is not exist
+          200:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message: added  
