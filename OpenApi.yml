@@ -166,14 +166,21 @@ paths:
       summary: Обновление пары токенов
       description: Обновление пары токенов
       parameters:
-        - name: Authorization
+        - name: Accept
           in: header
           required: true
           schema:
             type: string
             example:
-              Bearer eyJhbGciOiJIUzI1NiIsIncCI6IkpXVCJ9.eyJleHAiOjEZXIiOnsiiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWn0.eeYhxcZcjbfrfqBvjSPPywU4qbbWpXdy-o
+              application/json
           style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                refresh_token: JIUzI1NiIsIncCI6IkpXVCJ
       responses:
         200:
           description: Успешно
@@ -184,8 +191,8 @@ paths:
               example:
                   status: ok
                   message:
-                    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MTQxnsiaWQiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWNjZXNzIn0.eeYhxcZcj-jTI65svCbfrfqBvjSPPywU4qbbWpXdy-o
-                    refresh_token: eyJhbGciOiJIUzInR5cCI6IkpXVCJ9.eyJleHAiOjE2MTQxMDU4aWQiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeoiYWNjZXNzIn0.eeYhxcZcj-jTI65svCbfrfqBvjSPPywU4qbbW           
+                    token: <token>
+                    refresh_token: <token>
         401:
           description: Токен недействителен
           content:
@@ -232,7 +239,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer eyJhbGciOiJIUzI1NiIsIncCI6IkpXVCJ9.eyJleHAiOjEZXIiOnsiiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWn0.eeYhxcZcjbfrfqBvjSPPywU4qbbWpXdy-o
+                Bearer <token>
             style: simple
         responses:
           200:
@@ -288,7 +295,7 @@ paths:
       post:
         tags:
           - Пользователи
-        summary: CRUD пользователей
+        summary: Создать пользователя
         description: Cоздание пользователя приложения
         parameters:
           - name: Authorization
@@ -297,7 +304,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer eyJhbGciOiJIUzI1NiIsIncCI6IkpXVCJ9.eyJleHAiOjEZXIiOnsiiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWn0.eeYhxcZcjbfrfqBvjSPPywU4qbbWpXdy-o
+                Bearer <token>
             style: simple
           - name: Accept
             in: header
@@ -353,7 +360,7 @@ paths:
       patch:
         tags:
           - Пользователи
-        summary: CRUD пользователей
+        summary: Редактировать пользователя
         description: Просмотр, создание, редактирование, удалением пользователей приложения
         parameters:
           - name: Authorization
@@ -362,7 +369,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer eyJhbGciOiJIUzI1NiIsIncCI6IkpXVCJ9.eyJleHAiOjEZXIiOnsiiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWn0.eeYhxcZcjbfrfqBvjSPPywU4qbbWpXdy-o
+                Bearer <token>
             style: simple
           - name: Accept
             in: header
@@ -438,7 +445,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer eyJhbGciOiJIUzI1NiIsIncCI6IkpXVCJ9.eyJleHAiOjEZXIiOnsiiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWn0.eeYhxcZcjbfrfqBvjSPPywU4qbbWpXdy-o
+                Bearer <token>
             style: simple
           - name: Accept
             in: header
@@ -510,7 +517,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer eyJhbGciOiJIUzI1NiIsIncCI6IkpXVCJ9.eyJleHAiOjEZXIiOnsiiOjcsIm5hbWUiOiLRgtC10YHRgiIsImVtYWlsIjoidGVzdCJ9LCJUeXBlIjoiYWn0.eeYhxcZcjbfrfqBvjSPPywU4qbbWpXdy-o
+                Bearer <token>
             style: simple
           - name: Accept
             in: header
