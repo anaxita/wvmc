@@ -436,7 +436,7 @@ paths:
       delete:
         tags:
           - Пользователи
-        summary: CRUD пользователей
+        summary: Удалить пользователя
         description: Удаление пользователя приложения
         parameters:
           - name: Authorization

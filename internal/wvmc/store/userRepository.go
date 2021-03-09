@@ -65,7 +65,7 @@ func (r *UserRepository) Edit(u model.User) error {
 		return err
 	}
 
-	logit.Log("Успешно обновили поля")
+	logit.Info("Успешно обновили поля пользователя", u.Name)
 	return nil
 }
 

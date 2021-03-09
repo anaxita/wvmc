@@ -52,6 +52,14 @@ func (s *Store) User(c context.Context) *UserRepository {
 	}
 }
 
+// Server возвращает указатель на ServerRepository
+func (s *Store) Server(c context.Context) *UserRepository {
+	return &UserRepository{
+		db:  s.db,
+		ctx: c,
+	}
+}
+
 // Migrate создает таблицы в БД, если их еще не существует
 func Migrate(db *sql.DB) error {
 	createUsersTable := `CREATE TABLE IF NOT EXISTS users (

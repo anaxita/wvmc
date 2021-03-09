@@ -33,7 +33,7 @@ func (s *Server) GetUsers() http.HandlerFunc {
 // CreateUser создает пользователя
 func (s *Server) CreateUser() http.HandlerFunc {
 	type response struct {
-		UserID int `json:"id"`
+		UserID int `json:"id,string"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
