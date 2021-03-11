@@ -41,9 +41,9 @@ func (s *Server) configureRouter() {
 
 	servers := r.NewRoute().Subrouter()
 	servers.Use(s.Auth, s.CheckIsAdmin)
-	servers.Handle("/servers", s.CreateUser()).Methods("POST", "OPTIONS")
-	servers.Handle("/servers", s.EditUser()).Methods("OPTIONS", "PATCH")
-	servers.Handle("/servers", s.DeleteUser()).Methods("OPTIONS", "DELETE")
+	servers.Handle("/servers", s.CreateServer()).Methods("POST", "OPTIONS")
+	servers.Handle("/servers", s.EditServer()).Methods("OPTIONS", "PATCH")
+	servers.Handle("/servers", s.DeleteServer()).Methods("OPTIONS", "DELETE")
 }
 
 // Start - запускает сервер

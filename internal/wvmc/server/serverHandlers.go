@@ -67,9 +67,73 @@ func (s *Server) CreateServer() http.HandlerFunc {
 				SendOK(w, http.StatusCreated, "Created")
 				return
 			}
+
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 			return
 		}
-		SendErr(w, http.StatusBadRequest, errors.New("User is exists"), "Пользователь уже существует")
+
+		SendErr(w, http.StatusBadRequest, errors.New("User is exists"), "Сервер уже существует")
+	}
+}
+
+// EditServer обновляет данные сервера
+func (s *Server) EditServer() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := model.Server{}
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
+		}
+
+		store := s.store.Server(r.Context())
+
+		_, err := store.Find("id", req.ID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				SendErr(w, http.StatusNotFound, err, "Сервер не найден")
+				return
+			}
+
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+
+		err = store.Edit(req)
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+
+		SendOK(w, http.StatusOK, "Updated")
+	}
+}
+
+// DeleteServer удаляет пользователя
+func (s *Server) DeleteServer() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := model.Server{}
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
+		}
+
+		store := s.store.Server(r.Context())
+
+		_, err := store.Find("id", req.ID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				SendErr(w, http.StatusNotFound, err, "Сервер не найден")
+				return
+			}
+
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+		}
+
+		err = store.Delete(req.ID)
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+		}
+
+		SendOK(w, http.StatusOK, "Deleted")
 	}
 }
