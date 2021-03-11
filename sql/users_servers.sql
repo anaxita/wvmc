@@ -8,9 +8,8 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 CREATE TABLE `users_servers` (
-    `user_id` int NOT NULL,
+    `user_id` int PRIMARY KEY,
     `server_id` varchar(255) NOT NULL,
-    KEY `user_id` (`user_id`),
     KEY `server_id` (`server_id`) USING BTREE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 

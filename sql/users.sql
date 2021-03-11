@@ -8,15 +8,14 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 CREATE TABLE IF NOT EXISTS `users` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `id` int UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `company` varchar(255) NOT NULL,
   `role` int NOT NULL,
   `password` text NOT NULL,
-  PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 

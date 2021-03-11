@@ -8,9 +8,8 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 CREATE TABLE `refresh_tokens` (
-  `user_id` int NOT NULL,
+  `user_id` int PRIMARY KEY,
   `token` text NOT NULL,
-  PRIMARY KEY (`user_id`),
   UNIQUE KEY `user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

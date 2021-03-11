@@ -8,9 +8,9 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 CREATE TABLE IF NOT EXISTS `hypervs` (
-  `name` varchar(255) NOT NULL,
-  PRIMARY KEY (`name`),
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+  `name` varchar(255) PRIMARY KEY,
+  `ip4` varchar(255) NOT NULL DEFAULT '0.0.0.0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 
