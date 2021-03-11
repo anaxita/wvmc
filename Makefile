@@ -1,7 +1,7 @@
 .PHONY b:
 b:
 	# go build -v -o ./build/wvmc.exe ./cmd/wvmc
-	go build -v -o ./cmd/wvmc
+	go build -v ./cmd/wvmc
 
 .PHONY bc:
 bc:
