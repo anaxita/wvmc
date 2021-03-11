@@ -53,11 +53,13 @@ func (s *Server) CreateUser() http.HandlerFunc {
 					SendErr(w, http.StatusInternalServerError, err, "Невозможно создать хеш")
 					return
 				}
+
 				req.EncPassword = string(encPassword)
 
 				createdID, err := store.Create(req)
 				if err != nil {
 					SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+					return
 				}
 
 				SendOK(w, http.StatusCreated, response{createdID})

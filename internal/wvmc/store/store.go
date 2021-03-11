@@ -53,8 +53,8 @@ func (s *Store) User(c context.Context) *UserRepository {
 }
 
 // Server возвращает указатель на ServerRepository
-func (s *Store) Server(c context.Context) *UserRepository {
-	return &UserRepository{
+func (s *Store) Server(c context.Context) *ServerRepository {
+	return &ServerRepository{
 		db:  s.db,
 		ctx: c,
 	}
