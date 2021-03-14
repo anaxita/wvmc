@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/anaxita/wvmc/internal/wvmc/control"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 )
 
@@ -38,6 +39,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 				return
 			}
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
 		}
 
 		SendOK(w, http.StatusOK, response{servers})
@@ -51,6 +53,7 @@ func (s *Server) CreateServer() http.HandlerFunc {
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
+			return
 		}
 
 		store := s.store.Server(r.Context())
@@ -83,6 +86,7 @@ func (s *Server) EditServer() http.HandlerFunc {
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
+			return
 		}
 
 		store := s.store.Server(r.Context())
@@ -115,6 +119,7 @@ func (s *Server) DeleteServer() http.HandlerFunc {
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
+			return
 		}
 
 		store := s.store.Server(r.Context())
@@ -127,13 +132,56 @@ func (s *Server) DeleteServer() http.HandlerFunc {
 			}
 
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
 		}
 
 		err = store.Delete(req.ID)
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
 		}
 
 		SendOK(w, http.StatusOK, "Deleted")
+	}
+}
+
+// ControlServer выполняет команды на сервере
+func (s *Server) ControlServer() http.HandlerFunc {
+	type controlRequest struct {
+		Command  string `json:"command"`
+		ServerID string `json:"server_id"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := controlRequest{}
+		var err error
+		if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
+			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
+			return
+		}
+
+		s := control.NewServerService(&control.Command{})
+
+		switch req.Command {
+		case "start-power":
+			_, err = s.StartServer(req.ServerID)
+		case "stop-power":
+			_, err = s.StopServer(req.ServerID)
+
+		case "start-power-force":
+			_, err = s.StopServerForce(req.ServerID)
+
+		case "start-network":
+			_, err = s.StartServerNetwork(req.ServerID)
+
+		case "stop-network":
+			_, err = s.StopServerNetwork(req.ServerID)
+		}
+
+		if err != nil {
+			SendErr(w, http.StatusOK, err, "Ошибка выполнения команды")
+			return
+		}
+
+		SendOK(w, http.StatusOK, "Команда выполнена успешно")
 	}
 }

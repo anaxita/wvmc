@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/anaxita/logit"
@@ -62,67 +63,33 @@ func (s *Store) Server(c context.Context) *ServerRepository {
 
 // Migrate создает таблицы в БД, если их еще не существует
 func Migrate(db *sql.DB) error {
-	createUsersTable := `CREATE TABLE IF NOT EXISTS users (
-		id int unsigned NOT NULL AUTO_INCREMENT,
-		name varchar(255) NOT NULL,
-		email varchar(255) NOT NULL,
-		company varchar(255) NOT NULL,
-		role int NOT NULL,
-		password text NOT NULL,
-		PRIMARY KEY (id),
-		UNIQUE KEY email (email) USING BTREE
-	  ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;`
+	createUsersTable, _ := os.ReadFile("./sql/users.sql")
+	createServersTable, _ := os.ReadFile("./sql/servers.sql")
+	createUsersServersTable, _ := os.ReadFile("./sql/users_servers.sql")
+	createRefreshTokkensTable, _ := os.ReadFile("./sql/refresh_tokens.sql")
+	createHypervsTable, _ := os.ReadFile("./sql/hypervs.sql")
 
-	createServersTable := `CREATE TABLE IF NOT EXISTS servers (
-		id varchar(255) NOT NULL,
-		title varchar(255) NOT NULL,
-		hv varchar(255) NOT NULL,
-		ip4 varchar(255) NOT NULL,
-		user_name varchar(255) NOT NULL,
-		user_password varchar(255) NOT NULL,
-		PRIMARY KEY (id)
-	  ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;`
-
-	createUsersServersTable := `CREATE TABLE IF NOT EXISTS users_servers (
-		user_id int NOT NULL,
-		server_id varchar(255) NOT NULL,
-		KEY user_id (user_id),
-		KEY server_id (server_id) USING BTREE
-	) ENGINE = InnoDB DEFAULT CHARSET = utf8;`
-
-	createRefreshTokkensTable := `CREATE TABLE IF NOT EXISTS refresh_tokens (
-		user_id int NOT NULL,
-		token text NOT NULL,
-		PRIMARY KEY (user_id),
-		UNIQUE KEY user_id (user_id)
-	  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;`
-
-	createHypervsTable := `CREATE TABLE IF NOT EXISTS hypervs (
-		name varchar(255) NOT NULL,
-		PRIMARY KEY (name)
-	  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;`
-
-	_, err := db.Exec(createUsersTable)
+	_, err := db.Exec(string(createUsersTable))
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec(createServersTable)
+	_, err = db.Exec(string(createServersTable))
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec(createUsersServersTable)
+	_, err = db.Exec(string(createUsersServersTable))
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec(createRefreshTokkensTable)
+	_, err = db.Exec(string(createRefreshTokkensTable))
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec(createHypervsTable)
+	_, err = db.Exec(string(createHypervsTable))
 	if err != nil {
 		return err
 	}

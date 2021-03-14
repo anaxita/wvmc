@@ -87,3 +87,15 @@ func (s *ServerService) StartServer(serverID string) ([]byte, error) {
 	command := fmt.Sprintf("Start-VM -ID %s", serverID)
 	return s.commander.run(command)
 }
+
+// StartServerNetwork включает сеть на сервере
+func (s *ServerService) StartServerNetwork(serverID string) ([]byte, error) {
+	command := fmt.Sprintf("Start-VM -ID %s", serverID)
+	return s.commander.run(command)
+}
+
+// StopServerNetwork выключает сеть на сервере
+func (s *ServerService) StopServerNetwork(serverID string) ([]byte, error) {
+	command := fmt.Sprintf("Start-VM -ID %s", serverID)
+	return s.commander.run(command)
+}

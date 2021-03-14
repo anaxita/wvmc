@@ -1,6 +1,6 @@
 module github.com/anaxita/wvmc
 
-go 1.15
+go 1.16
 
 require (
 	github.com/anaxita/logit v0.0.0-20210127184001-4a0864725d67

@@ -23,7 +23,9 @@ func (s *Server) GetUsers() http.HandlerFunc {
 				SendOK(w, http.StatusOK, response{make([]model.User, 0)})
 				return
 			}
+
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
 		}
 
 		SendOK(w, http.StatusOK, response{users})
@@ -41,6 +43,7 @@ func (s *Server) CreateUser() http.HandlerFunc {
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
+			return
 		}
 
 		store := s.store.User(r.Context())
@@ -65,8 +68,11 @@ func (s *Server) CreateUser() http.HandlerFunc {
 				SendOK(w, http.StatusCreated, response{createdID})
 				return
 			}
+
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
 		}
+
 		SendErr(w, http.StatusBadRequest, errors.New("User is exists"), "Пользователь уже существует")
 	}
 }
@@ -78,6 +84,7 @@ func (s *Server) EditUser() http.HandlerFunc {
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
+			return
 		}
 
 		store := s.store.User(r.Context())
@@ -88,6 +95,7 @@ func (s *Server) EditUser() http.HandlerFunc {
 				SendErr(w, http.StatusNotFound, err, "Пользователь не найден")
 				return
 			}
+
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 			return
 		}
@@ -109,6 +117,7 @@ func (s *Server) DeleteUser() http.HandlerFunc {
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
+			return
 		}
 
 		store := s.store.User(r.Context())
@@ -119,12 +128,15 @@ func (s *Server) DeleteUser() http.HandlerFunc {
 				SendErr(w, http.StatusNotFound, err, "Пользователь не найден")
 				return
 			}
+
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
 		}
 
 		err = store.Delete(req.ID)
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
 		}
 
 		SendOK(w, http.StatusOK, "Deleted")
@@ -143,11 +155,13 @@ func (s *Server) AddServerToUser() http.HandlerFunc {
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
+			return
 		}
 
 		err := s.store.User(r.Context()).AddServer(req.UserID, req.Servers)
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
 		}
 
 		SendOK(w, http.StatusOK, "Added")

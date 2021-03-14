@@ -44,6 +44,7 @@ func (s *Server) configureRouter() {
 	servers.Handle("/servers", s.CreateServer()).Methods("POST", "OPTIONS")
 	servers.Handle("/servers", s.EditServer()).Methods("OPTIONS", "PATCH")
 	servers.Handle("/servers", s.DeleteServer()).Methods("OPTIONS", "DELETE")
+	servers.Handle("/servers/control", s.ControlServer()).Methods("POST", "OPTIONS")
 }
 
 // Start - запускает сервер

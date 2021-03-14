@@ -151,7 +151,7 @@ func (s *Server) CheckIsAdmin(next http.Handler) http.Handler {
 
 		ctxUser := r.Context().Value(CtxString("user")).(model.User)
 		if ctxUser.Role != adminRole {
-			SendErr(w, http.StatusForbidden, errors.New("User is not admin"), "Неверный формат запроса")
+			SendErr(w, http.StatusForbidden, errors.New("User is not admin"), "Пользователь не администратор")
 			return
 		}
 

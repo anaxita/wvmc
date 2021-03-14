@@ -1,0 +1,51 @@
+13.03.2021 13:24:48 open .env: The system cannot find the file specified.
+13.03.2021 13:26:48 open ### СЕРВЕР ###
+
+# Порт на котором запускается сервер
+PORT=192.168.1.254:8080
+
+
+### ЛОГ ###
+
+# Путь до лог файла
+LOG=C:\\Users\\anaxita\\Documents\\OpenServer\\domains\\wvmc\\logs\\vm.log
+
+### БАЗА ДАННЫХ ###
+
+DB_TYPE=mysql
+DB_ADDR=localhost
+DB_NAME=wvmc
+DB_USER=anaxita
+DB_PASSWORD=anaxita
+
+
+### ТОКЕНЫ ###
+TOKEN=1ngumPkOGE2svJ6CjhVyD3yfpaQYy2X77wEq6fVxV9y2jgcAtYrn2YifCqq
+: The system cannot find the path specified.
+13.03.2021 13:27:47 open .env: The system cannot find the file specified.
+13.03.2021 13:30:00 open .env: The system cannot find the file specified.
+13.03.2021 13:30:24 open ### СЕРВЕР ###
+
+# Порт на котором запускается сервер
+PORT=192.168.1.254:8080
+
+
+### ЛОГ ###
+
+# Путь до лог файла
+LOG=C:\\Users\\anaxita\\Documents\\OpenServer\\domains\\wvmc\\logs\\vm.log
+
+### БАЗА ДАННЫХ ###
+
+DB_TYPE=mysql
+DB_ADDR=localhost
+DB_NAME=wvmc
+DB_USER=anaxita
+DB_PASSWORD=anaxita
+
+
+### ТОКЕНЫ ###
+TOKEN=1ngumPkOGE2svJ6CjhVyD3yfpaQYy2X77wEq6fVxV9y2jgcAtYrn2YifCqq
+: The system cannot find the path specified.
+13.03.2021 13:42:50 open .env: The system cannot find the file specified.
+13.03.2021 13:43:37 open .env: The system cannot find the file specified.
