@@ -15,7 +15,7 @@ import (
 func init() {
 	err := godotenv.Load(".env")
 	if err != nil {
-		f, _ := os.OpenFile("./errors.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0500)
+		f, _ := os.OpenFile("./errors.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0200)
 		defer f.Close()
 		f.WriteString(fmt.Sprintln(time.Now().Format("02.01.2006 15:04:05"), err))
 		log.Fatal("[FATAL] Cannot find env file")

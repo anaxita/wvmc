@@ -148,17 +148,21 @@ func (s *Server) DeleteServer() http.HandlerFunc {
 // ControlServer выполняет команды на сервере
 func (s *Server) ControlServer() http.HandlerFunc {
 	type controlRequest struct {
-		Command  string `json:"command"`
 		ServerID string `json:"server_id"`
+		Command  string `json:"command"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := controlRequest{}
 		var err error
 		if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
-			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
+			SendErr(w, http.StatusBadRequest, errors.New("server_id and command fields cannot be empty"), "server_id и command не могут быть пустыми")
 			return
 		}
 
+		if req.ServerID == "" || req.Command == "" {
+			SendErr(w, http.StatusOK, err, "Ошибка выполнения команды")
+			return
+		}
 		s := control.NewServerService(&control.Command{})
 
 		switch req.Command {
@@ -175,6 +179,9 @@ func (s *Server) ControlServer() http.HandlerFunc {
 
 		case "stop-network":
 			_, err = s.StopServerNetwork(req.ServerID)
+		default:
+			SendErr(w, http.StatusBadRequest, errors.New("underfiend command"), "Неизвестная команда")
+			return
 		}
 
 		if err != nil {
