@@ -3,3 +3,5 @@ log*
 .env
 /build
 *.exe
+/powershell
+.vscode

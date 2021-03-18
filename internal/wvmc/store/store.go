@@ -8,7 +8,10 @@ import (
 	"time"
 
 	"github.com/anaxita/logit"
-	_ "github.com/go-sql-driver/mysql" // ...
+	"github.com/anaxita/wvmc/internal/wvmc/hasher"
+
+	// _ "github.com/go-sql-driver/mysql" // ...
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // Store содержит в себе подключение к базе данных и репозитории
@@ -20,7 +23,11 @@ type Store struct {
 func Connect(dbtype, user, password, addr, dbname string) (*sql.DB, error) {
 	logit.Info("Соединяемся с БД ...")
 
-	db, err := sql.Open(dbtype, fmt.Sprintf("%s:%s@tcp(%s)/%s", user, password, addr, dbname))
+	// mysql
+	// db, err := sql.Open(dbtype, fmt.Sprintf("%s:%s@tcp(%s)/%s", user, password, addr, dbname))
+
+	// sqllite3
+	db, err := sql.Open(dbtype, fmt.Sprintf("file:%s?_auth&_auth_user=%s&_auth_pass=%s&_auth_crypt=sha512", dbname, user, password))
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +77,17 @@ func Migrate(db *sql.DB) error {
 	createHypervsTable, _ := os.ReadFile("./sql/hypervs.sql")
 
 	_, err := db.Exec(string(createUsersTable))
+	if err != nil {
+		return err
+	}
+
+	password, err := hasher.Hash(os.Getenv("ADMIN_PASSORD"))
+	if err != nil {
+		return err
+	}
+
+	query := "INSERT OR IGNORE INTO  users (name, email, company, password, role) VALUES('Администратор', ?, 'Моя компания', ?, 1)"
+	_, err = db.Exec(query, os.Getenv("ADMIN_NAME"), string(password))
 	if err != nil {
 		return err
 	}

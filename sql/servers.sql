@@ -6,4 +6,4 @@ CREATE TABLE IF NOT EXISTS `servers` (
   `hostname` varchar(255) NOT NULL,
   `user_name` varchar(255) NOT NULL,
   `user_password` varchar(255) NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+);

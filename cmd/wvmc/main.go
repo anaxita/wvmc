@@ -37,7 +37,7 @@ func main() {
 
 	err = store.Migrate(db)
 	if err != nil {
-		logit.Fatal("Ошибка соединения с БД:", err)
+		logit.Fatal("Ошибка миграции", err)
 	}
 
 	store := store.New(db)
