@@ -1,7 +1,11 @@
-log*
+/logs
 .log
+/powershell
+
 .env
+
 /build
 *.exe
-/powershell
 .vscode
+
+*.s3db

@@ -70,6 +70,8 @@ func (s *Store) Server(c context.Context) *ServerRepository {
 
 // Migrate создает таблицы в БД, если их еще не существует
 func Migrate(db *sql.DB) error {
+	logit.Info("Выполняем миграции ...")
+
 	createUsersTable, _ := os.ReadFile("./sql/users.sql")
 	createServersTable, _ := os.ReadFile("./sql/servers.sql")
 	createUsersServersTable, _ := os.ReadFile("./sql/users_servers.sql")
@@ -81,7 +83,7 @@ func Migrate(db *sql.DB) error {
 		return err
 	}
 
-	password, err := hasher.Hash(os.Getenv("ADMIN_PASSORD"))
+	password, err := hasher.Hash(os.Getenv("ADMIN_PASSWORD"))
 	if err != nil {
 		return err
 	}
@@ -112,5 +114,6 @@ func Migrate(db *sql.DB) error {
 		return err
 	}
 
+	logit.Info("Миграции выполнены успешно")
 	return nil
 }
