@@ -73,7 +73,7 @@ func (s *Server) CreateUser() http.HandlerFunc {
 			return
 		}
 
-		SendErr(w, http.StatusBadRequest, errors.New("User is exists"), "Пользователь уже существует")
+		SendErr(w, http.StatusBadRequest, errors.New("user is exists"), "Пользователь уже существует")
 	}
 }
 

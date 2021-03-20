@@ -24,13 +24,13 @@ func (s *Server) Auth(next http.Handler) http.Handler {
 
 		if len(tokenString) != 2 || tokenString[0] != "Bearer" {
 			logit.Log("Нет токена в заголовке", authHeader)
-			SendErr(w, http.StatusUnauthorized, errors.New("No token in headers"), "Нет токена в заголовке")
+			SendErr(w, http.StatusUnauthorized, errors.New("no token in headers"), "Нет токена в заголовке")
 			return
 		}
 
 		token, err := jwt.ParseWithClaims(tokenString[1], &customClaims{}, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			return []byte(os.Getenv("TOKEN")), nil
 		})
@@ -47,7 +47,7 @@ func (s *Server) Auth(next http.Handler) http.Handler {
 				return
 			}
 
-			SendErr(w, http.StatusUnauthorized, errors.New("Token it not 'access'"), "Неверный тип токен")
+			SendErr(w, http.StatusUnauthorized, errors.New("token it not 'access'"), "Неверный тип токен")
 			return
 		}
 		SendErr(w, http.StatusUnauthorized, err, "Токен не валиден")
@@ -95,7 +95,7 @@ func (s *Server) RefreshToken() http.Handler {
 		token, err := jwt.Parse(req.RefreshToken, func(token *jwt.Token) (interface{}, error) {
 			// Проверяем, что метод авторизации верный
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			// Если все ок - возвращаем ключ подписи
 			return []byte(os.Getenv("TOKEN")), nil
@@ -139,10 +139,10 @@ func (s *Server) RefreshToken() http.Handler {
 				SendOK(w, http.StatusOK, tokens)
 				return
 			}
-			SendErr(w, http.StatusBadRequest, errors.New("Token type is not refresh"), "Неверный тип токена")
+			SendErr(w, http.StatusBadRequest, errors.New("token type is not refresh"), "Неверный тип токена")
 			return
 		}
-		SendErr(w, http.StatusUnauthorized, errors.New("Token is invalid"), "Токен невалидный")
+		SendErr(w, http.StatusUnauthorized, errors.New("token is invalid"), "Токен невалидный")
 	})
 }
 
@@ -153,7 +153,7 @@ func (s *Server) CheckIsAdmin(next http.Handler) http.Handler {
 
 		ctxUser := r.Context().Value(CtxString("user")).(model.User)
 		if ctxUser.Role != adminRole {
-			SendErr(w, http.StatusForbidden, errors.New("User is not admin"), "Пользователь не администратор")
+			SendErr(w, http.StatusForbidden, errors.New("user is not admin"), "Пользователь не администратор")
 			return
 		}
 
