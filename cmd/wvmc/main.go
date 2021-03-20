@@ -25,7 +25,7 @@ func init() {
 func main() {
 	err := logit.New(os.Getenv("LOG"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Не удалось запустить логгер", err)
 	}
 	defer logit.Close()
 

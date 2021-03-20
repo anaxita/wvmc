@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"net/http"
 	"os"
 	"strings"
@@ -45,6 +46,7 @@ func (s *Server) Auth(next http.Handler) http.Handler {
 				next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxUser, claims.User)))
 				return
 			}
+
 			SendErr(w, http.StatusUnauthorized, errors.New("Token it not 'access'"), "Неверный тип токен")
 			return
 		}
@@ -92,7 +94,7 @@ func (s *Server) RefreshToken() http.Handler {
 		// Парсим токен
 		token, err := jwt.Parse(req.RefreshToken, func(token *jwt.Token) (interface{}, error) {
 			// Проверяем, что метод авторизации верный
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); ok != true {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
 			// Если все ок - возвращаем ключ подписи
