@@ -41,9 +41,9 @@ func (r *ServerRepository) Find(key, value string) (model.Server, error) {
 func (r *ServerRepository) Create(s model.Server) (int, error) {
 	logit.Info("Создааем сервер:", s.Name)
 
-	query := "INSERT INTO servers (id, name, ip4, hv, company, user, password) VALUES (?, ?, ?, ?, ?, ?, ?)"
+	query := "INSERT INTO servers (id, title, ip4, hv, company, user_name, user_password) VALUES (?, ?, ?, ?, ?, ?, ?)"
 
-	result, err := r.db.ExecContext(r.ctx, query, s.Name, s.IP4, s.HV, s.Company, s.User, s.Password)
+	result, err := r.db.ExecContext(r.ctx, query, s.ID, s.Name, s.IP, s.HV, s.Company, s.User, s.Password)
 	if err != nil {
 		return 0, err
 	}
@@ -60,7 +60,7 @@ func (r *ServerRepository) Edit(s model.Server) error {
 	logit.Info("Обновляем поля серверу:", s.Name)
 
 	query := "UPDATE servers SET name = ?, ip4 = ?, hv = ?, company = ?, user = ?, password = ? WHERE id = ?"
-	_, err := r.db.ExecContext(r.ctx, query, s.Name, s.IP4, s.HV, s.Company, s.User, s.Password, s.ID)
+	_, err := r.db.ExecContext(r.ctx, query, s.Name, s.IP, s.HV, s.Company, s.User, s.Password, s.ID)
 	if err != nil {
 		return err
 	}

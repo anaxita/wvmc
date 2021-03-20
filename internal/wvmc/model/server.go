@@ -4,9 +4,8 @@ package model
 type Server struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
-	IP4      string `json:"ip4"`
+	IP       string `json:"ip"`
 	HV       string `json:"hv"`
-	Hostname string `json:"hostname"`
 	Company  string `json:"company"`
 	User     string `json:"user"`
 	Password string `json:"password"`

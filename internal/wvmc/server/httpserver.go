@@ -26,6 +26,7 @@ func (s *Server) configureRouter() {
 	r.Use(s.Cors)
 	r.Handle("/refresh", s.RefreshToken()).Methods("POST", "OPTIONS")
 	r.Handle("/signin", s.SignIn()).Methods("POST", "OPTIONS")
+	r.Handle("/update", s.UpdateAllServersInfo()).Methods("GET", "OPTIONS")
 
 	users := r.NewRoute().Subrouter()
 	users.Use(s.Auth, s.CheckIsAdmin)
@@ -50,6 +51,6 @@ func (s *Server) configureRouter() {
 // Start - запускает сервер
 func (s *Server) Start() error {
 	s.configureRouter()
-	logit.Info("Server stared at", os.Getenv("PORT"))
+	logit.Info("Server started at", os.Getenv("PORT"))
 	return http.ListenAndServe(os.Getenv("PORT"), s.router)
 }

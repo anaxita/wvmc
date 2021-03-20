@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/anaxita/logit"
 	"github.com/anaxita/wvmc/internal/wvmc/control"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 )
@@ -190,5 +191,43 @@ func (s *Server) ControlServer() http.HandlerFunc {
 		}
 
 		SendOK(w, http.StatusOK, "Команда выполнена успешно")
+	}
+}
+
+// UpdateAllServersInfo обновляет данные в БД по серверам
+func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var servers []model.Server
+
+		out, err := control.NewServerService(&control.Command{}).UpdateAllServersInfo()
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка powershell")
+			return
+		}
+
+		err = json.Unmarshal(out, &servers)
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка декодирования")
+			return
+		}
+
+		duplicates := make(map[string]int)
+
+		for _, server := range servers {
+			if duplicates[server.ID] > 0 {
+				logit.Log("ДУБЛЬ", server.Name, server.ID)
+			}
+			duplicates[server.ID] += 1
+
+			_, _ = s.store.Server(r.Context()).Create(server)
+			if err != nil {
+				// SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+				logit.Log("Невозможно добавить сервер", server.Name, err)
+				// return
+			}
+		}
+		logit.Info("Дубликаты:", duplicates)
+
+		SendOK(w, http.StatusOK, "Updated")
 	}
 }

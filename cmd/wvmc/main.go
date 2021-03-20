@@ -25,7 +25,7 @@ func init() {
 func main() {
 	err := logit.New(os.Getenv("LOG"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Не удалось запустить логгер", err)
 	}
 	defer logit.Close()
 
@@ -37,7 +37,7 @@ func main() {
 
 	err = store.Migrate(db)
 	if err != nil {
-		logit.Fatal("Ошибка соединения с БД:", err)
+		logit.Fatal("Ошибка миграции", err)
 	}
 
 	store := store.New(db)
