@@ -1,6 +1,7 @@
 package control
 
 import (
+	"encoding/json"
 	"fmt"
 	"os/exec"
 
@@ -47,7 +48,7 @@ func NewServerService(c Commander) *ServerService {
 }
 
 // GetServerStatus получает статус работы и сети ВМ servers по их ID
-func (s *ServerService) GetServerStatus(servers []model.Server) ([]byte, error) {
+func (s *ServerService) GetServerStatus(servers []model.Server) ([]VM, error) {
 	script := `
 $result = New-Object System.Collections.Arraylist;
 foreach ($s in $servers) {
@@ -71,7 +72,18 @@ $result | ConvertTo-Json;
 	`
 	command := fmt.Sprintf("$servers = Get-VM -ID %s", script)
 
-	return s.commander.run(command)
+	out, err := s.commander.run(command)
+	if err != nil {
+		return nil, err
+	}
+
+	var vms []VM
+
+	if err = json.Unmarshal(out, &vms); err != nil {
+		return nil, err
+	}
+
+	return vms, nil
 }
 
 // StopServer выключает сервер

@@ -8,6 +8,7 @@ import (
 
 	"github.com/anaxita/logit"
 	"github.com/anaxita/wvmc/internal/wvmc/control"
+	"github.com/anaxita/wvmc/internal/wvmc/converter"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 )
 
@@ -42,8 +43,17 @@ func (s *Server) GetServers() http.HandlerFunc {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 			return
 		}
-		// TODO придумать как записывать статус в ответ
-		// s.serverService.GetServerStatus(servers)
+
+		vms, err := s.serverService.GetServerStatus(servers)
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
+		}
+
+		err = converter.GetServerStatus(&servers, vms)
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка преобразования структур")
+		}
+
 		SendOK(w, http.StatusOK, response{servers})
 	}
 }
