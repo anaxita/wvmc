@@ -68,7 +68,7 @@ func (s *Server) CreateServer() http.HandlerFunc {
 					return
 				}
 
-				SendOK(w, http.StatusCreated, "Created")
+				SendOK(w, http.StatusOK, "added")
 				return
 			}
 
@@ -76,7 +76,7 @@ func (s *Server) CreateServer() http.HandlerFunc {
 			return
 		}
 
-		SendErr(w, http.StatusBadRequest, errors.New("user is already exists"), "Сервер уже существует")
+		SendErr(w, http.StatusBadRequest, errors.New("server is already exists"), "Сервер уже существует")
 	}
 }
 
