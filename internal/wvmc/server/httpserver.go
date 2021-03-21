@@ -5,20 +5,25 @@ import (
 	"os"
 
 	"github.com/anaxita/logit"
+	"github.com/anaxita/wvmc/internal/wvmc/control"
 	"github.com/anaxita/wvmc/internal/wvmc/store"
 	"github.com/gorilla/mux"
 )
 
 // Server - структура http сервера
 type Server struct {
-	store  *store.Store
-	router *mux.Router
+	store         *store.Store
+	router        *mux.Router
+	serverService *control.ServerService
 }
 
 // New - создает новый сервер
 func New(storage *store.Store) *Server {
-	return &Server{store: storage,
-		router: mux.NewRouter()}
+	return &Server{
+		store:         storage,
+		router:        mux.NewRouter(),
+		serverService: control.NewServerService(&control.Command{}),
+	}
 }
 
 func (s *Server) configureRouter() {

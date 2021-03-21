@@ -42,7 +42,8 @@ func (s *Server) GetServers() http.HandlerFunc {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 			return
 		}
-
+		// TODO придумать как записывать статус в ответ
+		// s.serverService.GetServerStatus(servers)
 		SendOK(w, http.StatusOK, response{servers})
 	}
 }

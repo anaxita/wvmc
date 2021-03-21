@@ -3,7 +3,8 @@ package control
 import (
 	"fmt"
 	"os/exec"
-	"strings"
+
+	"github.com/anaxita/wvmc/internal/wvmc/model"
 )
 
 // VM описывает свойства виртуальной машины, который можно получить с помощью комманд данного пакета
@@ -46,7 +47,7 @@ func NewServerService(c Commander) *ServerService {
 }
 
 // GetServerStatus получает статус работы и сети ВМ servers по их ID
-func (s *ServerService) GetServerStatus(servers []string) ([]byte, error) {
+func (s *ServerService) GetServerStatus(servers []model.Server) ([]byte, error) {
 	script := `
 $result = New-Object System.Collections.Arraylist;
 foreach ($s in $servers) {
@@ -68,7 +69,7 @@ foreach ($s in $servers) {
 }
 $result | ConvertTo-Json;
 	`
-	command := fmt.Sprintf("$servers = Get-VM -ID %s ; %s", strings.Join(servers, ","), script)
+	command := fmt.Sprintf("$servers = Get-VM -ID %s", script)
 
 	return s.commander.run(command)
 }
