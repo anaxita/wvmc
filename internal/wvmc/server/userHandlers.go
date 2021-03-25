@@ -8,6 +8,7 @@ import (
 
 	"github.com/anaxita/wvmc/internal/wvmc/hasher"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
+	"github.com/gorilla/mux"
 )
 
 // GetUsers возвращает список всех пользователей
@@ -73,7 +74,7 @@ func (s *Server) CreateUser() http.HandlerFunc {
 			return
 		}
 
-		SendErr(w, http.StatusBadRequest, errors.New("User is exists"), "Пользователь уже существует")
+		SendErr(w, http.StatusBadRequest, errors.New("user is exists"), "Пользователь уже существует")
 	}
 }
 
@@ -143,8 +144,8 @@ func (s *Server) DeleteUser() http.HandlerFunc {
 	}
 }
 
-// AddServerToUser добавляет пользователю сервер
-func (s *Server) AddServerToUser() http.HandlerFunc {
+// AddServersToUser добавляет пользователю сервер
+func (s *Server) AddServersToUser() http.HandlerFunc {
 	type request struct {
 		UserID  string         `json:"user_id"`
 		Servers []model.Server `json:"servers"`
@@ -165,5 +166,34 @@ func (s *Server) AddServerToUser() http.HandlerFunc {
 		}
 
 		SendOK(w, http.StatusOK, "Added")
+	}
+}
+
+// GetUserServers получает сервера пользователя
+func (s *Server) GetUserServers() http.HandlerFunc {
+	type response struct {
+		Servers []model.Server `json:"servers"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		userID, ok := vars["user_id"]
+		if !ok {
+			SendErr(w, http.StatusBadRequest, errors.New("user id is undefiend"), "Неверный данные в запросе")
+			return
+		}
+
+		servers, err := s.store.Server(r.Context()).FindByUser(userID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				SendOK(w, http.StatusOK, response{make([]model.Server, 0)})
+				return
+			}
+
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+
+		SendOK(w, http.StatusOK, response{servers})
 	}
 }

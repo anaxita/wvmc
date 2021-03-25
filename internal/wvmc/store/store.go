@@ -88,7 +88,7 @@ func Migrate(db *sql.DB) error {
 		return err
 	}
 
-	query := "INSERT OR IGNORE INTO  users (name, email, company, password, role) VALUES('Администратор', ?, 'Моя компания', ?, 1)"
+	query := "INSERT OR IGNORE INTO  users (name, email, password, company,  role) VALUES('Администратор', ?, ?, 'Моя компания', 1)"
 	_, err = db.Exec(query, os.Getenv("ADMIN_NAME"), string(password))
 	if err != nil {
 		return err

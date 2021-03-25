@@ -361,7 +361,7 @@ paths:
         tags:
           - Пользователи
         summary: Редактировать пользователя
-        description: Просмотр, создание, редактирование, удалением пользователей приложения
+        description: Редактирование пользователей приложения
         parameters:
           - name: Authorization
             in: header
@@ -538,18 +538,18 @@ paths:
                     servers:
                       type: array
                       example: [
-                        dfg3456g-45-dfgh-7,
-                        dfg3456g-45-dfgh-7,
-                        dfg3456g-45-dfgh-7,
-                        dfg3456g-45-dfgh-7
+                        id: dfg3456g-45-dfgh-7,
+                        id: dfg3456g-45-dfgh-7,
+                        id: dfg3456g-45-dfgh-7,
+                        id: dfg3456g-45-dfgh-7,
                         ]      
               example:
                 user_id: 34
                 servers: [
-                  dfg3456g-45-dfgh-7,
-                  dfg3456g-45-dfgh-7,
-                  dfg3456g-45-dfgh-7,
-                  dfg3456g-45-dfgh-7
+                  id: dfg3456g-45-dfgh-7,
+                  id: dfg3456g-45-dfgh-7,
+                  id: dfg3456g-45-dfgh-7,
+                  id: dfg3456g-45-dfgh-7,
                   ]
         responses:      
           401:
@@ -582,4 +582,421 @@ paths:
                   $ref: '#/components/schemas/Response'
                 example:
                     status: ok
-                    message: added  
+                    message: added
+  /users/{user_id}/servers:
+      get:
+        tags:
+          - Пользователи
+        summary: Просмотр серверов пользователя
+        description: Просмотр серверов опредленного пользователя
+        parameters:
+          - name: Authorization
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                Bearer <token>
+            style: simple
+          - name: user_id
+            in: path
+            required: true
+            schema:
+              type: string
+              example:
+                25
+            style: simple
+        responses:
+          401:
+            description: Токен истёк или недействителен
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Токен недействителен
+                    meta: not valid signature
+          500:
+            description: Ошибка БД
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: err
+                    message:
+                      err: Ошибка записи в БД
+                      meta: table is not exist
+          200:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message:
+                      servers:
+                        -
+                          id: fgh-5-h-dfghrgh--45th--
+                          name: SRV_PF
+                          ip: 192.168.1.23
+                          out_addr: dc.kmsys.ru:5322
+                          hv: DCSRVHV12
+                          company: Промформат
+                          state: Running
+                          network: "Off"
+                        -
+                          id: fgh-5-h-dfghrgh--45th--
+                          name: SRV_PF
+                          ip: 192.168.1.23
+                          out_addr: dc.kmsys.ru:5322
+                          hv: DCSRVHV12
+                          company: Промформат
+                          state: Running
+                          network: "Off"
+                        -
+                          id: fgh-5-h-dfghrgh--45th--
+                          name: SRV_PF
+                          ip: 192.168.1.23
+                          out_addr: dc.kmsys.ru:5322
+                          hv: DCSRVHV12
+                          company: Промформат
+                          state: Running
+                          network: "Off"
+  /servers/update:
+      post:
+        tags:
+          - Сервера
+        summary: Обновление данных по всем серверам
+        description: Обновление данных в БД по всем серверам со всех гипервизорам
+        parameters:
+          - name: Authorization
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                Bearer <token>
+            style: simple
+        responses:  
+          401:
+            description: Токен истёк или недействителен
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Токен недействителен
+                    meta: not valid signature
+          500:
+            description: Ошибка БД
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: err
+                    message:
+                      err: Ошибка записи в БД
+                      meta: table is not exist
+          200:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message: updated
+  /servers:
+      get:
+        tags:
+          - Сервера
+        summary: Просмотр серверов
+        description: Просмотр серверов приложения
+        parameters:
+          - name: Authorization
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                Bearer <token>
+            style: simple
+        responses:
+          401:
+            description: Токен истёк или недействителен
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Токен недействителен
+                    meta: not valid signature
+          500:
+            description: Ошибка БД
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: err
+                    message:
+                      err: Ошибка записи в БД
+                      meta: table is not exist
+          200:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message:
+                      servers:
+                        -
+                          id: fgh-5-h-dfghrgh--45th--
+                          name: SRV_PF
+                          ip: 192.168.1.23
+                          out_addr: dc.kmsys.ru:5322
+                          hv: DCSRVHV12
+                          company: Промформат
+                          state: Running
+                          network: "Off"
+                        -
+                          id: fgh-5-h-dfghrgh--45th--
+                          name: SRV_PF
+                          ip: 192.168.1.23
+                          out_addr: dc.kmsys.ru:5322
+                          hv: DCSRVHV12
+                          company: Промформат
+                          state: Running
+                          network: "Off"
+                        -
+                          id: fgh-5-h-dfghrgh--45th--
+                          name: SRV_PF
+                          ip: 192.168.1.23
+                          out_addr: dc.kmsys.ru:5322
+                          hv: DCSRVHV12
+                          company: Промформат
+                          state: Running
+                          network: "Off"
+      post:
+        tags:
+          - Сервера
+        summary: Добавить сервер
+        description: Добавление сервера в приложение
+        parameters:
+          - name: Authorization
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                Bearer <token>
+            style: simple
+          - name: Accept
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                application/json
+        requestBody:
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Server'
+              example:
+                name: "SRV_PF"
+                company: Промформат
+                description: Такая-то компания и вообще молодцы
+                out_addr: dc.kmsys.ru:5322
+                admin: anaxita
+                password: qwerty123
+        responses:      
+          401:
+            description: Токен истёк или недействителен
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Токен недействителен
+                    meta: not valid signature
+          500:
+            description: Ошибка БД
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: err
+                    message:
+                      err: Ошибка записи в БД
+                      meta: table is not exist
+          200:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message:
+                      id: added  
+      patch:
+        tags:
+          - Сервера
+        summary: Редактировать сервер
+        description: Редактирование серверов приложения
+        parameters:
+          - name: Authorization
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                Bearer <token>
+            style: simple
+          - name: Accept
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                application/json
+        requestBody:
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/User'
+              example:
+                company: Промформат
+                description: Такая-то компания и вообще молодцы
+                out_addr: dc.kmsys.ru:5322
+                user: admin
+                password: admin
+        responses:  
+          401:
+            description: Токен истёк или недействителен
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Токен недействителен
+                    meta: not valid signature
+          404:
+            description: Сервер не найден
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Сервер не найден
+                    meta: no sql rows
+          500:
+            description: Ошибка БД
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: err
+                    message:
+                      err: Ошибка записи в БД
+                      meta: table is not exist
+          200:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message: updated   
+      delete:
+        tags:
+          - Сервера
+        summary: Удалить сервер из БД
+        description: Удаление сервера из приложения
+        parameters:
+          - name: Authorization
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                Bearer <token>
+            style: simple
+          - name: Accept
+            in: header
+            required: true
+            schema:
+              type: string
+              example:
+                application/json
+        requestBody:
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/User'
+              example:
+                id: 75
+        responses:    
+          401:
+            description: Токен истёк или недействителен
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Токен недействителен
+                    meta: not valid signature
+          404:
+            description: Пользователь не найден
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                  status: err
+                  message:
+                    error: Сервер не найден
+                    meta: no sql rows
+          500:
+            description: Ошибка БД
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: err
+                    message:
+                      err: Ошибка записи в БД
+                      meta: table is not exist
+          200:
+            description: Успешно
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+                example:
+                    status: ok
+                    message: deleted 
