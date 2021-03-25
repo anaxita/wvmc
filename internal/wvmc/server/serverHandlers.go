@@ -5,56 +5,79 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
+	"strings"
+	"sync"
 
 	"github.com/anaxita/logit"
 	"github.com/anaxita/wvmc/internal/wvmc/control"
-	"github.com/anaxita/wvmc/internal/wvmc/converter"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 )
 
 // GetServers возвращает список серверов
 func (s *Server) GetServers() http.HandlerFunc {
 	type response struct {
-		Servers []model.Server `json:"servers"`
+		Servers []control.VM `json:"servers"`
 	}
 
-	userRole := 0
-	adminRole := 1
-	return func(w http.ResponseWriter, r *http.Request) {
-		var servers []model.Server
-		var err error
+	var userRole = 0
+	var adminRole = 1
 
-		store := s.store.Server(r.Context())
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		user := r.Context().Value(CtxString("user")).(model.User)
+
 		if user.Role == adminRole {
-			servers, err = store.All()
+			hvList := strings.Split(os.Getenv("HV_LIST"), ",")
+			var vms []control.VM
+			var wg sync.WaitGroup
+			var mu sync.Mutex
+
+			wg.Add(len(hvList))
+			for _, hv := range hvList {
+				go func(hv string, vms *[]control.VM, wg *sync.WaitGroup, mu *sync.Mutex) {
+					defer wg.Done()
+
+					servers, err := s.serverService.GetServerDataForAdmins(hv)
+					if err != nil {
+						// SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
+						// return
+						logit.Log("PS", err)
+					}
+
+					mu.Lock()
+					defer mu.Unlock()
+					*vms = append(*vms, servers...)
+
+				}(hv, &vms, &wg, &mu)
+			}
+
+			wg.Wait()
+
+			SendOK(w, http.StatusOK, response{vms})
+
 		}
 
 		if user.Role == userRole {
-			servers, err = store.FindByUser(user.ID)
-		}
+			servers, err := s.store.Server(r.Context()).FindByUser(user.ID)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					SendOK(w, http.StatusOK, response{make([]control.VM, 0)})
+					return
+				}
 
-		if err != nil {
-			if err == sql.ErrNoRows {
-				SendOK(w, http.StatusOK, response{make([]model.Server, 0)})
+				SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 				return
 			}
-			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
-			return
+
+			vms, err := s.serverService.GetServersDataForUsers(servers)
+			if err != nil {
+				SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
+				return
+			}
+			SendOK(w, http.StatusOK, response{vms})
 		}
 
-		vms, err := s.serverService.GetServerStatus(servers)
-		if err != nil {
-			SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
-		}
-
-		err = converter.GetServerStatus(&servers, vms)
-		if err != nil {
-			SendErr(w, http.StatusInternalServerError, err, "Ошибка преобразования структур")
-		}
-
-		SendOK(w, http.StatusOK, response{servers})
 	}
 }
 
