@@ -538,18 +538,18 @@ paths:
                     servers:
                       type: array
                       example: [
-                        dfg3456g-45-dfgh-7,
-                        dfg3456g-45-dfgh-7,
-                        dfg3456g-45-dfgh-7,
-                        dfg3456g-45-dfgh-7
+                        id: dfg3456g-45-dfgh-7,
+                        id: dfg3456g-45-dfgh-7,
+                        id: dfg3456g-45-dfgh-7,
+                        id: dfg3456g-45-dfgh-7,
                         ]      
               example:
                 user_id: 34
                 servers: [
-                  dfg3456g-45-dfgh-7,
-                  dfg3456g-45-dfgh-7,
-                  dfg3456g-45-dfgh-7,
-                  dfg3456g-45-dfgh-7
+                  id: dfg3456g-45-dfgh-7,
+                  id: dfg3456g-45-dfgh-7,
+                  id: dfg3456g-45-dfgh-7,
+                  id: dfg3456g-45-dfgh-7,
                   ]
         responses:      
           401:
@@ -583,6 +583,7 @@ paths:
                 example:
                     status: ok
                     message: added
+  /users/{user_id}/servers:
       get:
         tags:
           - Пользователи
@@ -665,8 +666,8 @@ paths:
                           company: Промформат
                           state: Running
                           network: "Off"
-  /servers/control:
-      get:
+  /servers/update:
+      post:
         tags:
           - Сервера
         summary: Обновление данных по всем серверам

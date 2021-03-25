@@ -31,13 +31,13 @@ type Command struct{}
 // run запускает команду powershell,возвращает вывод и ошибку
 func (c *Command) run(command string) ([]byte, error) {
 	e := exec.Command("pwsh", "-Command", command)
+	// e := exec.Command("pwsh", "./powershell/test.ps1")
 	logit.Info("Выполняем команду", command)
 	out, err := e.Output()
+	logit.Info(string(out))
 	if err != nil {
 		return nil, err
 	}
-	// logit.Info(string(out))
-	logit.Info("Выполнили команду", command)
 	return out, nil
 }
 
@@ -139,9 +139,11 @@ func (s *ServerService) GetServersDataForAdmins() ([]VM, error) {
 
 $result | ConvertTo-Json -AsArray -Compress;`
 
+	scriptsCimSessinons := `Get-CimSession`
+
 	command := fmt.Sprintf("$hvList = %s; %s", os.Getenv("HV_LIST"), script)
 	logit.Log(command)
-	out, err := s.commander.run(command)
+	out, err := s.commander.run(scriptsCimSessinons)
 	if err != nil {
 		return nil, err
 	}

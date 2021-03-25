@@ -53,8 +53,13 @@ func (s *Server) GetServers() http.HandlerFunc {
 			}
 
 			wg.Wait()
-
-			SendOK(w, http.StatusOK, response{vms})
+			// vms, err := s.serverService.GetServersDataForAdmins()
+			// if err != nil {
+			// 	SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
+			// 	logit.Log("PS", err)
+			// 	return
+			// }
+			// SendOK(w, http.StatusOK, response{vms})
 
 		}
 
@@ -215,7 +220,7 @@ func (s *Server) ControlServer() http.HandlerFunc {
 		case "stop-network":
 			_, err = s.StopServerNetwork(req.ServerID)
 		default:
-			SendErr(w, http.StatusBadRequest, errors.New("underfiend command"), "Неизвестная команда")
+			SendErr(w, http.StatusBadRequest, errors.New("undefiend command"), "Неизвестная команда")
 			return
 		}
 

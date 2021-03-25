@@ -138,7 +138,7 @@ func (r *UserRepository) GetRefreshToken(token string) error {
 	return nil
 }
 
-// AddServer создает пользователя и возвращает его ID, либо ошибку
+// AddServer добавляет сервера пользователю по его айди
 func (r *UserRepository) AddServer(userID string, servers []model.Server) error {
 	logit.Info("Добавляем сервера пользователю:", userID)
 
