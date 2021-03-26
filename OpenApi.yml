@@ -4,10 +4,7 @@ info:
   version: 1.0.0
 servers:
   -
-    url: http://192.168.1.254:8080
-    description: Локальный сервер
-  -
-    url: https://dc.kmsys.ru:53326
+    url: http://dc.kmsys.ru:53338
     description: Основной сервер
 components:
   schemas:
@@ -764,30 +761,23 @@ paths:
                         -
                           id: fgh-5-h-dfghrgh--45th--
                           name: SRV_PF
-                          ip: 192.168.1.23
-                          out_addr: dc.kmsys.ru:5322
                           hv: DCSRVHV12
-                          company: Промформат
                           state: Running
-                          network: "Off"
                         -
                           id: fgh-5-h-dfghrgh--45th--
                           name: SRV_PF
-                          ip: 192.168.1.23
-                          out_addr: dc.kmsys.ru:5322
                           hv: DCSRVHV12
-                          company: Промформат
                           state: Running
-                          network: "Off"
                         -
                           id: fgh-5-h-dfghrgh--45th--
                           name: SRV_PF
-                          ip: 192.168.1.23
-                          out_addr: dc.kmsys.ru:5322
                           hv: DCSRVHV12
-                          company: Промформат
                           state: Running
-                          network: "Off"
+                        -
+                          id: fgh-5-h-dfghrgh--45th--
+                          name: SRV_PF
+                          hv: DCSRVHV12
+                          state: Running
       post:
         tags:
           - Сервера

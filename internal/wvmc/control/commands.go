@@ -54,7 +54,7 @@ func NewServerService(c Commander) *ServerService {
 }
 
 // GetServersDataForUsers получает статус работы и сети ВМ servers по их Name
-func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]VM, error) {
+func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]model.Server, error) {
 	var hvs []string
 	var names []string
 	var allNames string
@@ -76,7 +76,7 @@ func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]VM, er
 	allNames = strings.Replace(allNames, "]", "", 1)
 	logit.Log(allNames)
 
-	script := `$result = Get-VM -Name $nameList -ComputerName $hvList | ForEach-Object -Parallel {
+	script := ` | ForEach-Object -Parallel {
     $state = $_.State;
     
     if ($state -eq 2) {
@@ -101,19 +101,18 @@ func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]VM, er
 };
 
 $result | ConvertTo-Json -AsArray -Compress;`
+	vms := make([]model.Server, 0)
 
-	command := fmt.Sprintf("$hvList = %s; $nameList = %s; %s", allHV, allNames, script)
+	command := fmt.Sprintf("$nameList = %s; $result = Get-VM -Name $nameList -ComputerName %s %s", allNames, allHV, script)
 
 	out, err := s.commander.run(command)
 	logit.Log("out:", string(out))
 	if err != nil {
-		return nil, err
+		return vms, err
 	}
 
-	var vms []VM
-
 	if err = json.Unmarshal(out, &vms); err != nil {
-		return nil, err
+		return vms, err
 	}
 	return vms, nil
 }
@@ -158,7 +157,7 @@ $result | ConvertTo-Json -AsArray -Compress;`
 }
 
 // GetServerDataForAdmins получает статус работы всех ВМ servers
-func (s *ServerService) GetServerDataForAdmins(hv string) ([]VM, error) {
+func (s *ServerService) GetServerDataForAdmins(hv string) ([]model.Server, error) {
 	script := `$result = New-Object System.Collections.Arraylist;
     $servers = Get-VM -ComputerName $hvList
 foreach ($s in $servers)
@@ -190,7 +189,7 @@ foreach ($s in $servers)
 		return nil, err
 	}
 
-	var vms []VM
+	var vms []model.Server
 
 	if err = json.Unmarshal(out, &vms); err != nil {
 		return nil, err

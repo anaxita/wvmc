@@ -17,7 +17,7 @@ import (
 // GetServers возвращает список серверов
 func (s *Server) GetServers() http.HandlerFunc {
 	type response struct {
-		Servers []control.VM `json:"servers"`
+		Servers []model.Server `json:"servers"`
 	}
 
 	var userRole = 0
@@ -29,13 +29,13 @@ func (s *Server) GetServers() http.HandlerFunc {
 
 		if user.Role == adminRole {
 			hvList := strings.Split(os.Getenv("HV_LIST"), ",")
-			var vms []control.VM
+			var vms []model.Server
 			var wg sync.WaitGroup
 			var mu sync.Mutex
 
 			wg.Add(len(hvList))
 			for _, hv := range hvList {
-				go func(hv string, vms *[]control.VM, wg *sync.WaitGroup, mu *sync.Mutex) {
+				go func(hv string, vms *[]model.Server, wg *sync.WaitGroup, mu *sync.Mutex) {
 					defer wg.Done()
 
 					servers, err := s.serverService.GetServerDataForAdmins(hv)
@@ -60,14 +60,15 @@ func (s *Server) GetServers() http.HandlerFunc {
 			// 	return
 			// }
 			// SendOK(w, http.StatusOK, response{vms})
-
+			SendOK(w, http.StatusOK, response{vms})
+			return
 		}
 
 		if user.Role == userRole {
 			servers, err := s.store.Server(r.Context()).FindByUser(user.ID)
 			if err != nil {
 				if err == sql.ErrNoRows {
-					SendOK(w, http.StatusOK, response{make([]control.VM, 0)})
+					SendOK(w, http.StatusOK, response{make([]model.Server, 0)})
 					return
 				}
 
@@ -236,29 +237,55 @@ func (s *Server) ControlServer() http.HandlerFunc {
 // UpdateAllServersInfo обновляет данные в БД по серверам
 func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var servers []model.Server
+		// var servers []model.Server
 
-		out, err := control.NewServerService(&control.Command{}).UpdateAllServersInfo()
-		if err != nil {
-			SendErr(w, http.StatusInternalServerError, err, "Ошибка powershell")
-			return
+		// out, err := s.serverService.UpdateAllServersInfo()
+		// if err != nil {
+		// 	SendErr(w, http.StatusInternalServerError, err, "Ошибка powershell")
+		// 	return
+		// }
+
+		// err = json.Unmarshal(out, &servers)
+		// if err != nil {
+		// 	SendErr(w, http.StatusInternalServerError, err, "Ошибка декодирования")
+		// 	return
+		// }
+
+		hvList := strings.Split(os.Getenv("HV_LIST"), ",")
+		var vms []model.Server
+		var wg sync.WaitGroup
+		var mu sync.Mutex
+
+		wg.Add(len(hvList))
+		for _, hv := range hvList {
+			go func(hv string, vms *[]model.Server, wg *sync.WaitGroup, mu *sync.Mutex) {
+				defer wg.Done()
+
+				servers, err := s.serverService.GetServerDataForAdmins(hv)
+				if err != nil {
+					// SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
+					// return
+					logit.Log("PS", err)
+				}
+
+				mu.Lock()
+				defer mu.Unlock()
+				*vms = append(*vms, servers...)
+
+			}(hv, &vms, &wg, &mu)
 		}
 
-		err = json.Unmarshal(out, &servers)
-		if err != nil {
-			SendErr(w, http.StatusInternalServerError, err, "Ошибка декодирования")
-			return
-		}
+		wg.Wait()
 
 		duplicates := make(map[string]int)
 
-		for _, server := range servers {
+		for _, server := range vms {
 			if duplicates[server.ID] > 0 {
 				logit.Log("ДУБЛЬ", server.Name, server.ID)
 			}
 			duplicates[server.ID] += 1
 
-			_, _ = s.store.Server(r.Context()).Create(server)
+			_, err := s.store.Server(r.Context()).Create(server)
 			if err != nil {
 				// SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 				logit.Log("Невозможно добавить сервер", server.Name, err)

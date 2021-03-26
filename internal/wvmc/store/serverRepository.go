@@ -41,7 +41,7 @@ func (r *ServerRepository) Find(key, value string) (model.Server, error) {
 func (r *ServerRepository) Create(s model.Server) (int, error) {
 	logit.Info("Создааем сервер:", s.Name)
 
-	query := "INSERT INTO servers (id, title, ip4, hv, company, user_name, user_password) VALUES (?, ?, ?, ?, ?, ?, ?)"
+	query := "INSERT OR IGNORE INTO servers (id, title, ip4, hv, company, user_name, user_password) VALUES (?, ?, ?, ?, ?, ?, ?)"
 
 	result, err := r.db.ExecContext(r.ctx, query, s.ID, s.Name, s.IP, s.HV, s.Company, s.User, s.Password)
 	if err != nil {
@@ -114,7 +114,7 @@ func (r *ServerRepository) FindByUser(userID string) ([]model.Server, error) {
 	logit.Info("Получаем все сервера пользователя", userID)
 	var servers []model.Server
 
-	rows, err := r.db.QueryContext(r.ctx, "SELECT s.id, s.name, s.ip4, s.hv, s.company, s.user_name, s.user_password FROM servers as s INNER JOIN users_server as us ON (s.id = us.server_ID) WHERE us.user_id = ?", userID)
+	rows, err := r.db.QueryContext(r.ctx, "SELECT s.id, s.title, s.ip4, s.hv, s.company, s.user_name, s.user_password FROM servers as s INNER JOIN users_servers as us ON (s.id = us.server_ID) WHERE us.user_id = ?", userID)
 	if err != nil {
 		return servers, err
 	}
@@ -122,7 +122,7 @@ func (r *ServerRepository) FindByUser(userID string) ([]model.Server, error) {
 
 	for rows.Next() {
 		var s model.Server
-		err := rows.Scan(&s.ID, &s.Name, &s.HV, &s.Company, &s.User, &s.Password)
+		err := rows.Scan(&s.ID, &s.Name, &s.IP, &s.HV, &s.Company, &s.User, &s.Password)
 		if err != nil {
 			return servers, err
 		}
