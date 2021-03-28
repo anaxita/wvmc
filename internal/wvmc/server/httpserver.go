@@ -46,12 +46,14 @@ func (s *Server) configureRouter() {
 	serversShow.Use(s.Auth)
 	serversShow.Handle("/servers", s.GetServers()).Methods("OPTIONS", "GET")
 
+	serversControl := r.NewRoute().Subrouter()
+	serversControl.Use(s.Auth, s.CheckControlPermissions)
+	serversControl.Handle("/servers/control", s.ControlServer()).Methods("POST", "OPTIONS")
+
 	servers := r.NewRoute().Subrouter()
 	servers.Use(s.Auth, s.CheckIsAdmin)
 	servers.Handle("/servers", s.CreateServer()).Methods("POST", "OPTIONS")
 	servers.Handle("/servers", s.EditServer()).Methods("OPTIONS", "PATCH")
-	servers.Handle("/servers", s.DeleteServer()).Methods("OPTIONS", "DELETE")
-	servers.Handle("/servers/control", s.ControlServer()).Methods("POST", "OPTIONS")
 	servers.Handle("/servers/update", s.UpdateAllServersInfo()).Methods("POST", "OPTIONS")
 }
 

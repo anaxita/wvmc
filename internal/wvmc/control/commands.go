@@ -199,32 +199,32 @@ foreach ($s in $servers)
 }
 
 // StopServer выключает сервер
-func (s *ServerService) StopServer(serverID string) ([]byte, error) {
-	command := fmt.Sprintf("Stop-VM -ID '%s'", serverID)
+func (s *ServerService) StopServer(server model.Server) ([]byte, error) {
+	command := fmt.Sprintf("Stop-VM -ID '%s' -ComputerName '%s'", server.ID, server.HV)
 	return s.commander.run(command)
 }
 
 // StopServerForce принудительно выключает сервер
-func (s *ServerService) StopServerForce(serverID string) ([]byte, error) {
-	command := fmt.Sprintf("Stop-VM -ID '%s' -Force", serverID)
+func (s *ServerService) StopServerForce(server model.Server) ([]byte, error) {
+	command := fmt.Sprintf("Stop-VM -ID '%s' -Force -ComputerName '%s'", server.ID, server.HV)
 	return s.commander.run(command)
 }
 
 // StartServer включает сервер
-func (s *ServerService) StartServer(serverID string) ([]byte, error) {
-	command := fmt.Sprintf("Start-VM -ID '%s'", serverID)
+func (s *ServerService) StartServer(server model.Server) ([]byte, error) {
+	command := fmt.Sprintf("Start-VM -ID '%s' -ComputerName '%s'", server.ID, server.HV)
 	return s.commander.run(command)
 }
 
 // StartServerNetwork включает сеть на сервере
-func (s *ServerService) StartServerNetwork(serverID string) ([]byte, error) {
-	command := fmt.Sprintf("Start-VM -ID '%s'", serverID)
+func (s *ServerService) StartServerNetwork(server model.Server) ([]byte, error) {
+	command := fmt.Sprintf("Start-VM -ID '%s' -ComputerName '%s'", server.ID, server.HV)
 	return s.commander.run(command)
 }
 
 // StopServerNetwork выключает сеть на сервере
-func (s *ServerService) StopServerNetwork(serverID string) ([]byte, error) {
-	command := fmt.Sprintf("Start-VM -ID '%s'", serverID)
+func (s *ServerService) StopServerNetwork(server model.Server) ([]byte, error) {
+	command := fmt.Sprintf("Start-VM -ID '%s' -ComputerName '%s'", server.ID, server.HV)
 	return s.commander.run(command)
 }
 

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -150,13 +151,89 @@ func (s *Server) RefreshToken() http.Handler {
 func (s *Server) CheckIsAdmin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		adminRole := 1
-
 		ctxUser := r.Context().Value(CtxString("user")).(model.User)
+
+		logit.Info("Проверяем права пользователя", ctxUser.Email)
+
 		if ctxUser.Role != adminRole {
 			SendErr(w, http.StatusForbidden, errors.New("user is not admin"), "Пользователь не администратор")
 			return
 		}
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+// CheckControlPermissions проверяет права на сервер у пользователя
+func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
+	type controlRequest struct {
+		ServerID string `json:"server_id"`
+		Command  string `json:"command"`
+	}
+
+	var adminRole = 1
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		req := controlRequest{}
+		var err error
+		if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
+			SendErr(w, http.StatusBadRequest, errors.New("server_id and command fields cannot be empty"), "server_id и command не могут быть пустыми")
+			return
+		}
+
+		if req.ServerID == "" || req.Command == "" {
+			SendErr(w, http.StatusBadRequest, errors.New("fields cannot be empty"), "Все поля должны быть заполнены")
+			return
+		}
+
+		ctxUser := r.Context().Value(CtxString("user")).(model.User)
+
+		server, err := s.store.Server(r.Context()).Find("id", req.ServerID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				SendErr(w, http.StatusBadRequest, err, "Сервер не найден")
+				return
+			}
+
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+
+		logit.Info("Проверяем права пользователя", ctxUser.Email)
+
+		if ctxUser.Role != adminRole {
+			serversByUser, err := s.store.Server(r.Context()).FindByUser(ctxUser.ID)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					SendErr(w, http.StatusBadRequest, err, "Сервер не найден")
+					return
+				}
+
+				SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+				return
+			}
+
+			for _, srv := range serversByUser {
+				if srv.ID == req.ServerID {
+					ctxServer := CtxString("server")
+					ctxCommand := CtxString("command")
+					newctx := context.WithValue(r.Context(), ctxServer, srv)
+					newctx = context.WithValue(newctx, ctxCommand, req.Command)
+					next.ServeHTTP(w, r.WithContext(newctx))
+					return
+				}
+			}
+
+			SendErr(w, http.StatusForbidden, err, "Доступ запрещен")
+			return
+		}
+
+		ctxServer := CtxString("server")
+		ctxCommand := CtxString("command")
+		newctx := context.WithValue(r.Context(), ctxServer, server)
+		newctx = context.WithValue(newctx, ctxCommand, req.Command)
+		next.ServeHTTP(w, r.WithContext(newctx))
+		return
 	})
 }

@@ -1025,7 +1025,7 @@ paths:
         content:
           application/json:             
             example:
-              id: 75
+              server_id: "sdf23-sdf-2345-gds"
               command: "start_power"
       responses:
         400:

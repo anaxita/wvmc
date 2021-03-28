@@ -19,8 +19,8 @@ func (s *Server) GetServers() http.HandlerFunc {
 		Servers []model.Server `json:"servers"`
 	}
 
-	var userRole = 0
 	var adminRole = 1
+	var userRole = 0
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -187,37 +187,27 @@ func (s *Server) DeleteServer() http.HandlerFunc {
 
 // ControlServer выполняет команды на сервере
 func (s *Server) ControlServer() http.HandlerFunc {
-	type controlRequest struct {
-		ServerID string `json:"server_id"`
-		Command  string `json:"command"`
-	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := controlRequest{}
 		var err error
-		if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
-			SendErr(w, http.StatusBadRequest, errors.New("server_id and command fields cannot be empty"), "server_id и command не могут быть пустыми")
-			return
-		}
 
-		if req.ServerID == "" || req.Command == "" {
-			SendErr(w, http.StatusOK, err, "Ошибка выполнения команды")
-			return
-		}
+		server := r.Context().Value(CtxString("server")).(model.Server)
+		command := r.Context().Value(CtxString("command")).(string)
 
-		switch req.Command {
+		switch command {
 		case "start_power":
-			_, err = s.serverService.StartServer(req.ServerID)
+			_, err = s.serverService.StartServer(server)
 		case "stop_power":
-			_, err = s.serverService.StopServer(req.ServerID)
+			_, err = s.serverService.StopServer(server)
 
 		case "stop_power_force":
-			_, err = s.serverService.StopServerForce(req.ServerID)
+			_, err = s.serverService.StopServerForce(server)
 
 		case "start_network":
-			_, err = s.serverService.StartServerNetwork(req.ServerID)
+			_, err = s.serverService.StartServerNetwork(server)
 
 		case "stop_network":
-			_, err = s.serverService.StopServerNetwork(req.ServerID)
+			_, err = s.serverService.StopServerNetwork(server)
 		default:
 			SendErr(w, http.StatusBadRequest, errors.New("undefiend command"), "Неизвестная команда")
 			return
