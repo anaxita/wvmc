@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/anaxita/logit"
-	"github.com/anaxita/wvmc/internal/wvmc/control"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 )
 
@@ -204,29 +203,28 @@ func (s *Server) ControlServer() http.HandlerFunc {
 			SendErr(w, http.StatusOK, err, "Ошибка выполнения команды")
 			return
 		}
-		s := control.NewServerService(&control.Command{})
 
 		switch req.Command {
-		case "start-power":
-			_, err = s.StartServer(req.ServerID)
-		case "stop-power":
-			_, err = s.StopServer(req.ServerID)
+		case "start_power":
+			_, err = s.serverService.StartServer(req.ServerID)
+		case "stop_power":
+			_, err = s.serverService.StopServer(req.ServerID)
 
-		case "start-power-force":
-			_, err = s.StopServerForce(req.ServerID)
+		case "stop_power_force":
+			_, err = s.serverService.StopServerForce(req.ServerID)
 
-		case "start-network":
-			_, err = s.StartServerNetwork(req.ServerID)
+		case "start_network":
+			_, err = s.serverService.StartServerNetwork(req.ServerID)
 
-		case "stop-network":
-			_, err = s.StopServerNetwork(req.ServerID)
+		case "stop_network":
+			_, err = s.serverService.StopServerNetwork(req.ServerID)
 		default:
 			SendErr(w, http.StatusBadRequest, errors.New("undefiend command"), "Неизвестная команда")
 			return
 		}
 
 		if err != nil {
-			SendErr(w, http.StatusOK, err, "Ошибка выполнения команды")
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка выполнения команды")
 			return
 		}
 

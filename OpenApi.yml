@@ -154,8 +154,8 @@ paths:
               example:
                   status: ok
                   message:
-                    token: <token>
-                    refresh_token: <token>
+                    token: {{token}}
+                    refresh_token: {{token}}
   /refresh:
     post:
       tags:
@@ -177,7 +177,7 @@ paths:
             schema:
               type: object
               example:
-                refresh_token: <token>
+                refresh_token: {{token}}
       responses:
         401:
           description: Токен истёк или недействителен
@@ -221,8 +221,8 @@ paths:
               example:
                   status: ok
                   message:
-                    token: <token>
-                    refresh_token: <token>
+                    token: {{token}}
+                    refresh_token: {{token}}
   /users:
       get:
         tags:
@@ -236,7 +236,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer <token>
+                Bearer {{token}}
             style: simple
         responses:
           401:
@@ -301,7 +301,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer <token>
+                Bearer {{token}}
             style: simple
           - name: Accept
             in: header
@@ -366,7 +366,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer <token>
+                Bearer {{token}}
             style: simple
           - name: Accept
             in: header
@@ -442,7 +442,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer <token>
+                Bearer {{token}}
             style: simple
           - name: Accept
             in: header
@@ -514,7 +514,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer <token>
+                Bearer {{token}}
             style: simple
           - name: Accept
             in: header
@@ -593,7 +593,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer <token>
+                Bearer {{token}}
             style: simple
           - name: user_id
             in: path
@@ -667,7 +667,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer <token>
+                Bearer {{token}}
             style: simple
         responses:  
           401:
@@ -714,7 +714,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer <token>
+                Bearer {{token}}
             style: simple
         responses:
           401:
@@ -785,7 +785,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer <token>
+                Bearer {{token}}
             style: simple
           - name: Accept
             in: header
@@ -851,7 +851,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer <token>
+                Bearer {{token}}
             style: simple
           - name: Accept
             in: header
@@ -926,7 +926,7 @@ paths:
             schema:
               type: string
               example:
-                Bearer <token>
+                Bearer {{token}}
             style: simple
           - name: Accept
             in: header
@@ -984,4 +984,111 @@ paths:
                   $ref: '#/components/schemas/Response'
                 example:
                     status: ok
-                    message: deleted 
+                    message: deleted
+  /servers/control:
+    post:
+      tags:
+        - Сервера
+      summary: Управление сервером
+      description:
+        Команды
+
+        - start_power  - включить сервер
+
+        - stop_power  - выключить сервер (завершение работы)
+
+        - stop_power_force  - выключить сервер (выключиние по питанию)
+
+        - start_network  - включить сеть (переводит сетевой адаптер в режим "DMZ - Virtual Switch")
+
+        - stop_network  - выключить сеть (переводит сетевой адаптер в режим "нет подключения")
+
+
+        Поддерживается выполнение **только одной** команды за запрос
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              Bearer {{token}}
+          style: simple
+        - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
+      requestBody:
+        content:
+          application/json:             
+            example:
+              id: 75
+              command: "start_power"
+      responses:
+        400:
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                status: err
+                message:
+                  error: Неизвестная команда
+                  meta: command is undefined 
+        401:
+          description: Токен истёк или недействителен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                status: err
+                message:
+                  error: Токен недействителен
+                  meta: not valid signature
+        404:
+          description: Сервер не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                status: err
+                message:
+                  error: Сервер не найден
+                  meta: no sql rows
+        403:
+          description: Нет прав к данному серверу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                status: err
+                message:
+                  error: Нет прав к данному серверу
+                  meta: not access
+        500:
+          description: Ошибка БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                  status: err
+                  message:
+                    err: Ошибка записи в БД
+                    meta: table is not exist
+        200:
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                  status: ok
+                  message: accepted                   
