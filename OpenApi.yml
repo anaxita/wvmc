@@ -639,28 +639,19 @@ paths:
                         -
                           id: fgh-5-h-dfghrgh--45th--
                           name: SRV_PF
-                          ip: 192.168.1.23
-                          out_addr: dc.kmsys.ru:5322
                           hv: DCSRVHV12
-                          company: Промформат
                           state: Running
                           network: "Off"
                         -
                           id: fgh-5-h-dfghrgh--45th--
                           name: SRV_PF
-                          ip: 192.168.1.23
-                          out_addr: dc.kmsys.ru:5322
                           hv: DCSRVHV12
-                          company: Промформат
                           state: Running
                           network: "Off"
                         -
                           id: fgh-5-h-dfghrgh--45th--
                           name: SRV_PF
-                          ip: 192.168.1.23
-                          out_addr: dc.kmsys.ru:5322
                           hv: DCSRVHV12
-                          company: Промформат
                           state: Running
                           network: "Off"
   /servers/update:
@@ -763,21 +754,25 @@ paths:
                           name: SRV_PF
                           hv: DCSRVHV12
                           state: Running
+                          network: "Off"
                         -
                           id: fgh-5-h-dfghrgh--45th--
                           name: SRV_PF
                           hv: DCSRVHV12
                           state: Running
+                          network: "Off"
                         -
                           id: fgh-5-h-dfghrgh--45th--
                           name: SRV_PF
                           hv: DCSRVHV12
                           state: Running
+                          network: "Off"
                         -
                           id: fgh-5-h-dfghrgh--45th--
                           name: SRV_PF
                           hv: DCSRVHV12
                           state: Running
+                          network: "Off"
       post:
         tags:
           - Сервера

@@ -169,31 +169,62 @@ func (s *Server) AddServersToUser() http.HandlerFunc {
 	}
 }
 
-// GetUserServers получает сервера пользователя
+// GetUserServers возвращат список серверов где доступные пользователю помечены полем added = true
 func (s *Server) GetUserServers() http.HandlerFunc {
+	type addedServers struct {
+		ID      string `json:"id"`
+		Name    string `json:"name"`
+		HV      string `json:"hv,omitempty"`
+		IP      string `json:"ip,omitempty"`
+		Company string `json:"company,omitempty"`
+		Added   bool   `json:"is_added"`
+	}
+
 	type response struct {
-		Servers []model.Server `json:"servers"`
+		Servers []addedServers `json:"servers"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-
 		userID, ok := vars["user_id"]
 		if !ok {
 			SendErr(w, http.StatusBadRequest, errors.New("user id is undefiend"), "Неверный данные в запросе")
 			return
 		}
 
-		servers, err := s.store.Server(r.Context()).FindByUser(userID)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				SendOK(w, http.StatusOK, response{make([]model.Server, 0)})
-				return
-			}
+		store := s.store.Server(r.Context())
 
+		allServers, err := store.All()
+		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 			return
 		}
 
-		SendOK(w, http.StatusOK, response{servers})
+		userServers, err := store.FindByUser(userID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				userServers = make([]model.Server, 0)
+			} else {
+				SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+				return
+			}
+		}
+
+		var res []addedServers
+
+		for _, srv := range allServers {
+			res = append(res, addedServers{ID: srv.ID, Name: srv.Name, Company: srv.Company})
+		}
+
+	loop:
+		for k, addedSrv := range res {
+			for _, us := range userServers {
+				if addedSrv.ID == us.ID {
+					res[k].Added = true
+					continue loop
+				}
+			}
+		}
+
+		SendOK(w, http.StatusOK, response{res})
 	}
 }
