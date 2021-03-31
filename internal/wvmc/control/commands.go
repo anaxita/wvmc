@@ -159,7 +159,7 @@ $result | ConvertTo-Json -AsArray -Compress;`
 // GetServerDataForAdmins получает статус работы всех ВМ servers
 func (s *ServerService) GetServerDataForAdmins(hv string) ([]model.Server, error) {
 	script := `$result = New-Object System.Collections.Arraylist;
-    $servers = Get-VM -ComputerName $hvList
+    $servers = Get-VM -ComputerName $hvList | Where-Object {$_.Id -in '15332a09-a1fa-42e2-97e3-35f19e0f3a86', '5f08e450-4342-452f-af0a-4e5594ac9dbe', '2f89e03b-e72d-4867-9ffb-44dd06cc6163', 'bbe86300-1329-4526-b108-7b780c9c3f57'};
 foreach ($s in $servers)
 {
         $state = $s.State;

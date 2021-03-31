@@ -111,7 +111,7 @@ func (r *UserRepository) All() ([]model.User, error) {
 
 // CreateRefreshToken добавляет  запись о токене или обновляет , если запись уже есть
 func (r *UserRepository) CreateRefreshToken(userID, refreshToken string) error {
-	logit.Log("Записываем в БД рефреш токен пользователя ", userID)
+	logit.Info("Записываем в БД рефреш токен пользователя ", userID)
 
 	query := "INSERT INTO refresh_tokens (user_id, token) VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE SET user_id = user_id, token = ? "
 	_, err := r.db.ExecContext(r.ctx, query, userID, refreshToken, refreshToken)

@@ -41,7 +41,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 					if err != nil {
 						// SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
 						// return
-						logit.Log("PS", err)
+						logit.Log("Ошибка получения статусов", hv, err)
 					}
 
 					mu.Lock()

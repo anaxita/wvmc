@@ -60,7 +60,7 @@ func (s *Server) SignIn() http.HandlerFunc {
 	}
 
 	type response struct {
-		AccessToken  string `json:"token"`
+		AccessToken  string `json:"access_token"`
 		RefreshToken string `json:"refresh_token"`
 	}
 

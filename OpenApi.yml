@@ -4,7 +4,7 @@ info:
   version: 1.0.0
 servers:
   -
-    url: http://dc.kmsys.ru:53338
+    url: https://dc.kmsys.ru:53338
     description: Основной сервер
 components:
   schemas:
@@ -221,7 +221,7 @@ paths:
               example:
                   status: ok
                   message:
-                    token: {{token}}
+                    access_token: {{token}}
                     refresh_token: {{token}}
   /users:
       get:

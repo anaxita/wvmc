@@ -234,6 +234,5 @@ func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
 		newctx := context.WithValue(r.Context(), ctxServer, server)
 		newctx = context.WithValue(newctx, ctxCommand, req.Command)
 		next.ServeHTTP(w, r.WithContext(newctx))
-		return
 	})
 }
