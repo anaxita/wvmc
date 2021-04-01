@@ -32,9 +32,8 @@ type Command struct{}
 func (c *Command) run(command string) ([]byte, error) {
 	e := exec.Command("pwsh", "-Command", command)
 	// e := exec.Command("pwsh", "./powershell/test.ps1")
-	logit.Info("Выполняем команду", command)
+
 	out, err := e.Output()
-	logit.Info(string(out))
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +73,6 @@ func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]model.
 
 	allNames = strings.Replace(string(nameList), "[", "", 1)
 	allNames = strings.Replace(allNames, "]", "", 1)
-	logit.Log(allNames)
 
 	script := ` | ForEach-Object -Parallel {
     $state = $_.State;
@@ -183,7 +181,7 @@ foreach ($s in $servers)
     $result | ConvertTo-Json -AsArray -Compress;`
 
 	command := fmt.Sprintf("$hvList = %s;  %s", hv, script)
-	// logit.Log(command)
+
 	out, err := s.commander.run(command)
 	if err != nil {
 		return nil, err
@@ -200,31 +198,31 @@ foreach ($s in $servers)
 
 // StopServer выключает сервер
 func (s *ServerService) StopServer(server model.Server) ([]byte, error) {
-	command := fmt.Sprintf("Stop-VM -ID '%s' -ComputerName '%s'", server.ID, server.HV)
+	command := fmt.Sprintf("Stop-VM -Name '%s' -ComputerName '%s'", server.Name, server.HV)
 	return s.commander.run(command)
 }
 
 // StopServerForce принудительно выключает сервер
 func (s *ServerService) StopServerForce(server model.Server) ([]byte, error) {
-	command := fmt.Sprintf("Stop-VM -ID '%s' -Force -ComputerName '%s'", server.ID, server.HV)
+	command := fmt.Sprintf("Stop-VM -Name '%s' -Force -ComputerName '%s'", server.Name, server.HV)
 	return s.commander.run(command)
 }
 
 // StartServer включает сервер
 func (s *ServerService) StartServer(server model.Server) ([]byte, error) {
-	command := fmt.Sprintf("Start-VM -ID '%s' -ComputerName '%s'", server.ID, server.HV)
+	command := fmt.Sprintf("Start-VM -Name '%s' -ComputerName '%s'", server.Name, server.HV)
 	return s.commander.run(command)
 }
 
 // StartServerNetwork включает сеть на сервере
 func (s *ServerService) StartServerNetwork(server model.Server) ([]byte, error) {
-	command := fmt.Sprintf("Start-VM -ID '%s' -ComputerName '%s'", server.ID, server.HV)
+	command := fmt.Sprintf("Connect-VMNetworkAdapter -VMName %s -SwitchName \"DMZ - Virtual Switch\" -ComputerName '%s'", server.Name, server.HV)
 	return s.commander.run(command)
 }
 
 // StopServerNetwork выключает сеть на сервере
 func (s *ServerService) StopServerNetwork(server model.Server) ([]byte, error) {
-	command := fmt.Sprintf("Start-VM -ID '%s' -ComputerName '%s'", server.ID, server.HV)
+	command := fmt.Sprintf("Disconnect-VMNetworkAdapter -VMName %s -ComputerName '%s'", server.Name, server.HV)
 	return s.commander.run(command)
 }
 

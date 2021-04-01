@@ -21,10 +21,11 @@ func (r *ServerRepository) Find(key, value string) (model.Server, error) {
 
 	s := model.Server{}
 
-	query := fmt.Sprintf("SELECT id, title, ip4, hv, company, user, password FROM servers WHERE %s = ?", key)
+	query := fmt.Sprintf("SELECT id, title, ip4, hv, company, user_name, user_password FROM servers WHERE %s = ?", key)
 	if err := r.db.QueryRowContext(r.ctx, query, value).Scan(
 		&s.ID,
 		&s.Name,
+		&s.IP,
 		&s.HV,
 		&s.Company,
 		&s.User,

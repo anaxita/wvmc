@@ -77,7 +77,7 @@ func (s *Server) Cors(next http.Handler) http.Handler {
 // RefreshToken выполняет переиздание токена
 func (s *Server) RefreshToken() http.Handler {
 	type respTokens struct {
-		AccessToken  string `json:"token"`
+		AccessToken  string `json:"access_token"`
 		RefreshToken string `json:"refresh_token"`
 	}
 

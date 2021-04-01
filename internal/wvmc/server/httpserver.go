@@ -62,7 +62,6 @@ func (s *Server) configureRouter() {
 // Start - запускает сервер
 func (s *Server) Start() error {
 	s.configureRouter()
-	logit.Info("Server started at", os.Getenv("PORT"))
 
 	cer, err := ioutil.ReadFile("C:\\Apache24\\conf\\ssl\\kmsys.ru.cer")
 
