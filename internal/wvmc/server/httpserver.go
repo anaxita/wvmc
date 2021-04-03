@@ -54,7 +54,7 @@ func (s *Server) configureRouter() {
 
 	servers := r.NewRoute().Subrouter()
 	servers.Use(s.Auth, s.CheckIsAdmin)
-	servers.Handle("/servers", s.CreateServer()).Methods("POST", "OPTIONS")
+	// servers.Handle("/servers", s.CreateServer()).Methods("POST", "OPTIONS")
 	servers.Handle("/servers", s.EditServer()).Methods("OPTIONS", "PATCH")
 	servers.Handle("/servers/update", s.UpdateAllServersInfo()).Methods("POST", "OPTIONS")
 }

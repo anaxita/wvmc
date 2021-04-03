@@ -56,11 +56,19 @@ func (r *UserRepository) Create(u model.User) (int, error) {
 }
 
 // Edit обновляет данные пользователя, возвращает ошибку в случае неудачи
-func (r *UserRepository) Edit(u model.User) error {
+func (r *UserRepository) Edit(u model.User, pass bool) error {
 	logit.Info("Обновляем поля пользователю:", u.Name)
 
-	query := "UPDATE users SET name = ?, company = ?, role = ? WHERE id = ? "
-	_, err := r.db.ExecContext(r.ctx, query, u.Name, u.Company, u.Role, u.ID)
+	var query string
+	var err error
+
+	if pass {
+		query = "UPDATE users SET name = ?, company = ?, role = ?, password = ? WHERE id = ? "
+		_, err = r.db.ExecContext(r.ctx, query, u.Name, u.Company, u.Role, u.EncPassword, u.ID)
+	} else {
+		query = "UPDATE users SET name = ?, company = ?, role = ? WHERE id = ? "
+		_, err = r.db.ExecContext(r.ctx, query, u.Name, u.Company, u.Role, u.ID)
+	}
 	if err != nil {
 		return err
 	}

@@ -82,15 +82,16 @@ func (s *Server) CreateUser() http.HandlerFunc {
 func (s *Server) EditUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := model.User{}
+		var err error
 
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
 			return
 		}
 
 		store := s.store.User(r.Context())
 
-		_, err := store.Find("id", req.ID)
+		_, err = store.Find("id", req.ID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusNotFound, err, "Пользователь не найден")
@@ -101,7 +102,22 @@ func (s *Server) EditUser() http.HandlerFunc {
 			return
 		}
 
-		err = store.Edit(req)
+		// edit user data with/without password
+		if req.Password != "" {
+			encPassword, _err := hasher.Hash(req.Password)
+			if err != nil {
+				SendErr(w, http.StatusInternalServerError, _err, "Невозможно создать хеш пароля")
+				return
+			}
+
+			req.EncPassword = string(encPassword)
+
+			err = store.Edit(req, true)
+
+		} else {
+			err = store.Edit(req, false)
+		}
+
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 			return

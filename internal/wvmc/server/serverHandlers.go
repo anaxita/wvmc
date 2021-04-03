@@ -80,6 +80,21 @@ func (s *Server) GetServers() http.HandlerFunc {
 				SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
 				return
 			}
+
+		loop:
+			for k, v := range vms {
+				for _, srv := range servers {
+					if srv.ID == v.ID {
+						vms[k].Company = srv.Company
+						vms[k].Description = srv.Description
+						vms[k].OutAddr = srv.OutAddr
+						vms[k].IP = srv.IP
+
+						continue loop
+					}
+				}
+			}
+
 			SendOK(w, http.StatusOK, response{vms})
 		}
 
