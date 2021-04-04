@@ -34,6 +34,7 @@ func (s *Server) configureRouter() {
 	r.Handle("/refresh", s.RefreshToken()).Methods("POST", "OPTIONS")
 	r.Handle("/signin", s.SignIn()).Methods("POST", "OPTIONS")
 	r.Handle("/update", s.UpdateAllServersInfo()).Methods("GET", "OPTIONS") // TODO: удалить когда уйдет в продакшен (аналог /servers/update)
+	r.Handle("/log", s.Showlog()).Methods("GET", "OPTIONS")
 
 	users := r.NewRoute().Subrouter()
 	users.Use(s.Auth, s.CheckIsAdmin)
@@ -86,6 +87,11 @@ func (s *Server) Start() error {
 	defer goCer.Close()
 
 	logit.Info("Сервер запущен на : ", os.Getenv("PORT"))
+
+	go http.ListenAndServe(":8081", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "https://"+r.Host+r.URL.String(), http.StatusMovedPermanently)
+	}))
+
 	return http.ListenAndServeTLS(os.Getenv("PORT"), goCer.Name(), "C:\\Apache24\\conf\\ssl\\kmsys.ru.key", s.router)
 
 	// return http.ListenAndServe(os.Getenv("PORT"), s.router)

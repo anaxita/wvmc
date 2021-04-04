@@ -127,7 +127,7 @@ func (r *UserRepository) CreateRefreshToken(userID, refreshToken string) error {
 		return err
 	}
 
-	logit.Info("Успешно записали рефреш токен")
+	logit.Info("Успешно записали рефреш токен пользователя", userID)
 	return nil
 }
 

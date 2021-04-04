@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"os"
-	"strings"
-	"sync"
 
 	"github.com/anaxita/logit"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
@@ -27,38 +24,13 @@ func (s *Server) GetServers() http.HandlerFunc {
 		user := r.Context().Value(CtxString("user")).(model.User)
 
 		if user.Role == adminRole {
-			hvList := strings.Split(os.Getenv("HV_LIST"), ",")
-			var vms []model.Server
-			var wg sync.WaitGroup
-			var mu sync.Mutex
 
-			wg.Add(len(hvList))
-			for _, hv := range hvList {
-				go func(hv string, vms *[]model.Server, wg *sync.WaitGroup, mu *sync.Mutex) {
-					defer wg.Done()
-
-					servers, err := s.serverService.GetServerDataForAdmins(hv)
-					if err != nil {
-						// SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
-						// return
-						logit.Log("Ошибка получения статусов", hv, err)
-					}
-
-					mu.Lock()
-					defer mu.Unlock()
-					*vms = append(*vms, servers...)
-
-				}(hv, &vms, &wg, &mu)
+			vms, err := s.serverService.GetServersDataForAdmins()
+			if err != nil {
+				SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
+				logit.Log("PS", err)
+				return
 			}
-
-			wg.Wait()
-			// vms, err := s.serverService.GetServersDataForAdmins()
-			// if err != nil {
-			// 	SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
-			// 	logit.Log("PS", err)
-			// 	return
-			// }
-			// SendOK(w, http.StatusOK, response{vms})
 			SendOK(w, http.StatusOK, response{vms})
 			return
 		}
@@ -240,49 +212,14 @@ func (s *Server) ControlServer() http.HandlerFunc {
 // UpdateAllServersInfo обновляет данные в БД по серверам
 func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// var servers []model.Server
-
-		// out, err := s.serverService.UpdateAllServersInfo()
-		// if err != nil {
-		// 	SendErr(w, http.StatusInternalServerError, err, "Ошибка powershell")
-		// 	return
-		// }
-
-		// err = json.Unmarshal(out, &servers)
-		// if err != nil {
-		// 	SendErr(w, http.StatusInternalServerError, err, "Ошибка декодирования")
-		// 	return
-		// }
-
-		hvList := strings.Split(os.Getenv("HV_LIST"), ",")
-		var vms []model.Server
-		var wg sync.WaitGroup
-		var mu sync.Mutex
-
-		wg.Add(len(hvList))
-		for _, hv := range hvList {
-			go func(hv string, vms *[]model.Server, wg *sync.WaitGroup, mu *sync.Mutex) {
-				defer wg.Done()
-
-				servers, err := s.serverService.GetServerDataForAdmins(hv)
-				if err != nil {
-					// SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
-					// return
-					logit.Log("PS", err)
-				}
-
-				mu.Lock()
-				defer mu.Unlock()
-				*vms = append(*vms, servers...)
-
-			}(hv, &vms, &wg, &mu)
+		servers, err := s.serverService.UpdateAllServersInfo()
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка powershell")
+			return
 		}
-
-		wg.Wait()
-
 		duplicates := make(map[string]int)
 
-		for _, server := range vms {
+		for _, server := range servers {
 			if duplicates[server.ID] > 0 {
 				logit.Log("ДУБЛЬ", server.Name, server.ID)
 			}

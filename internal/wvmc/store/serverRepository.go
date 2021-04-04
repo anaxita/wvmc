@@ -42,9 +42,9 @@ func (r *ServerRepository) Find(key, value string) (model.Server, error) {
 func (r *ServerRepository) Create(s model.Server) (int, error) {
 	logit.Info("Создааем сервер:", s.Name)
 
-	query := "INSERT OR IGNORE INTO servers (id, title, ip4, hv, company, user_name, user_password) VALUES (?, ?, ?, ?, ?, ?, ?)"
+	query := "INSERT INTO servers (id, title, ip4, hv, company, user_name, user_password) VALUES (?, ?, ?, ?, ?, ?, ?) on conflict (id) DO UPDATE SET title = ?, ip4 = ?, hv = ?;"
 
-	result, err := r.db.ExecContext(r.ctx, query, s.ID, s.Name, s.IP, s.HV, s.Company, s.User, s.Password)
+	result, err := r.db.ExecContext(r.ctx, query, s.ID, s.Name, s.IP, s.HV, s.Company, s.User, s.Password, s.Name, s.IP, s.HV)
 	if err != nil {
 		return 0, err
 	}

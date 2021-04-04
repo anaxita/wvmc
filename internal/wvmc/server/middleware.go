@@ -200,7 +200,7 @@ func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
 			return
 		}
 
-		logit.Info("Проверяем права пользователя", ctxUser.Email)
+		logit.Info("Проверяем права на сервер у пользователя", ctxUser.Email)
 
 		if ctxUser.Role != adminRole {
 			serversByUser, err := s.store.Server(r.Context()).FindByUser(ctxUser.ID)
