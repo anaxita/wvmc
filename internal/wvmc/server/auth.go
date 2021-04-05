@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
 	"strings"
@@ -72,18 +73,23 @@ func (s *Server) SignIn() http.HandlerFunc {
 			return
 		}
 
+		if req.Email == "" || req.Password == "" {
+			SendErr(w, http.StatusBadRequest, errors.New("fields cannot be empty"), "Поля email и password не могут быть пустыми")
+			return
+		}
+
 		req.Email = strings.TrimSpace(req.Email)
 		req.Password = strings.TrimSpace(req.Password)
 
 		user, err := s.store.User(r.Context()).Find("email", req.Email)
 		if err != nil {
-			SendErr(w, http.StatusUnprocessableEntity, err, "Неверный логин")
+			SendErr(w, http.StatusUnprocessableEntity, err, "Неверный логин или пароль")
 			return
 		}
 
 		err = hasher.Compare(user.EncPassword, req.Password)
 		if err != nil {
-			SendErr(w, http.StatusUnprocessableEntity, err, "Неверный пароль")
+			SendErr(w, http.StatusUnprocessableEntity, err, "Неверный логин или пароль")
 			return
 		}
 
