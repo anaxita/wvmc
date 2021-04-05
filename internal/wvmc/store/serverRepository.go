@@ -21,10 +21,11 @@ func (r *ServerRepository) Find(key, value string) (model.Server, error) {
 
 	s := model.Server{}
 
-	query := fmt.Sprintf("SELECT id, title, ip4, hv, company, user, password FROM servers WHERE %s = ?", key)
+	query := fmt.Sprintf("SELECT id, title, ip4, hv, company, user_name, user_password FROM servers WHERE %s = ?", key)
 	if err := r.db.QueryRowContext(r.ctx, query, value).Scan(
 		&s.ID,
 		&s.Name,
+		&s.IP,
 		&s.HV,
 		&s.Company,
 		&s.User,
@@ -41,9 +42,9 @@ func (r *ServerRepository) Find(key, value string) (model.Server, error) {
 func (r *ServerRepository) Create(s model.Server) (int, error) {
 	logit.Info("Создааем сервер:", s.Name)
 
-	query := "INSERT INTO servers (id, title, ip4, hv, company, user_name, user_password) VALUES (?, ?, ?, ?, ?, ?, ?)"
+	query := "INSERT INTO servers (id, title, ip4, hv, company, user_name, user_password) VALUES (?, ?, ?, ?, ?, ?, ?) on conflict (id) DO UPDATE SET title = ?, ip4 = ?, hv = ?;"
 
-	result, err := r.db.ExecContext(r.ctx, query, s.ID, s.Name, s.IP, s.HV, s.Company, s.User, s.Password)
+	result, err := r.db.ExecContext(r.ctx, query, s.ID, s.Name, s.IP, s.HV, s.Company, s.User, s.Password, s.Name, s.IP, s.HV)
 	if err != nil {
 		return 0, err
 	}
@@ -59,8 +60,8 @@ func (r *ServerRepository) Create(s model.Server) (int, error) {
 func (r *ServerRepository) Edit(s model.Server) error {
 	logit.Info("Обновляем поля серверу:", s.Name)
 
-	query := "UPDATE servers SET title = ?, ip4 = ?, hv = ?, company = ?, user = ?, password = ? WHERE id = ?"
-	_, err := r.db.ExecContext(r.ctx, query, s.Name, s.IP, s.HV, s.Company, s.User, s.Password, s.ID)
+	query := "UPDATE servers SET company = ?,  description = ?, out_addr = ?,user = ?, password = ? WHERE id = ?"
+	_, err := r.db.ExecContext(r.ctx, query, s.Company, s.Description, s.OutAddr, s.User, s.Password, s.ID)
 	if err != nil {
 		return err
 	}
@@ -114,7 +115,7 @@ func (r *ServerRepository) FindByUser(userID string) ([]model.Server, error) {
 	logit.Info("Получаем все сервера пользователя", userID)
 	var servers []model.Server
 
-	rows, err := r.db.QueryContext(r.ctx, "SELECT s.id, s.name, s.ip4, s.hv, s.company, s.user_name, s.user_password FROM servers as s INNER JOIN users_server as us ON (s.id = us.server_ID) WHERE us.user_id = ?", userID)
+	rows, err := r.db.QueryContext(r.ctx, "SELECT s.id, s.title, s.ip4, s.hv, s.company, s.user_name, s.user_password FROM servers as s INNER JOIN users_servers as us ON (s.id = us.server_ID) WHERE us.user_id = ?", userID)
 	if err != nil {
 		return servers, err
 	}
@@ -122,7 +123,7 @@ func (r *ServerRepository) FindByUser(userID string) ([]model.Server, error) {
 
 	for rows.Next() {
 		var s model.Server
-		err := rows.Scan(&s.ID, &s.Name, &s.HV, &s.Company, &s.User, &s.Password)
+		err := rows.Scan(&s.ID, &s.Name, &s.IP, &s.HV, &s.Company, &s.User, &s.Password)
 		if err != nil {
 			return servers, err
 		}

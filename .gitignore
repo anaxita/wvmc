@@ -1,6 +1,6 @@
 /logs
 .log
-/powershell
+/powershell/test*
 
 .env
 

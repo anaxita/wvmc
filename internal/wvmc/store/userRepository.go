@@ -56,11 +56,19 @@ func (r *UserRepository) Create(u model.User) (int, error) {
 }
 
 // Edit обновляет данные пользователя, возвращает ошибку в случае неудачи
-func (r *UserRepository) Edit(u model.User) error {
+func (r *UserRepository) Edit(u model.User, pass bool) error {
 	logit.Info("Обновляем поля пользователю:", u.Name)
 
-	query := "UPDATE users SET name = ?, company = ?, role = ? WHERE id = ? LIMIT 1"
-	_, err := r.db.ExecContext(r.ctx, query, u.Name, u.Company, u.Role, u.ID)
+	var query string
+	var err error
+
+	if pass {
+		query = "UPDATE users SET name = ?, company = ?, role = ?, password = ? WHERE id = ? "
+		_, err = r.db.ExecContext(r.ctx, query, u.Name, u.Company, u.Role, u.EncPassword, u.ID)
+	} else {
+		query = "UPDATE users SET name = ?, company = ?, role = ? WHERE id = ? "
+		_, err = r.db.ExecContext(r.ctx, query, u.Name, u.Company, u.Role, u.ID)
+	}
 	if err != nil {
 		return err
 	}
@@ -72,7 +80,7 @@ func (r *UserRepository) Edit(u model.User) error {
 // Delete удаляет пользователя, возвращает ошибку в случае неудачи
 func (r *UserRepository) Delete(id string) error {
 	logit.Info("Удаляем пользователя", id)
-	_, err := r.db.ExecContext(r.ctx, "DELETE FROM users WHERE id = ? LIMIT 1", id)
+	_, err := r.db.ExecContext(r.ctx, "DELETE FROM users WHERE id = ? ", id)
 	if err != nil {
 		return err
 	}
@@ -111,15 +119,15 @@ func (r *UserRepository) All() ([]model.User, error) {
 
 // CreateRefreshToken добавляет  запись о токене или обновляет , если запись уже есть
 func (r *UserRepository) CreateRefreshToken(userID, refreshToken string) error {
-	logit.Log("Записываем в БД рефреш токен пользователя ", userID)
+	logit.Info("Записываем в БД рефреш токен пользователя ", userID)
 
-	query := "INSERT INTO refresh_tokens (user_id, token) VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE SET user_id = user_id, token = token "
-	_, err := r.db.ExecContext(r.ctx, query, userID, refreshToken)
+	query := "INSERT INTO refresh_tokens (user_id, token) VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE SET user_id = user_id, token = ? "
+	_, err := r.db.ExecContext(r.ctx, query, userID, refreshToken, refreshToken)
 	if err != nil {
 		return err
 	}
 
-	logit.Info("Успешно записали рефреш токен")
+	logit.Info("Успешно записали рефреш токен пользователя", userID)
 	return nil
 }
 

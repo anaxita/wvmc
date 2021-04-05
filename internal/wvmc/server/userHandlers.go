@@ -82,15 +82,16 @@ func (s *Server) CreateUser() http.HandlerFunc {
 func (s *Server) EditUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := model.User{}
+		var err error
 
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
 			return
 		}
 
 		store := s.store.User(r.Context())
 
-		_, err := store.Find("id", req.ID)
+		_, err = store.Find("id", req.ID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusNotFound, err, "Пользователь не найден")
@@ -101,7 +102,22 @@ func (s *Server) EditUser() http.HandlerFunc {
 			return
 		}
 
-		err = store.Edit(req)
+		// edit user data with/without password
+		if req.Password != "" {
+			encPassword, _err := hasher.Hash(req.Password)
+			if err != nil {
+				SendErr(w, http.StatusInternalServerError, _err, "Невозможно создать хеш пароля")
+				return
+			}
+
+			req.EncPassword = string(encPassword)
+
+			err = store.Edit(req, true)
+
+		} else {
+			err = store.Edit(req, false)
+		}
+
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 			return
@@ -169,31 +185,62 @@ func (s *Server) AddServersToUser() http.HandlerFunc {
 	}
 }
 
-// GetUserServers получает сервера пользователя
+// GetUserServers возвращат список серверов где доступные пользователю помечены полем added = true
 func (s *Server) GetUserServers() http.HandlerFunc {
+	type addedServers struct {
+		ID      string `json:"id"`
+		Name    string `json:"name"`
+		HV      string `json:"hv,omitempty"`
+		IP      string `json:"ip,omitempty"`
+		Company string `json:"company,omitempty"`
+		Added   bool   `json:"is_added"`
+	}
+
 	type response struct {
-		Servers []model.Server `json:"servers"`
+		Servers []addedServers `json:"servers"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-
 		userID, ok := vars["user_id"]
 		if !ok {
 			SendErr(w, http.StatusBadRequest, errors.New("user id is undefiend"), "Неверный данные в запросе")
 			return
 		}
 
-		servers, err := s.store.Server(r.Context()).FindByUser(userID)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				SendOK(w, http.StatusOK, response{make([]model.Server, 0)})
-				return
-			}
+		store := s.store.Server(r.Context())
 
+		allServers, err := store.All()
+		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 			return
 		}
 
-		SendOK(w, http.StatusOK, response{servers})
+		userServers, err := store.FindByUser(userID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				userServers = make([]model.Server, 0)
+			} else {
+				SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+				return
+			}
+		}
+
+		var res []addedServers
+
+		for _, srv := range allServers {
+			res = append(res, addedServers{ID: srv.ID, Name: srv.Name, Company: srv.Company})
+		}
+
+	loop:
+		for k, addedSrv := range res {
+			for _, us := range userServers {
+				if addedSrv.ID == us.ID {
+					res[k].Added = true
+					continue loop
+				}
+			}
+		}
+
+		SendOK(w, http.StatusOK, response{res})
 	}
 }

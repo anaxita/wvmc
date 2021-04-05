@@ -6,7 +6,6 @@
 
 
 CREATE TABLE IF NOT EXISTS `users_servers` (
-    `user_id` int PRIMARY KEY,
-    `server_id` varchar(255) NOT NULL,
-    KEY `server_id`
+    `user_id` int,
+    `server_id` varchar(255)
 );

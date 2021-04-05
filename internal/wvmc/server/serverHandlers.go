@@ -5,69 +5,41 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"os"
-	"strings"
-	"sync"
 
 	"github.com/anaxita/logit"
-	"github.com/anaxita/wvmc/internal/wvmc/control"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 )
 
 // GetServers возвращает список серверов
 func (s *Server) GetServers() http.HandlerFunc {
 	type response struct {
-		Servers []control.VM `json:"servers"`
+		Servers []model.Server `json:"servers"`
 	}
 
-	var userRole = 0
 	var adminRole = 1
+	var userRole = 0
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		user := r.Context().Value(CtxString("user")).(model.User)
 
 		if user.Role == adminRole {
-			hvList := strings.Split(os.Getenv("HV_LIST"), ",")
-			var vms []control.VM
-			var wg sync.WaitGroup
-			var mu sync.Mutex
 
-			wg.Add(len(hvList))
-			for _, hv := range hvList {
-				go func(hv string, vms *[]control.VM, wg *sync.WaitGroup, mu *sync.Mutex) {
-					defer wg.Done()
-
-					servers, err := s.serverService.GetServerDataForAdmins(hv)
-					if err != nil {
-						// SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
-						// return
-						logit.Log("PS", err)
-					}
-
-					mu.Lock()
-					defer mu.Unlock()
-					*vms = append(*vms, servers...)
-
-				}(hv, &vms, &wg, &mu)
+			vms, err := s.serverService.GetServersDataForAdmins()
+			if err != nil {
+				SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
+				logit.Log("PS", err)
+				return
 			}
-
-			wg.Wait()
-			// vms, err := s.serverService.GetServersDataForAdmins()
-			// if err != nil {
-			// 	SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
-			// 	logit.Log("PS", err)
-			// 	return
-			// }
-			// SendOK(w, http.StatusOK, response{vms})
-
+			SendOK(w, http.StatusOK, response{vms})
+			return
 		}
 
 		if user.Role == userRole {
 			servers, err := s.store.Server(r.Context()).FindByUser(user.ID)
 			if err != nil {
 				if err == sql.ErrNoRows {
-					SendOK(w, http.StatusOK, response{make([]control.VM, 0)})
+					SendOK(w, http.StatusOK, response{make([]model.Server, 0)})
 					return
 				}
 
@@ -80,6 +52,21 @@ func (s *Server) GetServers() http.HandlerFunc {
 				SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
 				return
 			}
+
+		loop:
+			for k, v := range vms {
+				for _, srv := range servers {
+					if srv.ID == v.ID {
+						vms[k].Company = srv.Company
+						vms[k].Description = srv.Description
+						vms[k].OutAddr = srv.OutAddr
+						vms[k].IP = srv.IP
+
+						continue loop
+					}
+				}
+			}
+
 			SendOK(w, http.StatusOK, response{vms})
 		}
 
@@ -187,45 +174,34 @@ func (s *Server) DeleteServer() http.HandlerFunc {
 
 // ControlServer выполняет команды на сервере
 func (s *Server) ControlServer() http.HandlerFunc {
-	type controlRequest struct {
-		ServerID string `json:"server_id"`
-		Command  string `json:"command"`
-	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := controlRequest{}
 		var err error
-		if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
-			SendErr(w, http.StatusBadRequest, errors.New("server_id and command fields cannot be empty"), "server_id и command не могут быть пустыми")
-			return
-		}
 
-		if req.ServerID == "" || req.Command == "" {
-			SendErr(w, http.StatusOK, err, "Ошибка выполнения команды")
-			return
-		}
-		s := control.NewServerService(&control.Command{})
+		server := r.Context().Value(CtxString("server")).(model.Server)
+		command := r.Context().Value(CtxString("command")).(string)
 
-		switch req.Command {
-		case "start-power":
-			_, err = s.StartServer(req.ServerID)
-		case "stop-power":
-			_, err = s.StopServer(req.ServerID)
+		switch command {
+		case "start_power":
+			_, err = s.serverService.StartServer(server)
+		case "stop_power":
+			_, err = s.serverService.StopServer(server)
 
-		case "start-power-force":
-			_, err = s.StopServerForce(req.ServerID)
+		case "stop_power_force":
+			_, err = s.serverService.StopServerForce(server)
 
-		case "start-network":
-			_, err = s.StartServerNetwork(req.ServerID)
+		case "start_network":
+			_, err = s.serverService.StartServerNetwork(server)
 
-		case "stop-network":
-			_, err = s.StopServerNetwork(req.ServerID)
+		case "stop_network":
+			_, err = s.serverService.StopServerNetwork(server)
 		default:
 			SendErr(w, http.StatusBadRequest, errors.New("undefiend command"), "Неизвестная команда")
 			return
 		}
 
 		if err != nil {
-			SendErr(w, http.StatusOK, err, "Ошибка выполнения команды")
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка выполнения команды")
 			return
 		}
 
@@ -236,36 +212,29 @@ func (s *Server) ControlServer() http.HandlerFunc {
 // UpdateAllServersInfo обновляет данные в БД по серверам
 func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var servers []model.Server
-
-		out, err := control.NewServerService(&control.Command{}).UpdateAllServersInfo()
+		servers, err := s.serverService.UpdateAllServersInfo()
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка powershell")
 			return
 		}
-
-		err = json.Unmarshal(out, &servers)
-		if err != nil {
-			SendErr(w, http.StatusInternalServerError, err, "Ошибка декодирования")
-			return
-		}
-
 		duplicates := make(map[string]int)
-
+		duplicatesServers := make([]model.Server, 0)
 		for _, server := range servers {
 			if duplicates[server.ID] > 0 {
 				logit.Log("ДУБЛЬ", server.Name, server.ID)
+				duplicatesServers = append(duplicatesServers, server)
 			}
 			duplicates[server.ID] += 1
 
-			_, _ = s.store.Server(r.Context()).Create(server)
+			_, err := s.store.Server(r.Context()).Create(server)
 			if err != nil {
-				// SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 				logit.Log("Невозможно добавить сервер", server.Name, err)
-				// return
+				SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+				return
 			}
 		}
-		logit.Info("Дубликаты:", duplicates)
+
+		logit.Log("ДУБЛИ: ", duplicatesServers)
 
 		SendOK(w, http.StatusOK, "Updated")
 	}

@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 
@@ -32,6 +34,7 @@ func (s *Server) configureRouter() {
 	r.Handle("/refresh", s.RefreshToken()).Methods("POST", "OPTIONS")
 	r.Handle("/signin", s.SignIn()).Methods("POST", "OPTIONS")
 	r.Handle("/update", s.UpdateAllServersInfo()).Methods("GET", "OPTIONS") // TODO: удалить когда уйдет в продакшен (аналог /servers/update)
+	r.Handle("/log", s.Showlog()).Methods("GET", "OPTIONS")
 
 	users := r.NewRoute().Subrouter()
 	users.Use(s.Auth, s.CheckIsAdmin)
@@ -46,18 +49,50 @@ func (s *Server) configureRouter() {
 	serversShow.Use(s.Auth)
 	serversShow.Handle("/servers", s.GetServers()).Methods("OPTIONS", "GET")
 
+	serversControl := r.NewRoute().Subrouter()
+	serversControl.Use(s.Auth, s.CheckControlPermissions)
+	serversControl.Handle("/servers/control", s.ControlServer()).Methods("POST", "OPTIONS")
+
 	servers := r.NewRoute().Subrouter()
 	servers.Use(s.Auth, s.CheckIsAdmin)
-	servers.Handle("/servers", s.CreateServer()).Methods("POST", "OPTIONS")
+	// servers.Handle("/servers", s.CreateServer()).Methods("POST", "OPTIONS")
 	servers.Handle("/servers", s.EditServer()).Methods("OPTIONS", "PATCH")
-	servers.Handle("/servers", s.DeleteServer()).Methods("OPTIONS", "DELETE")
-	servers.Handle("/servers/control", s.ControlServer()).Methods("POST", "OPTIONS")
 	servers.Handle("/servers/update", s.UpdateAllServersInfo()).Methods("POST", "OPTIONS")
 }
 
 // Start - запускает сервер
 func (s *Server) Start() error {
 	s.configureRouter()
-	logit.Info("Server started at", os.Getenv("PORT"))
-	return http.ListenAndServe(os.Getenv("PORT"), s.router)
+
+	cer, err := ioutil.ReadFile("C:\\Apache24\\conf\\ssl\\kmsys.ru.cer")
+
+	if err != nil {
+		logit.Fatal("Ошибка открытия kmsys.ru.cer:", err)
+	}
+
+	ca, err := ioutil.ReadFile("C:\\Apache24\\conf\\ssl\\ca.cer")
+	if err != nil {
+		logit.Fatal("Ошибка открытия ca.cer :", err)
+	}
+
+	c := fmt.Sprintf("%v \n %v", string(cer), string(ca))
+
+	goCer, err := os.Create("C:\\Apache24\\conf\\ssl\\anaxita.cer")
+
+	if err != nil {
+		logit.Fatal("Ошибка создания anaxita.cer :", err)
+	}
+
+	goCer.WriteString(c)
+	defer goCer.Close()
+
+	logit.Info("Сервер запущен на : ", os.Getenv("PORT"))
+
+	go http.ListenAndServe(":8081", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "https://"+r.Host+r.URL.String(), http.StatusMovedPermanently)
+	}))
+
+	return http.ListenAndServeTLS(os.Getenv("PORT"), goCer.Name(), "C:\\Apache24\\conf\\ssl\\kmsys.ru.key", s.router)
+
+	// return http.ListenAndServe(os.Getenv("PORT"), s.router)
 }
