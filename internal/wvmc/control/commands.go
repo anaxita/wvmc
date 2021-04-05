@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 
 	"github.com/anaxita/logit"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
@@ -34,11 +33,10 @@ func (c *Command) run(args ...string) ([]byte, error) {
 	command := strings.Join(args, " ")
 
 	e := exec.Command("pwsh", "-NoLogo", "-Mta", "-NoProfile", "-NonInteractive", "-Command", command)
-	// e := exec.Command("pwsh", "-NoLogo", "-Mta", "-NoProfile", "-NonInteractive", "-File", "./powershell/update_servers.ps1")
-	// e := exec.Command("pwsh", "./powershell/test.ps1")
 	logit.Log("COMMAND", e.Args)
 
 	out, err := e.Output()
+	logit.Log("out: ", string(out))
 	if err != nil {
 		return nil, err
 	}
@@ -59,75 +57,38 @@ func NewServerService(c Commander) *ServerService {
 
 // GetServersDataForUsers получает статус работы и сети ВМ servers по их Name
 func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]model.Server, error) {
-	start := time.Now()
-	logit.Info("Начало", start)
-	var hvs = make(map[string]bool)
-	var names []string
-	var allNames string
-	var allHV string
+	var uniqHVs = make(map[string]bool)
+	var ids string
+	var hvs string
+	var vms = make([]model.Server, 0)
+	var scriptPath = "./powershell/GetVmForUsers.ps1"
 
 	for _, v := range servers {
-		hvs[v.HV] = false
-		names = append(names, v.Name)
-	}
+		uniqHVs[v.HV] = false
 
-	logit.Log("карта ", hvs)
-
-	for k := range hvs {
-		allHV = fmt.Sprintf("'%s',", k)
-	}
-
-	logit.Log("после цикла ", allHV)
-	allHV = strings.TrimRight(allHV, ",")
-	logit.Log("после трима ", allHV)
-
-	nameList, err := json.Marshal(names)
-	if err != nil {
-		logit.Log("Ошибка маршала", err)
-	}
-
-	allNames = strings.Replace(string(nameList), "[", "", 1)
-	allNames = strings.Replace(allNames, "]", "", 1)
-	allNames = strings.Replace(allNames, ",", ", ", -1)
-
-	script := `$allServers = $hvList | ForEach-Object -Parallel {
-		$servers = Get-VM -ComputerName "$_" | Where-Object {$_.Name -in $Using:nameList};
-		if ($null -ne $servers) {
-	
-			foreach ($s in $servers)
-			{
-				$state = $s.State;
-				if ($state -eq 2) {
-					$state = "Running";
-				} else {
-					$state = "Off";
-				}
-				
-				[pscustomobject]@{
-					"id" = $s.Id;
-					"name" = $s.Name;
-					"state" = $state;
-					"hv" = $s.ComputerName;
-				};
-				
-			}
+		if ids == "" {
+			ids = fmt.Sprintf("'%s'", v.ID)
+		} else {
+			ids = fmt.Sprintf("%s, '%s'", ids, v.ID)
 		}
-	} -ThrottleLimit 3;
-	$allServers | ConvertTo-Json -AsArray -Compress;`
-	vms := make([]model.Server, 0)
+	}
 
-	command := fmt.Sprintf("$nameList = %s ; $hvList = %s ; %s", allNames, allHV, script)
-	end := time.Since(start)
-	logit.Info("Конец", end)
+	for k := range uniqHVs {
+		if hvs == "" {
+			hvs = fmt.Sprintf("'%v'", k)
+		} else {
+			hvs = fmt.Sprintf("%s, '%v'", hvs, k)
+		}
+	}
 
-	logit.Log(command)
-	out, err := s.commander.run(command)
-
+	out, err := s.commander.run(scriptPath, "-hvList", hvs, "-idList", ids)
 	if err != nil {
+		logit.Log("Ошибка powershell ", err)
 		return vms, err
 	}
 
 	if err = json.Unmarshal(out, &vms); err != nil {
+		logit.Log("Ошибка json unmarshal ", err)
 		return vms, err
 	}
 	return vms, nil
@@ -135,45 +96,22 @@ func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]model.
 
 // GetServersDataForAdmins получает статус работы всех ВМ servers
 func (s *ServerService) GetServersDataForAdmins() ([]model.Server, error) {
-	command := `$hvList = 'DCSRVHV1','DCSRVHV2';
-	$idList = '15332a09-a1fa-42e2-97e3-35f19e0f3a86', '5f08e450-4342-452f-af0a-4e5594ac9dbe', '2f89e03b-e72d-4867-9ffb-44dd06cc6163', 'bbe86300-1329-4526-b108-7b780c9c3f57';
-	$allServers = $hvList | ForEach-Object -Parallel {
-		$servers = Get-VM -ComputerName "$_" | Where-Object {$_.Id -in $Using:idList};
-		if ($null -ne $servers) {
-	
-			foreach ($s in $servers)
-			{
-				$state = $s.State;
-				if ($state -eq 2) {
-					$state = "Running";
-				} else {
-					$state = "Off";
-				}
-				
-				[pscustomobject]@{
-					"id" = $s.Id;
-					"name" = $s.Name;
-					"state" = $state;
-					"hv" = $s.ComputerName;
-				};
-				
-			}
-		}
-	}
-	$allServers | ConvertTo-Json -AsArray -Compress;`
+	hvs := os.Getenv("HV_LIST")
 
-	out, err := s.commander.run(command)
+	scriptPath := "./powershell/GetVMForAdmins.ps1"
+
+	out, err := s.commander.run(scriptPath, "-hvList", hvs)
 	if err != nil {
 		return nil, err
 	}
 
-	var vms []model.Server
+	var servers []model.Server
 
-	if err = json.Unmarshal(out, &vms); err != nil {
+	if err = json.Unmarshal(out, &servers); err != nil {
 		return nil, err
 	}
 
-	return vms, nil
+	return servers, nil
 }
 
 // GetServerDataForAdmins получает статус работы всех ВМ servers
@@ -278,35 +216,11 @@ func (s *ServerService) StopServerNetwork(server model.Server) ([]byte, error) {
 
 // UpdateAllServersInfo обновляет информацию по всем серверам в БД
 func (s *ServerService) UpdateAllServersInfo() ([]model.Server, error) {
-	hvs := fmt.Sprintf("$hvList = %s;", os.Getenv("HV_LIST"))
+	hvs := os.Getenv("HV_LIST")
 
-	script := `$servers = Get-VM -ComputerName $hvList;
-	$result = New-Object System.Collections.Arraylist;
-	foreach ($s in $servers)
-	{
-		$networkAdapter = $s | Get-VMNetworkAdapter;
-		# $network = $networkAdapter.SwitchName;
-		$ip = "no data";
-		$ip4 = $networkAdapter.IPAddresses
-		if ($null -ne $ip4[0]) {
-			$ip = $ip4 -join ', ';
-		};
-		$vm = @{
-			"id" = $s.VMId;
-			"name" = $s.VMName;
-			"ip" = $ip;
-			# "notes" = $s.NOTES;
-			# "state" = $s.State;
-			# "network" = $network;
-			# "ram" = $s.MemoryStartup/1MB;
-			"hv" = $s.ComputerName;
-		};
-		$result.add($vm) | Out-Null;
-	};
-	$result | ConvertTo-Json -AsArray -Compress;`
+	scriptPath := "./powershell/GetVmToDB.ps1"
 
-	command := fmt.Sprintf("%s %s", hvs, script)
-	out, err := s.commander.run(command)
+	out, err := s.commander.run(scriptPath, "-hvList", hvs)
 	if err != nil {
 		return nil, err
 	}

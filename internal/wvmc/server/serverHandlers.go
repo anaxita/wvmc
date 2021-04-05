@@ -218,21 +218,23 @@ func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 			return
 		}
 		duplicates := make(map[string]int)
-
+		duplicatesServers := make([]model.Server, 0)
 		for _, server := range servers {
 			if duplicates[server.ID] > 0 {
 				logit.Log("ДУБЛЬ", server.Name, server.ID)
+				duplicatesServers = append(duplicatesServers, server)
 			}
 			duplicates[server.ID] += 1
 
 			_, err := s.store.Server(r.Context()).Create(server)
 			if err != nil {
-				// SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 				logit.Log("Невозможно добавить сервер", server.Name, err)
-				// return
+				SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+				return
 			}
 		}
-		logit.Info("Дубликаты:", duplicates)
+
+		logit.Log("ДУБЛИ: ", duplicatesServers)
 
 		SendOK(w, http.StatusOK, "Updated")
 	}
