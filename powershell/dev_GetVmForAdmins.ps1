@@ -4,7 +4,7 @@ param (
 
 [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
 
-$nameList = 'ServerTwo', 'SRV_DVExpert', 'VMBitrix_dev.kmsys.ru_off', 'VM_TestCentOS_off';
+$nameList = 'ServerTwo' , 'VMBitrix_dev.kmsys.ru_off', 'VM_TestCentOS_off';
 $hvList =  'DCSRVHV2';
 $servers = $hvList | ForEach-Object -Parallel {
     $vms = Get-VM -ComputerName "$_" | Where-Object {$_.Name -in $Using:nameList};

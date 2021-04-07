@@ -55,7 +55,7 @@ func (s *Server) configureRouter() {
 
 	servers := r.NewRoute().Subrouter()
 	servers.Use(s.Auth, s.CheckIsAdmin)
-	// servers.Handle("/servers", s.CreateServer()).Methods("POST", "OPTIONS")
+	// servers.Handle("/servers", s.CreateServer()).Methods("POST", "OPTIONS") // disabled because working auto
 	servers.Handle("/servers", s.EditServer()).Methods("OPTIONS", "PATCH")
 	servers.Handle("/servers/update", s.UpdateAllServersInfo()).Methods("POST", "OPTIONS")
 }
@@ -86,13 +86,13 @@ func (s *Server) Start() error {
 	goCer.WriteString(c)
 	defer goCer.Close()
 
-	logit.Info("Сервер запущен на : ", os.Getenv("PORT"))
+	logit.Info("Сервер запущен на : ", os.Getenv("PORT_HTTPS"))
 
-	go http.ListenAndServe(":8081", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	go http.ListenAndServe(os.Getenv("PORT_HTTP"), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "https://"+r.Host+r.URL.String(), http.StatusMovedPermanently)
 	}))
 
-	return http.ListenAndServeTLS(os.Getenv("PORT"), goCer.Name(), "C:\\Apache24\\conf\\ssl\\kmsys.ru.key", s.router)
+	return http.ListenAndServeTLS(os.Getenv("PORT_HTTPS"), goCer.Name(), "C:\\Apache24\\conf\\ssl\\kmsys.ru.key", s.router)
 
 	// return http.ListenAndServe(os.Getenv("PORT"), s.router)
 }

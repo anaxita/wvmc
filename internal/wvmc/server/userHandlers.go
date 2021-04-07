@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"regexp"
+	"strings"
 
 	"github.com/anaxita/wvmc/internal/wvmc/hasher"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
@@ -47,9 +49,25 @@ func (s *Server) CreateUser() http.HandlerFunc {
 			return
 		}
 
+		req.Email = strings.TrimSpace(req.Email)
+		req.Password = strings.TrimSpace(req.Password)
+		req.Name = strings.TrimSpace(req.Name)
+		req.Company = strings.TrimSpace(req.Company)
+
+		match, err := regexp.Match(`^([a-zA-Z]+[a-zA-Z0-9\.\_]{2,14})$`, []byte(req.Email))
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "incorrect regexp")
+			return
+		}
+
+		if !match {
+			SendErr(w, http.StatusBadRequest, errors.New("email должен быть 3-25 символов, начинаться с буквы и содержать только английские буквы, цифры, точку или знак подчеркивания"), "incorrect regexp")
+			return
+		}
+
 		store := s.store.User(r.Context())
 
-		_, err := store.Find("email", req.Email)
+		_, err = store.Find("email", req.Email)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				encPassword, err := hasher.Hash(req.Password)

@@ -2,7 +2,7 @@ param (
     [string[]]$hvList 
 )
 
-$nameList = 'ServerTwo', 'SRV_DVExpert', 'VMBitrix_dev.kmsys.ru_off', 'VM_TestCentOS_off';
+$nameList = 'ServerTwo', 'VMBitrix_dev.kmsys.ru_off', 'VM_TestCentOS_off';
 
 $result = $hvList | ForEach-Object -Parallel {
     Get-VM  -ComputerName "$_" | Where-Object {$_.Name -in $Using:nameList} | ForEach-Object -Parallel {
