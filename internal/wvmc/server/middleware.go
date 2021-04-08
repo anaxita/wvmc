@@ -44,6 +44,9 @@ func (s *Server) Auth(next http.Handler) http.Handler {
 		if claims, ok := token.Claims.(*customClaims); ok && token.Valid {
 			if claims.Type == "access" {
 				ctxUser := CtxString("user")
+
+				logit.Info("ТОКЕН: ", claims.User.Name)
+
 				next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxUser, claims.User)))
 				return
 			}

@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/anaxita/logit"
 	"github.com/anaxita/wvmc/internal/wvmc/hasher"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 	"github.com/gorilla/mux"
@@ -54,14 +55,20 @@ func (s *Server) CreateUser() http.HandlerFunc {
 		req.Name = strings.TrimSpace(req.Name)
 		req.Company = strings.TrimSpace(req.Company)
 
-		match, err := regexp.Match(`^([a-zA-Z]+[a-zA-Z0-9\.\_]{2,14})$`, []byte(req.Email))
+		logit.Info("Проверяем возможность создания пользователя с данными: ", req.Email, req.Name)
+		if req.Email == "" || req.Password == "" || req.Name == "" {
+			SendErr(w, http.StatusBadRequest, errors.New("email password or name cannot be empty"), "Поля email, password или name не могут быть пустыми")
+			return
+		}
+
+		match, err := regexp.Match(`^([a-zA-Z0-9\_]){3,15}$`, []byte(req.Email))
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "incorrect regexp")
 			return
 		}
 
 		if !match {
-			SendErr(w, http.StatusBadRequest, errors.New("email должен быть 3-25 символов, начинаться с буквы и содержать только английские буквы, цифры, точку или знак подчеркивания"), "incorrect regexp")
+			SendErr(w, http.StatusBadRequest, errors.New("email должен быть 3-15 символов, начинаться с буквы и содержать только английские буквы, цифры и знак подчеркивания"), "incorrect regexp")
 			return
 		}
 
@@ -193,7 +200,40 @@ func (s *Server) AddServersToUser() http.HandlerFunc {
 			return
 		}
 
-		err := s.store.User(r.Context()).AddServer(req.UserID, req.Servers)
+		_, err := s.store.User(r.Context()).Find("id", req.UserID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				SendErr(w, http.StatusNotFound, err, "User not found")
+				return
+			}
+
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+
+		allServers, err := s.store.Server(r.Context()).All()
+		if err != nil {
+			if err == sql.ErrNoRows {
+				SendErr(w, http.StatusNotFound, err, "User not found")
+				return
+			}
+
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+
+		serversToAdd := make([]model.Server, 0)
+	loop:
+		for _, server := range allServers {
+			for _, reqServer := range req.Servers {
+				if server.ID == reqServer.ID {
+					serversToAdd = append(serversToAdd, reqServer)
+					continue loop
+				}
+			}
+		}
+
+		err = s.store.User(r.Context()).AddServer(req.UserID, serversToAdd)
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 			return
