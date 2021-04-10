@@ -81,6 +81,17 @@ func (r *ServerRepository) Delete(id string) error {
 	return nil
 }
 
+// DeleteByUser удаляет доступ к серверам у определенного пользователя, возвращает ошибку в случае неудачи
+func (r *ServerRepository) DeleteByUser(userID string) error {
+	logit.Info("Удаляем сервера у пользователя", userID)
+	_, err := r.db.ExecContext(r.ctx, "DELETE FROM users_servers WHERE user_id = ?", userID)
+	if err != nil {
+		return err
+	}
+	logit.Info("Успешно удалили сервера у пользователя", userID)
+	return nil
+}
+
 // All возвращает массив из серверов БД или ошибку
 func (r *ServerRepository) All() ([]model.Server, error) {
 	logit.Info("Получаем все сервера")

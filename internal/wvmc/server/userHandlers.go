@@ -211,6 +211,12 @@ func (s *Server) AddServersToUser() http.HandlerFunc {
 			return
 		}
 
+		err = s.store.Server(r.Context()).DeleteByUser(req.UserID)
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+
 		allServers, err := s.store.Server(r.Context()).All()
 		if err != nil {
 			if err == sql.ErrNoRows {
@@ -248,9 +254,9 @@ func (s *Server) GetUserServers() http.HandlerFunc {
 	type addedServers struct {
 		ID      string `json:"id"`
 		Name    string `json:"name"`
-		HV      string `json:"hv,omitempty"`
-		IP      string `json:"ip,omitempty"`
-		Company string `json:"company,omitempty"`
+		HV      string `json:"hv"`
+		IP      string `json:"ip"`
+		Company string `json:"company"`
 		Added   bool   `json:"is_added"`
 	}
 

@@ -19,12 +19,11 @@ import (
 // Auth выполняет проверку токена
 func (s *Server) Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		authHeader := r.Header.Get("Authorization")
 		tokenString := strings.Split(authHeader, " ")
 
 		if len(tokenString) != 2 || tokenString[0] != "Bearer" {
-			logit.Log("Нет токена в заголовке", authHeader)
+			logit.Info("Нет токена в заголовке", authHeader)
 			SendErr(w, http.StatusUnauthorized, errors.New("no token in headers"), "Нет токена в заголовке")
 			return
 		}
@@ -45,7 +44,7 @@ func (s *Server) Auth(next http.Handler) http.Handler {
 			if claims.Type == "access" {
 				ctxUser := CtxString("user")
 
-				logit.Info("ТОКЕН: ", claims.User.Name)
+				logit.Info("Авторизация: ", claims.User.Email)
 
 				next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxUser, claims.User)))
 				return
