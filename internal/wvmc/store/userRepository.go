@@ -93,7 +93,7 @@ func (r *UserRepository) All() ([]model.User, error) {
 	logit.Info("Получаем всех пользователей")
 	var users []model.User
 
-	rows, err := r.db.QueryContext(r.ctx, "SELECT id, name, email, role FROM users")
+	rows, err := r.db.QueryContext(r.ctx, "SELECT id, name, email, company, role FROM users")
 	if err != nil {
 		return users, err
 	}
@@ -101,7 +101,7 @@ func (r *UserRepository) All() ([]model.User, error) {
 
 	for rows.Next() {
 		var user model.User
-		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Role)
+		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Company, &user.Role)
 		if err != nil {
 			return users, err
 		}

@@ -84,13 +84,13 @@ func (s *Server) SignIn() http.HandlerFunc {
 
 		user, err := s.store.User(r.Context()).Find("email", req.Email)
 		if err != nil {
-			SendErr(w, http.StatusUnprocessableEntity, err, "Неверный логин или пароль")
+			SendErr(w, http.StatusOK, err, "Неверный логин или пароль")
 			return
 		}
 
 		err = hasher.Compare(user.EncPassword, req.Password)
 		if err != nil {
-			SendErr(w, http.StatusUnprocessableEntity, err, "Неверный логин или пароль")
+			SendErr(w, http.StatusOK, err, "Неверный логин или пароль")
 			return
 		}
 

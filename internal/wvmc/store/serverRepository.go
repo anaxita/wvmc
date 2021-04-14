@@ -126,7 +126,7 @@ func (r *ServerRepository) FindByUser(userID string) ([]model.Server, error) {
 	logit.Info("Получаем все сервера пользователя", userID)
 	var servers []model.Server
 
-	rows, err := r.db.QueryContext(r.ctx, "SELECT s.id, s.title, s.ip4, s.hv, s.company, s.user_name, s.user_password FROM servers as s INNER JOIN users_servers as us ON (s.id = us.server_ID) WHERE us.user_id = ?", userID)
+	rows, err := r.db.QueryContext(r.ctx, "SELECT s.id, s.title, s.ip4, s.hv, s.company, s.description, s.out_addr, s.user_name, s.user_password FROM servers as s INNER JOIN users_servers as us ON (s.id = us.server_ID) WHERE us.user_id = ?", userID)
 	if err != nil {
 		return servers, err
 	}
@@ -134,7 +134,7 @@ func (r *ServerRepository) FindByUser(userID string) ([]model.Server, error) {
 
 	for rows.Next() {
 		var s model.Server
-		err := rows.Scan(&s.ID, &s.Name, &s.IP, &s.HV, &s.Company, &s.User, &s.Password)
+		err := rows.Scan(&s.ID, &s.Name, &s.IP, &s.HV, &s.Company, &s.Description, &s.OutAddr, &s.User, &s.Password)
 		if err != nil {
 			return servers, err
 		}
