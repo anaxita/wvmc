@@ -60,7 +60,7 @@ func (r *ServerRepository) Create(s model.Server) (int, error) {
 func (r *ServerRepository) Edit(s model.Server) error {
 	logit.Info("Обновляем поля серверу:", s.Name)
 
-	query := "UPDATE servers SET company = ?,  description = ?, out_addr = ?,user = ?, password = ? WHERE id = ?"
+	query := "UPDATE servers SET company = ?,  description = ?, out_addr = ?, user_name = ?, user_password = ? WHERE id = ?"
 	_, err := r.db.ExecContext(r.ctx, query, s.Company, s.Description, s.OutAddr, s.User, s.Password, s.ID)
 	if err != nil {
 		return err
