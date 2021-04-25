@@ -67,29 +67,30 @@ func (s *Server) SignIn() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := request{}
+
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
 			SendErr(w, http.StatusBadRequest, err, "Неверный формат запроса")
 			return
 		}
 
-		if req.Email == "" || req.Password == "" {
-			SendErr(w, http.StatusBadRequest, errors.New("fields cannot be empty"), "Поля email и password не могут быть пустыми")
-			return
-		}
-
 		req.Email = strings.TrimSpace(req.Email)
 		req.Password = strings.TrimSpace(req.Password)
 
+		if req.Email == "" || req.Password == "" {
+			SendErr(w, http.StatusBadRequest, errors.New("email or password cannot be empty"), "Поля email или password не могут быть пустыми")
+			return
+		}
+
 		user, err := s.store.User(r.Context()).Find("email", req.Email)
 		if err != nil {
-			SendErr(w, http.StatusUnprocessableEntity, err, "Неверный логин или пароль")
+			SendErr(w, http.StatusOK, err, "Неверный логин или пароль")
 			return
 		}
 
 		err = hasher.Compare(user.EncPassword, req.Password)
 		if err != nil {
-			SendErr(w, http.StatusUnprocessableEntity, err, "Неверный логин или пароль")
+			SendErr(w, http.StatusOK, err, "Неверный логин или пароль")
 			return
 		}
 
@@ -106,6 +107,7 @@ func (s *Server) SignIn() http.HandlerFunc {
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 		}
+
 		SendOK(w, http.StatusOK, resp)
 	}
 }

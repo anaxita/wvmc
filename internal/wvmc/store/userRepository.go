@@ -55,14 +55,14 @@ func (r *UserRepository) Create(u model.User) (int, error) {
 	return int(id), nil
 }
 
-// Edit обновляет данные пользователя, возвращает ошибку в случае неудачи
-func (r *UserRepository) Edit(u model.User, pass bool) error {
+// Edit обновляет данные пользователя u с паролем или без withPass, возвращает ошибку в случае неудачи
+func (r *UserRepository) Edit(u model.User, withPass bool) error {
 	logit.Info("Обновляем поля пользователю:", u.Name)
 
 	var query string
 	var err error
 
-	if pass {
+	if withPass {
 		query = "UPDATE users SET name = ?, company = ?, role = ?, password = ? WHERE id = ? "
 		_, err = r.db.ExecContext(r.ctx, query, u.Name, u.Company, u.Role, u.EncPassword, u.ID)
 	} else {
@@ -93,7 +93,7 @@ func (r *UserRepository) All() ([]model.User, error) {
 	logit.Info("Получаем всех пользователей")
 	var users []model.User
 
-	rows, err := r.db.QueryContext(r.ctx, "SELECT id, name, email, role FROM users")
+	rows, err := r.db.QueryContext(r.ctx, "SELECT id, name, email, company, role FROM users")
 	if err != nil {
 		return users, err
 	}
@@ -101,7 +101,7 @@ func (r *UserRepository) All() ([]model.User, error) {
 
 	for rows.Next() {
 		var user model.User
-		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Role)
+		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Company, &user.Role)
 		if err != nil {
 			return users, err
 		}
@@ -151,7 +151,11 @@ func (r *UserRepository) AddServer(userID string, servers []model.Server) error 
 	logit.Info("Добавляем сервера пользователю:", userID)
 
 	query := "INSERT INTO users_servers (user_id, server_id) VALUES(?, ?)"
-	stmt, _ := r.db.PrepareContext(r.ctx, query)
+
+	stmt, err := r.db.PrepareContext(r.ctx, query)
+	if err != nil {
+		return err
+	}
 
 	for _, v := range servers {
 		_, err := stmt.ExecContext(r.ctx, userID, v.ID)
@@ -160,7 +164,7 @@ func (r *UserRepository) AddServer(userID string, servers []model.Server) error 
 		}
 	}
 
-	err := stmt.Close()
+	err = stmt.Close()
 	if err != nil {
 		return err
 	}

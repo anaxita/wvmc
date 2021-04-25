@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: WVMC
-  version: 1.0.0
+  version: 2.0.0
 servers:
   -
     url: https://dc.kmsys.ru:53338
@@ -112,17 +112,6 @@ paths:
               email: anaxita
               password: qwerty123
       responses:              
-        401:
-          description: Неверный логин/пароль
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-              example:
-                status: err
-                message:
-                  error: Неверный логин или пароль
-                  meta: "no sql rows"
         400:
           description: Некорректный запрос
           content:
@@ -151,11 +140,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-              example:
-                  status: ok
-                  message:
-                    access_token: <token>
-                    refresh_token: <token>
+              examples:
+                  success:
+                    value:
+                      status: ok
+                      message:
+                        access_token: <token>
+                        refresh_token: <token>
+                  auth_error:
+                    value:
+                      status: err
+                      message:
+                        error: Неверный логин или пароль
+                        meta: "no sql rows"
   /refresh:
     post:
       tags:
@@ -932,6 +929,7 @@ paths:
             schema:
                 $ref: '#/components/schemas/User'
             example:
+              id: sdf2345g-34-g345-dfg-43
               company: Промформат
               description: Такая-то компания и вообще молодцы
               out_addr: dc.kmsys.ru:5322

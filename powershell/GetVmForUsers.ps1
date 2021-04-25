@@ -25,6 +25,7 @@ $result = $hvList | ForEach-Object -Parallel {
             "id" = $_.Id;
             "name" = $_.Name;
             "network" = $network;
+            "state" = $state;
             "hv" = $_.ComputerName;
         }
 
