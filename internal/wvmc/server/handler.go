@@ -8,7 +8,7 @@ import (
 	"github.com/anaxita/logit"
 )
 
-// respOK единая структура ответа без ошибки
+// respOK единая структура ответа
 type respOK struct {
 	Status  string      `json:"status"`
 	Message interface{} `json:"message"`

@@ -20,6 +20,8 @@ $servers = $hvList | ForEach-Object -Parallel {
                 "id" = $vm.Id;
                 "name" = $vm.Name;
                 "state" = $state;
+                "status" = $vm.Status;
+                "cpu" = $vm.CPUUsage;
                 "hv" = $vm.ComputerName;
             } ;
             

@@ -7,7 +7,9 @@ import (
 	"net/http"
 
 	"github.com/anaxita/logit"
+	"github.com/anaxita/wvmc/internal/wvmc/control"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
+	"github.com/gorilla/mux"
 )
 
 // GetServers возвращает список серверов
@@ -69,6 +71,37 @@ func (s *Server) GetServers() http.HandlerFunc {
 
 			SendOK(w, http.StatusOK, response{vms})
 		}
+
+	}
+}
+
+// GetServer получает информацию об 1 сервере по его хв и имени
+func (s *Server) GetServer() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		hv := vars["hv"]
+		name := vars["name"]
+
+		store := s.store.Server(r.Context())
+
+		_, err := store.Find("title", name)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				SendErr(w, http.StatusNotFound, err, "server is not found")
+				return
+			}
+
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+
+		vmInfo, err := control.NewServerService(&control.Command{}).GetServerData(hv, name)
+		if err != nil {
+			SendErr(w, http.StatusNotFound, err, "can't to get vm info")
+			return
+		}
+
+		SendOK(w, http.StatusOK, vmInfo)
 
 	}
 }

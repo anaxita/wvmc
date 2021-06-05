@@ -233,3 +233,19 @@ func (s *ServerService) UpdateAllServersInfo() ([]model.Server, error) {
 
 	return servers, nil
 }
+
+func (s *ServerService) GetServerData(hv, name string) (model.Server, error) {
+	var server model.Server
+	scriptPath := "./powershell/GetVmByHvAndName.ps1"
+
+	out, err := s.commander.run(scriptPath, "-hv", hv, "-name", name)
+	if err != nil {
+		return server, err
+	}
+
+	if err = json.Unmarshal(out, &server); err != nil {
+		return server, err
+	}
+
+	return server, nil
+}
