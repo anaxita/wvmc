@@ -24,6 +24,7 @@ $servers = $hvList | ForEach-Object -Parallel {
                 "state" = $state;
                 "status" = $vm.Status;
                 "cpu" = $vm.CPUUsage;
+                "network" = ($vm | Get-VMNetworkAdapter).SwitchName
                 "hv" = $vm.ComputerName;
             } ;
             
