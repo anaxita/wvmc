@@ -11,7 +11,7 @@ $result = $hvList | ForEach-Object -Parallel {
             $networkAdapter = $_ | Get-VMNetworkAdapter;
             $ip4 = $networkAdapter.IPAddresses
             if ($null -ne $ip4[0]) {
-                $ip = $ip4 -join ', ';
+                $ip = $ip4[0]
             };
         }
 

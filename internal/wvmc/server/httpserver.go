@@ -44,7 +44,6 @@ func (s *Server) configureRouter() {
 	users.Handle("/users", s.DeleteUser()).Methods("OPTIONS", "DELETE")
 	users.Handle("/users/servers", s.AddServersToUser()).Methods("OPTIONS", "POST")
 	users.Handle("/users/{user_id}/servers", s.GetUserServers()).Methods("OPTIONS", "GET")
-	users.Handle("/servers/{hv}/{name}", s.GetServer()).Methods("OPTIONS", "GET")
 
 	serversShow := r.NewRoute().Subrouter()
 	serversShow.Use(s.Auth)
@@ -58,6 +57,8 @@ func (s *Server) configureRouter() {
 	servers.Use(s.Auth, s.CheckIsAdmin)
 	// servers.Handle("/servers", s.CreateServer()).Methods("POST", "OPTIONS") // disabled because working auto
 	servers.Handle("/servers", s.EditServer()).Methods("OPTIONS", "PATCH")
+	servers.Handle("/servers/{hv}/{name}", s.GetServer()).Methods("OPTIONS", "GET")
+	servers.Handle("/servers/{hv}/{name}/services", s.GetServerServices()).Methods("OPTIONS", "GET")
 	servers.Handle("/servers/update", s.UpdateAllServersInfo()).Methods("POST", "OPTIONS")
 }
 

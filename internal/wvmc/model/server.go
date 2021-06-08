@@ -17,6 +17,6 @@ type Server struct {
 	CpuCores    int     `json:"cpu_cores"`
 	Network     string  `json:"network"`
 	Backup      string  `json:"backup"`
-	User        string  `json:"user,omitempty"`
+	User        string  `json:"user"`
 	Password    string  `json:"password,omitempty"`
 }

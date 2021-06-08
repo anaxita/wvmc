@@ -272,3 +272,37 @@ func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 		SendOK(w, http.StatusOK, "Updated")
 	}
 }
+
+func (s *Server) GetServerServices() http.HandlerFunc {
+
+	type response struct {
+		Services []control.WinServices `json:"services"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		// vars := mux.Vars(r)
+		// hv := vars["hv"]
+		// name := vars["name"]
+
+		// store := s.store.Server(r.Context())
+
+		// s, err := store.Find("title", name)
+		// if err != nil {
+		// 	if err == sql.ErrNoRows {
+		// 		SendErr(w, http.StatusNotFound, err, "server is not found")
+		// 		return
+		// 	}
+
+		// 	SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+		// 	return
+		// }
+
+		vmInfo, err := control.NewServerService(&control.Command{}).GetServerServices("", "", "")
+		if err != nil {
+			SendErr(w, http.StatusOK, err, "Ошибка подключения к серверу")
+			return
+		}
+
+		SendOK(w, http.StatusOK, response{vmInfo})
+
+	}
+}

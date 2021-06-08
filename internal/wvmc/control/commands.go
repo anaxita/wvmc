@@ -20,6 +20,13 @@ type VM struct {
 	HV      string `json:"HV,omitempty"`
 }
 
+type WinServices struct {
+	Name        string `json:"name"`
+	DisplayName string `json:"display_name"`
+	State       string `json:"status"`
+	User        string `json:"user"`
+}
+
 // Commander описывает метод который запускает команду powershell,возвращает вывод и ошибку
 type Commander interface {
 	run(args ...string) ([]byte, error)
@@ -248,4 +255,21 @@ func (s *ServerService) GetServerData(hv, name string) (model.Server, error) {
 	}
 
 	return server, nil
+}
+
+func (s *ServerService) GetServerServices(ip, user, password string) ([]WinServices, error) {
+	var services []WinServices
+	scriptPath := "./powershell/GetServerServices.ps1"
+
+	// out, err := s.commander.run(scriptPath, "-ip", ip, "-u", user, "-p", password)
+	out, err := s.commander.run(scriptPath)
+	if err != nil {
+		return services, err
+	}
+
+	if err = json.Unmarshal(out, &services); err != nil {
+		return services, err
+	}
+
+	return services, nil
 }
