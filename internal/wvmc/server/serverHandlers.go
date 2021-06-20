@@ -306,3 +306,42 @@ func (s *Server) GetServerServices() http.HandlerFunc {
 
 	}
 }
+
+// ControlServerServices управляет службами сервера
+func (s *Server) ControlServerServices() http.HandlerFunc {
+
+	type req struct {
+		Service string `json:"service"`
+		Command string `json:"command"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		var err error
+
+		task := req{}
+		err = json.NewDecoder(r.Body).Decode(&task)
+		if err != nil {
+			SendErr(w, http.StatusBadRequest, err, "невалиданый json")
+			return
+		}
+
+		switch task.Command {
+		case "start":
+			_, err = s.serverService.StartWinService("", "", task.Service)
+		case "stop":
+			_, err = s.serverService.StopWinService("", "", task.Service)
+
+		case "restart":
+			_, err = s.serverService.RestartWinService("", "", task.Service)
+		default:
+			SendErr(w, http.StatusBadRequest, errors.New("undefiend command"), "Неизвестная команда")
+			return
+		}
+
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка выполнения команды")
+			return
+		}
+
+		SendOK(w, http.StatusOK, "Команда выполнена успешно")
+	}
+}

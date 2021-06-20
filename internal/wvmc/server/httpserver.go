@@ -59,6 +59,7 @@ func (s *Server) configureRouter() {
 	servers.Handle("/servers", s.EditServer()).Methods("OPTIONS", "PATCH")
 	servers.Handle("/servers/{hv}/{name}", s.GetServer()).Methods("OPTIONS", "GET")
 	servers.Handle("/servers/{hv}/{name}/services", s.GetServerServices()).Methods("OPTIONS", "GET")
+	servers.Handle("/servers/{hv}/{name}/services/", s.ControlServerServices()).Methods("OPTIONS", "POST")
 	servers.Handle("/servers/update", s.UpdateAllServersInfo()).Methods("POST", "OPTIONS")
 }
 

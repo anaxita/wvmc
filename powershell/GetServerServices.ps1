@@ -10,7 +10,7 @@
 # $Creds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $user, $pass
 
 # Invoke-Command -ComputerName 172.16.0.110  -Credential $Creds -ScriptBlock {
-    $services = Get-Service | Select-Object Name, DisplayName, Status, UserName -First 30 | ForEach-Object {
+    $services = Get-Service | Select-Object Name, DisplayName, Status, UserName | Where-Object {$_.Name -in 'Spooler', 'gupdate', 'gupdatem', 'Themes', 'GoogleChromeElevationService'} | ForEach-Object {
 
         [PSCustomObject]@{
             'name' = $_.Name

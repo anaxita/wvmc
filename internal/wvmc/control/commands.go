@@ -257,6 +257,7 @@ func (s *ServerService) GetServerData(hv, name string) (model.Server, error) {
 	return server, nil
 }
 
+// GetServerServices получает список служб сервера
 func (s *ServerService) GetServerServices(ip, user, password string) ([]WinServices, error) {
 	var services []WinServices
 	scriptPath := "./powershell/GetServerServices.ps1"
@@ -272,4 +273,22 @@ func (s *ServerService) GetServerServices(ip, user, password string) ([]WinServi
 	}
 
 	return services, nil
+}
+
+// StartWinService включает службу сервера
+func (s *ServerService) StartWinService(serverHV, serverName, serviceName string) ([]byte, error) {
+	command := fmt.Sprintf("Start-Service -Name '%s'", serviceName)
+	return s.commander.run(command)
+}
+
+// StopWinService выключает службу сервера
+func (s *ServerService) StopWinService(serverHV, serverName, serviceName string) ([]byte, error) {
+	command := fmt.Sprintf("Stop-Service -Name '%s'", serviceName)
+	return s.commander.run(command)
+}
+
+// RestartWinService переззагружает службу сервера
+func (s *ServerService) RestartWinService(serverHV, serverName, serviceName string) ([]byte, error) {
+	command := fmt.Sprintf("Restart-Service -Name '%s'", serviceName)
+	return s.commander.run(command)
 }
