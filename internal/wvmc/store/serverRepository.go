@@ -39,6 +39,25 @@ func (r *ServerRepository) Find(key, value string) (model.Server, error) {
 	return s, nil
 }
 
+//Find ищет первое совпадение сервер с заданным ключом и значением, возвращает модель либо ошибку
+func (r *ServerRepository) FindByIDAndHV(id, hv string) (model.Server, error) {
+	logit.Info("Ищем сервер:", id, hv)
+
+	s := model.Server{}
+
+	query := "SELECT ip4, user_name, user_password FROM servers WHERE id = ? AND hv = ?"
+	if err := r.db.QueryRowContext(r.ctx, query, id, hv).Scan(
+		&s.IP,
+		&s.User,
+		&s.Password,
+	); err != nil {
+		return s, err
+	}
+
+	logit.Info("Нашли сервер:", id, hv)
+	return s, nil
+}
+
 // Create создает сервер и возвращает его ID, либо ошибку
 func (r *ServerRepository) Create(s model.Server) (int, error) {
 	logit.Info("Создааем сервер:", s.Name)

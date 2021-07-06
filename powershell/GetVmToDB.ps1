@@ -1,6 +1,7 @@
 param (
     [string[]]$hvList 
 )
+[Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
 
 $result = $hvList | ForEach-Object -Parallel {
     Get-VM  -ComputerName "$_" | ForEach-Object -Parallel {
@@ -22,6 +23,6 @@ $result = $hvList | ForEach-Object -Parallel {
             "hv" = $_.ComputerName;
         }
 
-    } -ThrottleLimit 5;
-} -ThrottleLimit 5;
+    } -ThrottleLimit 10;
+} -ThrottleLimit 10;
 $result | ConvertTo-Json -AsArray -Compress;

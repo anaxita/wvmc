@@ -29,7 +29,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 
 			vms, err := s.serverService.GetServersDataForAdmins()
 			if err != nil {
-				SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
+				SendErr(w, http.StatusOK, err, "Ошибка получения статусов")
 				logit.Log("PS", err)
 				return
 			}
@@ -87,7 +87,7 @@ func (s *Server) GetServer() http.HandlerFunc {
 		_, err := store.Find("title", name)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				SendErr(w, http.StatusNotFound, err, "server is not found")
+				SendErr(w, http.StatusOK, err, "server is not found")
 				return
 			}
 
@@ -97,7 +97,7 @@ func (s *Server) GetServer() http.HandlerFunc {
 
 		vmInfo, err := control.NewServerService(&control.Command{}).GetServerData(hv, name)
 		if err != nil {
-			SendErr(w, http.StatusNotFound, err, "can't to get vm info")
+			SendErr(w, http.StatusOK, err, "can't to get vm info")
 			return
 		}
 
@@ -135,7 +135,7 @@ func (s *Server) CreateServer() http.HandlerFunc {
 			return
 		}
 
-		SendErr(w, http.StatusBadRequest, errors.New("server is already exists"), "Сервер уже существует")
+		SendErr(w, http.StatusOK, errors.New("server is already exists"), "Сервер уже существует")
 	}
 }
 
@@ -154,7 +154,7 @@ func (s *Server) EditServer() http.HandlerFunc {
 		_, err := store.Find("id", req.ID)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				SendErr(w, http.StatusNotFound, err, "Сервер не найден")
+				SendErr(w, http.StatusOK, err, "Сервер не найден")
 				return
 			}
 
@@ -279,23 +279,6 @@ func (s *Server) GetServerServices() http.HandlerFunc {
 		Services []control.WinServices `json:"services"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		// vars := mux.Vars(r)
-		// hv := vars["hv"]
-		// name := vars["name"]
-
-		// store := s.store.Server(r.Context())
-
-		// s, err := store.Find("title", name)
-		// if err != nil {
-		// 	if err == sql.ErrNoRows {
-		// 		SendErr(w, http.StatusNotFound, err, "server is not found")
-		// 		return
-		// 	}
-
-		// 	SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
-		// 	return
-		// }
-
 		vmInfo, err := control.NewServerService(&control.Command{}).GetServerServices("", "", "")
 		if err != nil {
 			SendErr(w, http.StatusOK, err, "Ошибка подключения к серверу")
@@ -307,12 +290,40 @@ func (s *Server) GetServerServices() http.HandlerFunc {
 	}
 }
 
+// GetServerDisks return info about disks like letter, total and free size
+func (s *Server) GetServerDisks() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		hv := vars["hv"]
+		name := vars["name"]
+
+		srv, err := s.store.Server(r.Context()).FindByIDAndHV(hv, name)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				SendErr(w, http.StatusOK, err, "server is not found")
+				return
+			}
+
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+		disksInfo, err := control.NewServerService(&control.Command{}).GetDiskFreeSpace(srv.IP, srv.User, srv.Password)
+		if err != nil {
+			SendErr(w, http.StatusOK, err, "Ошибка подключения к серверу")
+			return
+		}
+
+		SendOK(w, http.StatusOK, disksInfo)
+	}
+}
+
 // ControlServerServices управляет службами сервера
 func (s *Server) ControlServerServices() http.HandlerFunc {
 
 	type req struct {
-		Service string `json:"service"`
-		Command string `json:"command"`
+		ServiceName string `json:"service_name"`
+		ServerIP    string `json:"server_ip"`
+		Command     string `json:"command"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
@@ -326,12 +337,12 @@ func (s *Server) ControlServerServices() http.HandlerFunc {
 
 		switch task.Command {
 		case "start":
-			_, err = s.serverService.StartWinService("", "", task.Service)
+			_, err = s.serverService.StartWinService(task.ServerIP, task.ServiceName)
 		case "stop":
-			_, err = s.serverService.StopWinService("", "", task.Service)
+			_, err = s.serverService.StopWinService(task.ServerIP, task.ServiceName)
 
 		case "restart":
-			_, err = s.serverService.RestartWinService("", "", task.Service)
+			_, err = s.serverService.RestartWinService(task.ServerIP, task.ServiceName)
 		default:
 			SendErr(w, http.StatusBadRequest, errors.New("undefiend command"), "Неизвестная команда")
 			return

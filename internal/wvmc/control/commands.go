@@ -27,6 +27,12 @@ type WinServices struct {
 	User        string `json:"user"`
 }
 
+type WinVolume struct {
+	Letter     string `json:"disk_letter"`
+	SpaceTotel string `json:"space_total"`
+	SpaceFree  string `json:"space_free"`
+}
+
 // Commander описывает метод который запускает команду powershell,возвращает вывод и ошибку
 type Commander interface {
 	run(args ...string) ([]byte, error)
@@ -276,19 +282,36 @@ func (s *ServerService) GetServerServices(ip, user, password string) ([]WinServi
 }
 
 // StartWinService включает службу сервера
-func (s *ServerService) StartWinService(serverHV, serverName, serviceName string) ([]byte, error) {
+func (s *ServerService) StartWinService(serverIP, serviceName string) ([]byte, error) {
 	command := fmt.Sprintf("Start-Service -Name '%s'", serviceName)
 	return s.commander.run(command)
 }
 
 // StopWinService выключает службу сервера
-func (s *ServerService) StopWinService(serverHV, serverName, serviceName string) ([]byte, error) {
+func (s *ServerService) StopWinService(serverIP, serviceName string) ([]byte, error) {
 	command := fmt.Sprintf("Stop-Service -Name '%s'", serviceName)
 	return s.commander.run(command)
 }
 
 // RestartWinService переззагружает службу сервера
-func (s *ServerService) RestartWinService(serverHV, serverName, serviceName string) ([]byte, error) {
+func (s *ServerService) RestartWinService(serverIP, serviceName string) ([]byte, error) {
 	command := fmt.Sprintf("Restart-Service -Name '%s'", serviceName)
 	return s.commander.run(command)
+}
+
+// GetServerServices получает информацию о свободном мсесте на дисках
+func (s *ServerService) GetDiskFreeSpace(ip, user, password string) ([]WinVolume, error) {
+	var disks []WinVolume
+	scriptPath := "./powershell/GetDiskFreeSpace.ps1"
+
+	out, err := s.commander.run(scriptPath, "-ip", ip, "-u", user, "-p", password)
+	if err != nil {
+		return disks, err
+	}
+
+	if err = json.Unmarshal(out, &disks); err != nil {
+		return disks, err
+	}
+
+	return disks, nil
 }
