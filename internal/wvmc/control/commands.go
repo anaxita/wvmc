@@ -111,7 +111,7 @@ func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]model.
 func (s *ServerService) GetServersDataForAdmins() ([]model.Server, error) {
 	hvs := os.Getenv("HV_LIST")
 
-	scriptPath := "./powershell/dev_GetVMForAdmins.ps1"
+	scriptPath := "./powershell/GetVMForAdmins.ps1"
 
 	out, err := s.commander.run(scriptPath, "-hvList", hvs)
 	if err != nil {

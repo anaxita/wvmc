@@ -34,7 +34,7 @@ func (s *Server) configureRouter() {
 	r.Handle("/refresh", s.RefreshToken()).Methods("POST", "OPTIONS")
 	r.Handle("/signin", s.SignIn()).Methods("POST", "OPTIONS")
 	r.Handle("/update", s.UpdateAllServersInfo()).Methods("GET", "OPTIONS") // TODO: удалить когда уйдет в продакшен (аналог /servers/update)
-	r.Handle("/log", s.Showlog()).Methods("GET", "OPTIONS")
+	// r.Handle("/log", s.Showlog()).Methods("GET", "OPTIONS")
 
 	users := r.NewRoute().Subrouter()
 	users.Use(s.Auth, s.CheckIsAdmin)

@@ -29,6 +29,6 @@ $result = $hvList | ForEach-Object -Parallel {
             "hv" = $_.ComputerName;
         }
 
-    } -ThrottleLimit 5;
-} -ThrottleLimit 5;
+    } -ThrottleLimit 10;
+} -ThrottleLimit 10;
 $result | ConvertTo-Json -AsArray -Compress;
