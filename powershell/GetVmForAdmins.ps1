@@ -11,6 +11,8 @@ $servers = $hvList | ForEach-Object -Parallel {
         {
             $state = $vm.State;
             if ($state -eq 2) {
+                $networkAdapter = $_ | Get-VMNetworkAdapter;
+                $ip4 = $networkAdapter.IPAddresses
                 $state = "Running";
             } else {
                 $state = "Off";
@@ -23,6 +25,7 @@ $servers = $hvList | ForEach-Object -Parallel {
                 "status" = $vm.Status;
                 "cpu" = $vm.CPUUsage;
                 "hv" = $vm.ComputerName;
+                "ip" = $ip4[0];
             } ;
             
         }

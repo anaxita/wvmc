@@ -84,7 +84,7 @@ func (s *Server) GetServer() http.HandlerFunc {
 
 		store := s.store.Server(r.Context())
 
-		_, err := store.Find("title", name)
+		server, err := store.Find("title", name)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusOK, err, "server is not found")
@@ -95,7 +95,7 @@ func (s *Server) GetServer() http.HandlerFunc {
 			return
 		}
 
-		vmInfo, err := control.NewServerService(&control.Command{}).GetServerData(hv, name)
+		vmInfo, err := control.NewServerService(&control.Command{}).GetServerData(server, hv, name)
 		if err != nil {
 			SendErr(w, http.StatusOK, err, "can't to get vm info")
 			return
@@ -274,18 +274,29 @@ func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 }
 
 func (s *Server) GetServerServices() http.HandlerFunc {
-
-	type response struct {
-		Services []control.WinServices `json:"services"`
-	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		vmInfo, err := control.NewServerService(&control.Command{}).GetServerServices("", "", "")
+		vars := mux.Vars(r)
+		hv := vars["hv"]
+		name := vars["name"]
+
+		srv, err := s.store.Server(r.Context()).FindByHVandName(hv, name)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				SendErr(w, http.StatusOK, err, "server is not found")
+				return
+			}
+
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+
+		services, err := control.NewServerService(&control.Command{}).GetServerServices(srv.IP, srv.User, srv.Password)
 		if err != nil {
 			SendErr(w, http.StatusOK, err, "Ошибка подключения к серверу")
 			return
 		}
 
-		SendOK(w, http.StatusOK, response{vmInfo})
+		SendOK(w, http.StatusOK, services)
 
 	}
 }
@@ -297,7 +308,7 @@ func (s *Server) GetServerDisks() http.HandlerFunc {
 		hv := vars["hv"]
 		name := vars["name"]
 
-		srv, err := s.store.Server(r.Context()).FindByIDAndHV(hv, name)
+		srv, err := s.store.Server(r.Context()).FindByHVandName(hv, name)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusOK, err, "server is not found")

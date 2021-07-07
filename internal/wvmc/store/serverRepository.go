@@ -21,12 +21,13 @@ func (r *ServerRepository) Find(key, value string) (model.Server, error) {
 
 	s := model.Server{}
 
-	query := fmt.Sprintf("SELECT id, title, ip4, hv, company, description, user_name, user_password FROM servers WHERE %s = ?", key)
+	query := fmt.Sprintf("SELECT id, title, ip4, hv, company, out_addr, description, user_name, user_password FROM servers WHERE %s = ?", key)
 	if err := r.db.QueryRowContext(r.ctx, query, value).Scan(
 		&s.ID,
 		&s.Name,
 		&s.IP,
 		&s.HV,
+		&s.OutAddr,
 		&s.Company,
 		&s.Description,
 		&s.User,
@@ -39,14 +40,14 @@ func (r *ServerRepository) Find(key, value string) (model.Server, error) {
 	return s, nil
 }
 
-//Find ищет первое совпадение сервер с заданным ключом и значением, возвращает модель либо ошибку
-func (r *ServerRepository) FindByIDAndHV(id, hv string) (model.Server, error) {
-	logit.Info("Ищем сервер:", id, hv)
+//Find ищет сервер по хв + имени, возвращает модель либо ошибку
+func (r *ServerRepository) FindByHVandName(hv, name string) (model.Server, error) {
+	logit.Info("Ищем сервер:", name, hv)
 
 	s := model.Server{}
 
-	query := "SELECT ip4, user_name, user_password FROM servers WHERE id = ? AND hv = ?"
-	if err := r.db.QueryRowContext(r.ctx, query, id, hv).Scan(
+	query := "SELECT ip4, user_name, user_password FROM servers WHERE hv = ? AND title = ?"
+	if err := r.db.QueryRowContext(r.ctx, query, hv, name).Scan(
 		&s.IP,
 		&s.User,
 		&s.Password,
@@ -54,7 +55,7 @@ func (r *ServerRepository) FindByIDAndHV(id, hv string) (model.Server, error) {
 		return s, err
 	}
 
-	logit.Info("Нашли сервер:", id, hv)
+	logit.Info("Нашли сервер:", name, hv)
 	return s, nil
 }
 

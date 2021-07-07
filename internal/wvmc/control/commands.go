@@ -28,9 +28,9 @@ type WinServices struct {
 }
 
 type WinVolume struct {
-	Letter     string `json:"disk_letter"`
-	SpaceTotel string `json:"space_total"`
-	SpaceFree  string `json:"space_free"`
+	Letter     string  `json:"disk_letter"`
+	SpaceTotal float32 `json:"space_total"`
+	SpaceFree  float32 `json:"space_free"`
 }
 
 // Commander описывает метод который запускает команду powershell,возвращает вывод и ошибку
@@ -247,8 +247,7 @@ func (s *ServerService) UpdateAllServersInfo() ([]model.Server, error) {
 	return servers, nil
 }
 
-func (s *ServerService) GetServerData(hv, name string) (model.Server, error) {
-	var server model.Server
+func (s *ServerService) GetServerData(server model.Server, hv string, name string) (model.Server, error) {
 	scriptPath := "./powershell/GetVmByHvAndName.ps1"
 
 	out, err := s.commander.run(scriptPath, "-hv", hv, "-name", name)
@@ -267,9 +266,9 @@ func (s *ServerService) GetServerData(hv, name string) (model.Server, error) {
 func (s *ServerService) GetServerServices(ip, user, password string) ([]WinServices, error) {
 	var services []WinServices
 	scriptPath := "./powershell/GetServerServices.ps1"
+	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s'", scriptPath, ip, user, password)
 
-	// out, err := s.commander.run(scriptPath, "-ip", ip, "-u", user, "-p", password)
-	out, err := s.commander.run(scriptPath)
+	out, err := s.commander.run(args)
 	if err != nil {
 		return services, err
 	}
@@ -303,8 +302,8 @@ func (s *ServerService) RestartWinService(serverIP, serviceName string) ([]byte,
 func (s *ServerService) GetDiskFreeSpace(ip, user, password string) ([]WinVolume, error) {
 	var disks []WinVolume
 	scriptPath := "./powershell/GetDiskFreeSpace.ps1"
-
-	out, err := s.commander.run(scriptPath, "-ip", ip, "-u", user, "-p", password)
+	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s'", scriptPath, ip, user, password)
+	out, err := s.commander.run(args)
 	if err != nil {
 		return disks, err
 	}
