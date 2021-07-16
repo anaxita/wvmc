@@ -273,6 +273,7 @@ func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 	}
 }
 
+// Get services
 func (s *Server) GetServerServices() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -297,6 +298,35 @@ func (s *Server) GetServerServices() http.HandlerFunc {
 		}
 
 		SendOK(w, http.StatusOK, services)
+
+	}
+}
+
+// Get processes
+func (s *Server) GetServerManager() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		hv := vars["hv"]
+		name := vars["name"]
+
+		srv, err := s.store.Server(r.Context()).FindByHVandName(hv, name)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				SendErr(w, http.StatusOK, err, "server is not found")
+				return
+			}
+
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+
+		processes, err := control.NewServerService(&control.Command{}).GetProcesses(srv.IP, srv.User, srv.Password)
+		if err != nil {
+			SendErr(w, http.StatusOK, err, "Ошибка подключения к серверу")
+			return
+		}
+
+		SendOK(w, http.StatusOK, processes)
 
 	}
 }

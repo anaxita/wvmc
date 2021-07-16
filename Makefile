@@ -5,7 +5,7 @@ b:
 
 .PHONY bc:
 bc:
-	go build -v -ldflags="-s -w" -o ./build/wvmc.exe ./cmd/wvmc
+	go build -v -ldflags="-s -w -H windowsgui" ./cmd/wvmc
 
 .PHONY run:
 run:

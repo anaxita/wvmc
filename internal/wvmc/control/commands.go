@@ -231,7 +231,8 @@ func (s *ServerService) StopServerNetwork(server model.Server) ([]byte, error) {
 func (s *ServerService) UpdateAllServersInfo() ([]model.Server, error) {
 	hvs := os.Getenv("HV_LIST")
 
-	scriptPath := "./powershell/dev_GetVmToDB.ps1"
+	scriptPath := "./powershell/GetVmForAdmins.ps1"
+	// scriptPath := "./powershell/GetVmToDB.ps1"
 
 	out, err := s.commander.run(scriptPath, "-hvList", hvs)
 	if err != nil {
@@ -313,4 +314,21 @@ func (s *ServerService) GetDiskFreeSpace(ip, user, password string) ([]WinVolume
 	}
 
 	return disks, nil
+}
+
+// GetProcesses получает информацию о процессах (диспетчер задач)
+func (s *ServerService) GetProcesses(ip, user, password string) (map[string]interface{}, error) {
+	var processes map[string]interface{}
+	scriptPath := "./powershell/getProcesses.ps1"
+	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s'", scriptPath, ip, user, password)
+	out, err := s.commander.run(args)
+	if err != nil {
+		return processes, err
+	}
+
+	if err = json.Unmarshal(out, &processes); err != nil {
+		return processes, err
+	}
+
+	return processes, nil
 }
