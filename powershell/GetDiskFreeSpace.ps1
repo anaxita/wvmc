@@ -18,4 +18,4 @@ $result |
         Name='disk_letter'; Expression={$_.DriveLetter}},
         @{Name='space_total'; Expression={[math]::round($_.Size / 1GB, 2)}},
         @{Name='space_free'; Expression={[math]::round($_.SizeRemaining / 1GB, 2)}} |
-            ConvertTo-Json -AsArray
+            ConvertTo-Json -AsArray -Compress
