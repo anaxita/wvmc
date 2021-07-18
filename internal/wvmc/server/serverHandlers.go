@@ -27,7 +27,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 
 		if user.Role == adminRole {
 
-			vms, err := s.serverService.GetServersDataForAdmins()
+			vms, err := s.controlService.GetServersDataForAdmins()
 			if err != nil {
 				SendErr(w, http.StatusOK, err, "Ошибка получения статусов")
 				logit.Log("PS", err)
@@ -49,7 +49,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 				return
 			}
 
-			vms, err := s.serverService.GetServersDataForUsers(servers)
+			vms, err := s.controlService.GetServersDataForUsers(servers)
 			if err != nil {
 				SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
 				return
@@ -216,18 +216,18 @@ func (s *Server) ControlServer() http.HandlerFunc {
 
 		switch command {
 		case "start_power":
-			_, err = s.serverService.StartServer(server)
+			_, err = s.controlService.StartServer(server)
 		case "stop_power":
-			_, err = s.serverService.StopServer(server)
+			_, err = s.controlService.StopServer(server)
 
 		case "stop_power_force":
-			_, err = s.serverService.StopServerForce(server)
+			_, err = s.controlService.StopServerForce(server)
 
 		case "start_network":
-			_, err = s.serverService.StartServerNetwork(server)
+			_, err = s.controlService.StartServerNetwork(server)
 
 		case "stop_network":
-			_, err = s.serverService.StopServerNetwork(server)
+			_, err = s.controlService.StopServerNetwork(server)
 		default:
 			SendErr(w, http.StatusBadRequest, errors.New("undefiend command"), "Неизвестная команда")
 			return
@@ -245,7 +245,7 @@ func (s *Server) ControlServer() http.HandlerFunc {
 // UpdateAllServersInfo обновляет данные в БД по серверам
 func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		servers, err := s.serverService.UpdateAllServersInfo()
+		servers, err := s.controlService.UpdateAllServersInfo()
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка powershell")
 			return
@@ -331,6 +331,50 @@ func (s *Server) GetServerManager() http.HandlerFunc {
 	}
 }
 
+// ControlServerManager control processes and user rdp sessions
+func (s *Server) ControlServerManager() http.HandlerFunc {
+
+	type req struct {
+		ServerHV   string `json:"server_hv"`
+		ServerName string `json:"server_name"`
+		EnityID    int    `json:"enity_id"`
+		Command    string `json:"command"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		var task req
+
+		err = json.NewDecoder(r.Body).Decode(&task)
+		if err != nil {
+			SendErr(w, http.StatusBadRequest, err, "невалидный json")
+			return
+		}
+
+		server, err := s.store.Server(r.Context()).FindByHVandName(task.ServerHV, task.ServerName)
+		if err != nil {
+			SendErr(w, http.StatusNotFound, err, "Server is not found")
+			return
+		}
+
+		switch task.Command {
+		case "disconnect":
+			_, err = s.controlService.StoptWinProcess(server.IP, server.User, server.Password, task.EnityID)
+		case "stop":
+			_, err = s.controlService.DisconnectRDPUser(server.IP, server.User, server.Password, task.EnityID)
+		default:
+			SendErr(w, http.StatusBadRequest, errors.New("undefind command"), "Неизвестная команда")
+			return
+		}
+
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка выполнения команды")
+			return
+		}
+
+		SendOK(w, http.StatusOK, "Команда выполнена успешно")
+	}
+}
+
 // GetServerDisks return info about disks like letter, total and free size
 func (s *Server) GetServerDisks() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -362,30 +406,36 @@ func (s *Server) GetServerDisks() http.HandlerFunc {
 func (s *Server) ControlServerServices() http.HandlerFunc {
 
 	type req struct {
+		ServerHV    string `json:"server_hv"`
+		ServerName  string `json:"server_name"`
 		ServiceName string `json:"service_name"`
-		ServerIP    string `json:"server_ip"`
 		Command     string `json:"command"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
+		var task req
 
-		task := req{}
 		err = json.NewDecoder(r.Body).Decode(&task)
 		if err != nil {
-			SendErr(w, http.StatusBadRequest, err, "невалиданый json")
+			SendErr(w, http.StatusBadRequest, err, "невалидный json")
+			return
+		}
+
+		server, err := s.store.Server(r.Context()).FindByHVandName(task.ServerHV, task.ServerName)
+		if err != nil {
+			SendErr(w, http.StatusNotFound, err, "Server is not found")
 			return
 		}
 
 		switch task.Command {
 		case "start":
-			_, err = s.serverService.StartWinService(task.ServerIP, task.ServiceName)
+			_, err = s.controlService.StartWinService(server.IP, server.User, server.Password, task.ServiceName)
 		case "stop":
-			_, err = s.serverService.StopWinService(task.ServerIP, task.ServiceName)
-
+			_, err = s.controlService.StopWinService(server.IP, server.User, server.Password, task.ServiceName)
 		case "restart":
-			_, err = s.serverService.RestartWinService(task.ServerIP, task.ServiceName)
+			_, err = s.controlService.RestartWinService(server.IP, server.User, server.Password, task.ServiceName)
 		default:
-			SendErr(w, http.StatusBadRequest, errors.New("undefiend command"), "Неизвестная команда")
+			SendErr(w, http.StatusBadRequest, errors.New("undefind command"), "Неизвестная команда")
 			return
 		}
 

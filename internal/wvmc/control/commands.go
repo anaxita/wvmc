@@ -282,21 +282,24 @@ func (s *ServerService) GetServerServices(ip, user, password string) ([]WinServi
 }
 
 // StartWinService включает службу сервера
-func (s *ServerService) StartWinService(serverIP, serviceName string) ([]byte, error) {
-	command := fmt.Sprintf("Start-Service -Name '%s'", serviceName)
-	return s.commander.run(command)
+func (s *ServerService) StartWinService(ip, user, password, serviceName string) ([]byte, error) {
+	scriptPath := "./powershell/StartService.ps1"
+	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -name '%s'", scriptPath, ip, user, password, serviceName)
+	return s.commander.run(args)
 }
 
 // StopWinService выключает службу сервера
-func (s *ServerService) StopWinService(serverIP, serviceName string) ([]byte, error) {
-	command := fmt.Sprintf("Stop-Service -Name '%s'", serviceName)
-	return s.commander.run(command)
+func (s *ServerService) StopWinService(ip, user, password, serviceName string) ([]byte, error) {
+	scriptPath := "./powershell/StopService.ps1"
+	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -name '%s'", scriptPath, ip, user, password, serviceName)
+	return s.commander.run(args)
 }
 
 // RestartWinService переззагружает службу сервера
-func (s *ServerService) RestartWinService(serverIP, serviceName string) ([]byte, error) {
-	command := fmt.Sprintf("Restart-Service -Name '%s'", serviceName)
-	return s.commander.run(command)
+func (s *ServerService) RestartWinService(ip, user, password, serviceName string) ([]byte, error) {
+	scriptPath := "./powershell/RestartService.ps1"
+	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -name '%s'", scriptPath, ip, user, password, serviceName)
+	return s.commander.run(args)
 }
 
 // GetServerServices получает информацию о свободном мсесте на дисках
@@ -331,4 +334,18 @@ func (s *ServerService) GetProcesses(ip, user, password string) (map[string]inte
 	}
 
 	return processes, nil
+}
+
+// StoptWinProcess force stop process by id
+func (s *ServerService) StoptWinProcess(ip, user, password string, id int) ([]byte, error) {
+	scriptPath := "./powershell/StopProcess.ps1"
+	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -id '%d'", scriptPath, ip, user, password, id)
+	return s.commander.run(args)
+}
+
+// DisconnectRDPUser close RDP user session
+func (s *ServerService) DisconnectRDPUser(ip, user, password string, sessionID int) ([]byte, error) {
+	scriptPath := "./powershell/DisconnectRDPUser.ps1"
+	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -id '%d'", scriptPath, ip, user, password, sessionID)
+	return s.commander.run(args)
 }

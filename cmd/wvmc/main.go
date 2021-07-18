@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/anaxita/logit"
+	"github.com/anaxita/wvmc/internal/wvmc/control"
 	"github.com/anaxita/wvmc/internal/wvmc/server"
 	"github.com/anaxita/wvmc/internal/wvmc/store"
 	"github.com/joho/godotenv"
@@ -41,7 +42,8 @@ func main() {
 	}
 
 	store := store.New(db)
-	s := server.New(store)
+	serviceServer := control.NewServerService(new(control.Command))
+	s := server.New(store, serviceServer)
 	if err = s.Start(); err != nil {
 		logit.Fatal("Ошибка запуска сервер", err)
 	}

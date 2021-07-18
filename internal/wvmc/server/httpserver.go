@@ -14,17 +14,17 @@ import (
 
 // Server - структура http сервера
 type Server struct {
-	store         *store.Store
-	router        *mux.Router
-	serverService *control.ServerService
+	store          *store.Store
+	router         *mux.Router
+	controlService *control.ServerService
 }
 
 // New - создает новый сервер
-func New(storage *store.Store) *Server {
+func New(storage *store.Store, controlService *control.ServerService) *Server {
 	return &Server{
-		store:         storage,
-		router:        mux.NewRouter(),
-		serverService: control.NewServerService(&control.Command{}),
+		store:          storage,
+		router:         mux.NewRouter(),
+		controlService: controlService,
 	}
 }
 
@@ -62,6 +62,7 @@ func (s *Server) configureRouter() {
 	servers.Handle("/servers/{hv}/{name}/services", s.GetServerServices()).Methods("OPTIONS", "GET")
 	servers.Handle("/servers/{hv}/{name}/services", s.ControlServerServices()).Methods("OPTIONS", "POST")
 	servers.Handle("/servers/{hv}/{name}/manager", s.GetServerManager()).Methods("OPTIONS", "GET")
+	servers.Handle("/servers/{hv}/{name}/manager", s.ControlServerManager()).Methods("OPTIONS", "POST")
 	servers.Handle("/servers/update", s.UpdateAllServersInfo()).Methods("POST", "OPTIONS")
 }
 
