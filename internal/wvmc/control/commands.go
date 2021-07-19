@@ -11,7 +11,6 @@ import (
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 )
 
-// VM описывает свойства виртуальной машины, который можно получить с помощью комманд данного пакета
 type VM struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`
@@ -31,6 +30,22 @@ type WinVolume struct {
 	Letter     string  `json:"disk_letter"`
 	SpaceTotal float32 `json:"space_total"`
 	SpaceFree  float32 `json:"space_free"`
+}
+
+type WinProcess struct {
+	SessionID int    `json:"session_id"`
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	UserName  string `json:"user_name"`
+	CPULoad   string `json:"cpu_load"`
+	Memory    int `json:"memory"`
+}
+
+type WinRDPSesion struct {
+	SessionID int          `json:"session_id"`
+	UserName  string       `json:"user_name"`
+	State     string       `json:"state"`
+	Processes []WinProcess `json:"processes"`
 }
 
 // Commander описывает метод который запускает команду powershell,возвращает вывод и ошибку
@@ -320,8 +335,8 @@ func (s *ServerService) GetDiskFreeSpace(ip, user, password string) ([]WinVolume
 }
 
 // GetProcesses получает информацию о процессах (диспетчер задач)
-func (s *ServerService) GetProcesses(ip, user, password string) (map[string]interface{}, error) {
-	var processes map[string]interface{}
+func (s *ServerService) GetProcesses(ip, user, password string) ([]WinRDPSesion, error) {
+	var processes []WinRDPSesion
 	scriptPath := "./powershell/getProcesses.ps1"
 	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s'", scriptPath, ip, user, password)
 	out, err := s.commander.run(args)

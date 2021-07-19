@@ -72,7 +72,7 @@ func (s *Store) Server(c context.Context) *ServerRepository {
 func Migrate(db *sql.DB) error {
 	logit.Info("Выполняем миграции ...")
 
-	createUsersTable, _ := os.ReadFile("./sql/users.sql")
+	createUsersTable, _ := os.Read("./sql/users.sql")
 	createServersTable, _ := os.ReadFile("./sql/servers.sql")
 	createUsersServersTable, _ := os.ReadFile("./sql/users_servers.sql")
 	createRefreshTokkensTable, _ := os.ReadFile("./sql/refresh_tokens.sql")
