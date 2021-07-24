@@ -412,6 +412,7 @@ func (s *Server) ControlServerServices() http.HandlerFunc {
 		Command     string `json:"command"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
 		var err error
 		var task req
 
@@ -420,6 +421,9 @@ func (s *Server) ControlServerServices() http.HandlerFunc {
 			SendErr(w, http.StatusBadRequest, err, "невалидный json")
 			return
 		}
+
+		task.ServerHV = vars["hv"]
+		task.ServerName = vars["name"]
 
 		server, err := s.store.Server(r.Context()).FindByHVandName(task.ServerHV, task.ServerName)
 		if err != nil {
