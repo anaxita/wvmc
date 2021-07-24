@@ -283,7 +283,7 @@ func (s *Server) GetServerServices() http.HandlerFunc {
 		srv, err := s.store.Server(r.Context()).FindByHVandName(hv, name)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				SendErr(w, http.StatusOK, err, "server is not found")
+				SendErr(w, http.StatusNotFound, err, "server is not found")
 				return
 			}
 
