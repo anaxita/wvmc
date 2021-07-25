@@ -38,7 +38,7 @@ type WinProcess struct {
 	Name      string `json:"name"`
 	UserName  string `json:"user_name"`
 	CPULoad   string `json:"cpu_load"`
-	Memory    int `json:"memory"`
+	Memory    int    `json:"memory"`
 }
 
 type WinRDPSesion struct {

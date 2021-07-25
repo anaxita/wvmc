@@ -11,7 +11,7 @@ $Creds = New-Object -TypeName System.Management.Automation.PSCredential -Argumen
 $result = Invoke-Command -ComputerName $ip -Authentication Negotiate -Credential $Creds -ScriptBlock {
     Get-Volume |
         Where-Object {$_.DriveLetter -ne $null -AND [math]::round($_.Size / 1GB) -ge 1}
-}
+} -ErrorAction Stop
 
 $result |
     Select-Object @{

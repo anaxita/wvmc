@@ -444,7 +444,7 @@ func (s *Server) ControlServerServices() http.HandlerFunc {
 		}
 
 		if err != nil {
-			SendErr(w, http.StatusInternalServerError, err, "Ошибка выполнения команды")
+			SendErr(w, http.StatusInternalServerError, err, "Ошибока выполнения команды")
 			return
 		}
 
