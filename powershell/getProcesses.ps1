@@ -63,4 +63,4 @@ $rdpSessions | ForEach-Object {
     }
 }
 
-Write-Output $rdpSessions | ConvertTo-Json -Depth 3 -Compress > prc.json
+Write-Output $rdpSessions | ConvertTo-Json -Depth 3 -Compress
