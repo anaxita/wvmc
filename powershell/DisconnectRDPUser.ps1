@@ -10,5 +10,5 @@ $pass = ConvertTo-SecureString -String  $p -AsPlainText -Force
 $Creds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $u, $pass
 
 Invoke-Command -ComputerName $ip -Authentication Negotiate -Credential $Creds -ScriptBlock {
-    logoff $id
+    logoff.exe $Using:id
 }

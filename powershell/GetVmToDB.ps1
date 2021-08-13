@@ -6,7 +6,7 @@ param (
 $result = $hvList | ForEach-Object -Parallel {
     Get-VM  -ComputerName "$_" | ForEach-Object -Parallel {
 
-        $ip = "No data";
+        $ip = "";
         
         if ($_.State -eq 2) {
             $networkAdapter = $_ | Get-VMNetworkAdapter;

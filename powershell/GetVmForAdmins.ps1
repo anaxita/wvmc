@@ -3,34 +3,6 @@ param (
 )
 
 [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
-# $servers = $hvList | ForEach-Object -Parallel {
-#     $vms = Get-VM -ComputerName "$_";
-#     if ($Null -ne $vms) {
-#         foreach ($vm in $vms) {
-#             $state = $vm.State;
-#             $networkAdapter = $vm | Get-VMNetworkAdapter;
-#             if ($state -eq 2) {
-#                 $ip4 = $networkAdapter.IPAddresses
-#                 $state = "Running";
-#             }
-#             else {
-#                 $state = "Off";
-#             }
-            
-#             [pscustomobject]@{
-#                 "id"      = $vm.Id;
-#                 "name"    = $vm.Name;
-#                 "state"   = $state;
-#                 "network" = [string]$networkAdapter.SwitchName;
-#                 "status"  = $vm.Status;
-#                 "cpu"     = $vm.CPUUsage;
-#                 "hv"      = $vm.ComputerName;
-#                 "ip"      = $ip4[0];
-#             } ;
-            
-#         }
-#     }
-# } -ThrottleLimit 30;
 
 $servers =  $hvList | ForEach-Object -Parallel {
     $vms = Get-VM -ComputerName "$_";

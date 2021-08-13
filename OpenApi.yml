@@ -1418,7 +1418,7 @@ paths:
             example:
               server_name: SRVZinchenko
               server_hv: DCSRVHV12
-              enity_id: "4"
+              entity_id: "4"
               command: "stop"
       responses:
         400:

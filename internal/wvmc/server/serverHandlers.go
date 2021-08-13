@@ -337,10 +337,11 @@ func (s *Server) ControlServerManager() http.HandlerFunc {
 	type req struct {
 		ServerHV   string `json:"server_hv"`
 		ServerName string `json:"server_name"`
-		EnityID    int    `json:"enity_id"`
+		EntityID    int    `json:"entity_id"`
 		Command    string `json:"command"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
 		var err error
 		var task req
 
@@ -350,6 +351,9 @@ func (s *Server) ControlServerManager() http.HandlerFunc {
 			return
 		}
 
+		task.ServerHV = vars["hv"]
+		task.ServerName = vars["name"]
+
 		server, err := s.store.Server(r.Context()).FindByHVandName(task.ServerHV, task.ServerName)
 		if err != nil {
 			SendErr(w, http.StatusNotFound, err, "Server is not found")
@@ -357,10 +361,10 @@ func (s *Server) ControlServerManager() http.HandlerFunc {
 		}
 
 		switch task.Command {
-		case "disconnect":
-			_, err = s.controlService.StoptWinProcess(server.IP, server.User, server.Password, task.EnityID)
 		case "stop":
-			_, err = s.controlService.DisconnectRDPUser(server.IP, server.User, server.Password, task.EnityID)
+			_, err = s.controlService.StoptWinProcess(server.IP, server.User, server.Password, task.EntityID)
+		case "disconnect":
+			_, err = s.controlService.DisconnectRDPUser(server.IP, server.User, server.Password, task.EntityID)
 		default:
 			SendErr(w, http.StatusBadRequest, errors.New("undefind command"), "Неизвестная команда")
 			return

@@ -36,8 +36,7 @@ type WinProcess struct {
 	SessionID int    `json:"session_id"`
 	ID        int    `json:"id"`
 	Name      string `json:"name"`
-	UserName  string `json:"user_name"`
-	CPULoad   string `json:"cpu_load"`
+	CPULoad   int    `json:"cpu_load"`
 	Memory    int    `json:"memory"`
 }
 
@@ -126,7 +125,7 @@ func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]model.
 func (s *ServerService) GetServersDataForAdmins() ([]model.Server, error) {
 	hvs := os.Getenv("HV_LIST")
 
-	scriptPath := "./powershell/GetVMForAdmins.ps1"
+	scriptPath := "./powershell/dev_GetVMForAdmins.ps1"
 
 	out, err := s.commander.run(scriptPath, "-hvList", hvs)
 	if err != nil {
@@ -336,12 +335,18 @@ func (s *ServerService) GetDiskFreeSpace(ip, user, password string) ([]WinVolume
 
 // GetProcesses получает информацию о процессах (диспетчер задач)
 func (s *ServerService) GetProcesses(ip, user, password string) ([]WinRDPSesion, error) {
-	var processes []WinRDPSesion
+	processes := []WinRDPSesion{}
 	scriptPath := "./powershell/getProcesses.ps1"
 	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s'", scriptPath, ip, user, password)
+
 	out, err := s.commander.run(args)
 	if err != nil {
 		return processes, err
+	}
+
+	// check if not sessions
+	if string(out) != "" {
+		return processes, nil
 	}
 
 	if err = json.Unmarshal(out, &processes); err != nil {
@@ -361,6 +366,6 @@ func (s *ServerService) StoptWinProcess(ip, user, password string, id int) ([]by
 // DisconnectRDPUser close RDP user session
 func (s *ServerService) DisconnectRDPUser(ip, user, password string, sessionID int) ([]byte, error) {
 	scriptPath := "./powershell/DisconnectRDPUser.ps1"
-	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -id '%d'", scriptPath, ip, user, password, sessionID)
+	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -id %d", scriptPath, ip, user, password, sessionID)
 	return s.commander.run(args)
 }

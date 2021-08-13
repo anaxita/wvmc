@@ -9,7 +9,7 @@ $pass = ConvertTo-SecureString -String  $p -AsPlainText -Force
 $Creds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $u, $pass
 
 $result = Invoke-Command -ComputerName $ip -Credential $Creds -ScriptBlock {
-        Get-WmiObject -Class win32_service
+        Get-WmiObject -Class win32_service | Select-Object Name, DisplayName, State, StartName
     }
 
 $result |
@@ -21,4 +21,4 @@ $result |
             'user'         = $_.StartName
         }
     } |
-    ConvertTo-Json -Compress
+    ConvertTo-Json -AsArray -Compress
