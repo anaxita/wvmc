@@ -4,7 +4,7 @@ param (
 
 [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
 
-$nameList = 'ServerTwo' , 'VMBitrix_dev.kmsys.ru_off', 'VM_TestCentOS_off', 'SRV_IPZinchenko_off';
+$nameList = 'ServerTwo' , 'VMBitrix_dev.kmsys.ru_off', 'VM_TestCentOS_off';
 $hvList =  'DCSRVHV2', 'DCSRVHV7' ;
 
 $servers =  $hvList | ForEach-Object -Parallel {
