@@ -6,7 +6,6 @@ param (
 
 $nameList = 'ServerTwo' , 'VMBitrix_dev.kmsys.ru_off', 'VM_TestCentOS_off';
 $hvList =  'DCSRVHV2', 'DCSRVHV7' ;
-
 $servers =  $hvList | ForEach-Object -Parallel {
     $vms = Get-VM -ComputerName "$_" | Where-Object {$_.Name -in $Using:nameList};
 
