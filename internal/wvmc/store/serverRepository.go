@@ -21,13 +21,15 @@ func (r *ServerRepository) Find(key, value string) (model.Server, error) {
 
 	s := model.Server{}
 
-	query := fmt.Sprintf("SELECT id, title, ip4, hv, company, user_name, user_password FROM servers WHERE %s = ?", key)
+	query := fmt.Sprintf("SELECT id, title, ip4, hv, company, out_addr, description, user_name, user_password FROM servers WHERE %s = ?", key)
 	if err := r.db.QueryRowContext(r.ctx, query, value).Scan(
 		&s.ID,
 		&s.Name,
 		&s.IP,
 		&s.HV,
+		&s.OutAddr,
 		&s.Company,
+		&s.Description,
 		&s.User,
 		&s.Password,
 	); err != nil {
@@ -35,6 +37,25 @@ func (r *ServerRepository) Find(key, value string) (model.Server, error) {
 	}
 
 	logit.Info("Нашли сервер:", key, value)
+	return s, nil
+}
+
+//Find ищет сервер по хв + имени, возвращает модель либо ошибку
+func (r *ServerRepository) FindByHVandName(hv, name string) (model.Server, error) {
+	logit.Info("Ищем сервер:", name, hv)
+
+	s := model.Server{}
+
+	query := "SELECT ip4, user_name, user_password FROM servers WHERE hv = ? AND title = ?"
+	if err := r.db.QueryRowContext(r.ctx, query, hv, name).Scan(
+		&s.IP,
+		&s.User,
+		&s.Password,
+	); err != nil {
+		return s, err
+	}
+
+	logit.Info("Нашли сервер:", name, hv)
 	return s, nil
 }
 
@@ -60,8 +81,17 @@ func (r *ServerRepository) Create(s model.Server) (int, error) {
 func (r *ServerRepository) Edit(s model.Server) error {
 	logit.Info("Обновляем поля серверу:", s.Name)
 
-	query := "UPDATE servers SET company = ?,  description = ?, out_addr = ?, user_name = ?, user_password = ? WHERE id = ?"
-	_, err := r.db.ExecContext(r.ctx, query, s.Company, s.Description, s.OutAddr, s.User, s.Password, s.ID)
+	var query string
+	var err error
+
+	if s.Password != "" {
+		query = "UPDATE servers SET company = ?,  description = ?, out_addr = ?, user_name = ?, user_password = ? WHERE id = ? AND hv = ?"
+		_, err = r.db.ExecContext(r.ctx, query, s.Company, s.Description, s.OutAddr, s.User, s.Password, s.ID, s.HV)
+	} else {
+		query = "UPDATE servers SET company = ?,  description = ?, out_addr = ?, user_name = ? WHERE id = ? AND hv = ?"
+		_, err = r.db.ExecContext(r.ctx, query, s.Company, s.Description, s.OutAddr, s.User, s.ID, s.HV)
+	}
+
 	if err != nil {
 		return err
 	}

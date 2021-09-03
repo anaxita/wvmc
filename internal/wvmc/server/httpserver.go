@@ -14,17 +14,17 @@ import (
 
 // Server - структура http сервера
 type Server struct {
-	store         *store.Store
-	router        *mux.Router
-	serverService *control.ServerService
+	store          *store.Store
+	router         *mux.Router
+	controlService *control.ServerService
 }
 
 // New - создает новый сервер
-func New(storage *store.Store) *Server {
+func New(storage *store.Store, controlService *control.ServerService) *Server {
 	return &Server{
-		store:         storage,
-		router:        mux.NewRouter(),
-		serverService: control.NewServerService(&control.Command{}),
+		store:          storage,
+		router:         mux.NewRouter(),
+		controlService: controlService,
 	}
 }
 
@@ -34,7 +34,7 @@ func (s *Server) configureRouter() {
 	r.Handle("/refresh", s.RefreshToken()).Methods("POST", "OPTIONS")
 	r.Handle("/signin", s.SignIn()).Methods("POST", "OPTIONS")
 	r.Handle("/update", s.UpdateAllServersInfo()).Methods("GET", "OPTIONS") // TODO: удалить когда уйдет в продакшен (аналог /servers/update)
-	r.Handle("/log", s.Showlog()).Methods("GET", "OPTIONS")
+	// r.Handle("/log", s.Showlog()).Methods("GET", "OPTIONS")
 
 	users := r.NewRoute().Subrouter()
 	users.Use(s.Auth, s.CheckIsAdmin)
@@ -57,6 +57,12 @@ func (s *Server) configureRouter() {
 	servers.Use(s.Auth, s.CheckIsAdmin)
 	// servers.Handle("/servers", s.CreateServer()).Methods("POST", "OPTIONS") // disabled because working auto
 	servers.Handle("/servers", s.EditServer()).Methods("OPTIONS", "PATCH")
+	servers.Handle("/servers/{hv}/{name}", s.GetServer()).Methods("OPTIONS", "GET")
+	servers.Handle("/servers/{hv}/{name}/disks", s.GetServerDisks()).Methods("OPTIONS", "GET")
+	servers.Handle("/servers/{hv}/{name}/services", s.GetServerServices()).Methods("OPTIONS", "GET")
+	servers.Handle("/servers/{hv}/{name}/services", s.ControlServerServices()).Methods("OPTIONS", "POST")
+	servers.Handle("/servers/{hv}/{name}/manager", s.GetServerManager()).Methods("OPTIONS", "GET")
+	servers.Handle("/servers/{hv}/{name}/manager", s.ControlServerManager()).Methods("OPTIONS", "POST")
 	servers.Handle("/servers/update", s.UpdateAllServersInfo()).Methods("POST", "OPTIONS")
 }
 

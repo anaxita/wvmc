@@ -7,7 +7,9 @@ import (
 	"net/http"
 
 	"github.com/anaxita/logit"
+	"github.com/anaxita/wvmc/internal/wvmc/control"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
+	"github.com/gorilla/mux"
 )
 
 // GetServers возвращает список серверов
@@ -25,9 +27,9 @@ func (s *Server) GetServers() http.HandlerFunc {
 
 		if user.Role == adminRole {
 
-			vms, err := s.serverService.GetServersDataForAdmins()
+			vms, err := s.controlService.GetServersDataForAdmins()
 			if err != nil {
-				SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
+				SendErr(w, http.StatusOK, err, "Ошибка получения статусов")
 				logit.Log("PS", err)
 				return
 			}
@@ -47,7 +49,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 				return
 			}
 
-			vms, err := s.serverService.GetServersDataForUsers(servers)
+			vms, err := s.controlService.GetServersDataForUsers(servers)
 			if err != nil {
 				SendErr(w, http.StatusInternalServerError, err, "Ошибка получения статусов")
 				return
@@ -69,6 +71,37 @@ func (s *Server) GetServers() http.HandlerFunc {
 
 			SendOK(w, http.StatusOK, response{vms})
 		}
+
+	}
+}
+
+// GetServer получает информацию об 1 сервере по его хв и имени
+func (s *Server) GetServer() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		hv := vars["hv"]
+		name := vars["name"]
+
+		store := s.store.Server(r.Context())
+
+		server, err := store.Find("title", name)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				SendErr(w, http.StatusOK, err, "server is not found")
+				return
+			}
+
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+
+		vmInfo, err := control.NewServerService(&control.Command{}).GetServerData(server, hv, name)
+		if err != nil {
+			SendErr(w, http.StatusOK, err, "can't to get vm info")
+			return
+		}
+
+		SendOK(w, http.StatusOK, vmInfo)
 
 	}
 }
@@ -102,7 +135,7 @@ func (s *Server) CreateServer() http.HandlerFunc {
 			return
 		}
 
-		SendErr(w, http.StatusBadRequest, errors.New("server is already exists"), "Сервер уже существует")
+		SendErr(w, http.StatusOK, errors.New("server is already exists"), "Сервер уже существует")
 	}
 }
 
@@ -121,7 +154,7 @@ func (s *Server) EditServer() http.HandlerFunc {
 		_, err := store.Find("id", req.ID)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				SendErr(w, http.StatusNotFound, err, "Сервер не найден")
+				SendErr(w, http.StatusOK, err, "Сервер не найден")
 				return
 			}
 
@@ -183,18 +216,18 @@ func (s *Server) ControlServer() http.HandlerFunc {
 
 		switch command {
 		case "start_power":
-			_, err = s.serverService.StartServer(server)
+			_, err = s.controlService.StartServer(server)
 		case "stop_power":
-			_, err = s.serverService.StopServer(server)
+			_, err = s.controlService.StopServer(server)
 
 		case "stop_power_force":
-			_, err = s.serverService.StopServerForce(server)
+			_, err = s.controlService.StopServerForce(server)
 
 		case "start_network":
-			_, err = s.serverService.StartServerNetwork(server)
+			_, err = s.controlService.StartServerNetwork(server)
 
 		case "stop_network":
-			_, err = s.serverService.StopServerNetwork(server)
+			_, err = s.controlService.StopServerNetwork(server)
 		default:
 			SendErr(w, http.StatusBadRequest, errors.New("undefiend command"), "Неизвестная команда")
 			return
@@ -212,7 +245,7 @@ func (s *Server) ControlServer() http.HandlerFunc {
 // UpdateAllServersInfo обновляет данные в БД по серверам
 func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		servers, err := s.serverService.UpdateAllServersInfo()
+		servers, err := s.controlService.UpdateAllServersInfo()
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка powershell")
 			return
@@ -237,5 +270,188 @@ func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 		logit.Log("ДУБЛИ: ", duplicatesServers)
 
 		SendOK(w, http.StatusOK, "Updated")
+	}
+}
+
+// Get services
+func (s *Server) GetServerServices() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		hv := vars["hv"]
+		name := vars["name"]
+
+		srv, err := s.store.Server(r.Context()).FindByHVandName(hv, name)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				SendErr(w, http.StatusNotFound, err, "server is not found")
+				return
+			}
+
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+
+		services, err := control.NewServerService(&control.Command{}).GetServerServices(srv.IP, srv.User, srv.Password)
+		if err != nil {
+			SendErr(w, http.StatusOK, err, "Ошибка подключения к серверу")
+			return
+		}
+
+		SendOK(w, http.StatusOK, services)
+
+	}
+}
+
+// Get processes
+func (s *Server) GetServerManager() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		hv := vars["hv"]
+		name := vars["name"]
+
+		srv, err := s.store.Server(r.Context()).FindByHVandName(hv, name)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				SendErr(w, http.StatusOK, err, "server is not found")
+				return
+			}
+
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+
+		processes, err := control.NewServerService(&control.Command{}).GetProcesses(srv.IP, srv.User, srv.Password)
+		if err != nil {
+			SendErr(w, http.StatusOK, err, "Ошибка подключения к серверу")
+			return
+		}
+
+		SendOK(w, http.StatusOK, processes)
+
+	}
+}
+
+// ControlServerManager control processes and user rdp sessions
+func (s *Server) ControlServerManager() http.HandlerFunc {
+
+	type req struct {
+		ServerHV   string `json:"server_hv"`
+		ServerName string `json:"server_name"`
+		EntityID    int    `json:"entity_id"`
+		Command    string `json:"command"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		var err error
+		var task req
+
+		err = json.NewDecoder(r.Body).Decode(&task)
+		if err != nil {
+			SendErr(w, http.StatusBadRequest, err, "невалидный json")
+			return
+		}
+
+		task.ServerHV = vars["hv"]
+		task.ServerName = vars["name"]
+
+		server, err := s.store.Server(r.Context()).FindByHVandName(task.ServerHV, task.ServerName)
+		if err != nil {
+			SendErr(w, http.StatusNotFound, err, "Server is not found")
+			return
+		}
+
+		switch task.Command {
+		case "stop":
+			_, err = s.controlService.StoptWinProcess(server.IP, server.User, server.Password, task.EntityID)
+		case "disconnect":
+			_, err = s.controlService.DisconnectRDPUser(server.IP, server.User, server.Password, task.EntityID)
+		default:
+			SendErr(w, http.StatusBadRequest, errors.New("undefind command"), "Неизвестная команда")
+			return
+		}
+
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка выполнения команды")
+			return
+		}
+
+		SendOK(w, http.StatusOK, "Команда выполнена успешно")
+	}
+}
+
+// GetServerDisks return info about disks like letter, total and free size
+func (s *Server) GetServerDisks() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		hv := vars["hv"]
+		name := vars["name"]
+
+		srv, err := s.store.Server(r.Context()).FindByHVandName(hv, name)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				SendErr(w, http.StatusOK, err, "server is not found")
+				return
+			}
+
+			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+			return
+		}
+		disksInfo, err := control.NewServerService(&control.Command{}).GetDiskFreeSpace(srv.IP, srv.User, srv.Password)
+		if err != nil {
+			SendErr(w, http.StatusOK, err, "Ошибка подключения к серверу")
+			return
+		}
+
+		SendOK(w, http.StatusOK, disksInfo)
+	}
+}
+
+// ControlServerServices управляет службами сервера
+func (s *Server) ControlServerServices() http.HandlerFunc {
+
+	type req struct {
+		ServerHV    string `json:"server_hv"`
+		ServerName  string `json:"server_name"`
+		ServiceName string `json:"service_name"`
+		Command     string `json:"command"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		var err error
+		var task req
+
+		err = json.NewDecoder(r.Body).Decode(&task)
+		if err != nil {
+			SendErr(w, http.StatusBadRequest, err, "невалидный json")
+			return
+		}
+
+		task.ServerHV = vars["hv"]
+		task.ServerName = vars["name"]
+
+		server, err := s.store.Server(r.Context()).FindByHVandName(task.ServerHV, task.ServerName)
+		if err != nil {
+			SendErr(w, http.StatusNotFound, err, "Server is not found")
+			return
+		}
+
+		switch task.Command {
+		case "start":
+			_, err = s.controlService.StartWinService(server.IP, server.User, server.Password, task.ServiceName)
+		case "stop":
+			_, err = s.controlService.StopWinService(server.IP, server.User, server.Password, task.ServiceName)
+		case "restart":
+			_, err = s.controlService.RestartWinService(server.IP, server.User, server.Password, task.ServiceName)
+		default:
+			SendErr(w, http.StatusBadRequest, errors.New("undefind command"), "Неизвестная команда")
+			return
+		}
+
+		if err != nil {
+			SendErr(w, http.StatusInternalServerError, err, "Ошибока выполнения команды")
+			return
+		}
+
+		SendOK(w, http.StatusOK, "Команда выполнена успешно")
 	}
 }

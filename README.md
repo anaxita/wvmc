@@ -13,5 +13,5 @@ WVMC - is a simple service for basic administration your Windows virtual machine
   - Mobile web version
 
 ## Usage
-  1. Run app on your windows server with admin permission
+  1. Run app on your hyper-v with admin permission
   2. If there has no errors - you can signin at http://localhost:8080 where 8080 is your config PORT (login and password are: admin admin)

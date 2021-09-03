@@ -103,6 +103,13 @@ paths:
             type: string
             example:
               application/json
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
       requestBody:
         content:
           application/json:
@@ -161,6 +168,13 @@ paths:
       description: Обновление пары токенов
       parameters:
         - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
+        - name: Content-Type
           in: header
           required: true
           schema:
@@ -316,6 +330,13 @@ paths:
             type: string
             example:
               application/json
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
       requestBody:
         content:
           application/json:
@@ -382,6 +403,13 @@ paths:
               Bearer <token>
           style: simple
         - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
+        - name: Content-Type
           in: header
           required: true
           schema:
@@ -464,6 +492,13 @@ paths:
             type: string
             example:
               application/json
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
       requestBody:
         content:
           application/json:
@@ -530,6 +565,13 @@ paths:
               Bearer <token>
           style: simple
         - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
+        - name: Content-Type
           in: header
           required: true
           schema:
@@ -906,7 +948,11 @@ paths:
       tags:
         - Сервера
       summary: Редактировать сервер
-      description: Редактирование серверов приложения
+      description:
+        Редактирование серверов приложения
+
+        password - опционально, если не передано, то пароль не изменится, 
+        т.е редактирование делится на изменение включая пароль и не включая
       parameters:
         - name: Authorization
           in: header
@@ -917,6 +963,13 @@ paths:
               Bearer <token>
           style: simple
         - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
+        - name: Content-Type
           in: header
           required: true
           schema:
@@ -993,6 +1046,13 @@ paths:
               Bearer <token>
           style: simple
         - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
+        - name: Content-Type
           in: header
           required: true
           schema:
@@ -1085,6 +1145,13 @@ paths:
             type: string
             example:
               application/json
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
       requestBody:
         content:
           application/json:             
@@ -1155,4 +1222,417 @@ paths:
                 $ref: '#/components/schemas/Response'
               example:
                   status: ok
-                  message: accepted                   
+                  message: accepted
+  /servers/{hv}/{name}/services:
+    post:
+      tags:
+        - Сервера
+      summary: Службы сервера
+      description:
+        Команды
+
+        - start  - Включить службу
+
+        - stop  - Выключить службу
+
+        - restart  - Перезагрузить службу
+
+        Поддерживается выполнение **только одной** команды за запрос
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              Bearer <token>
+          style: simple
+        - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
+      requestBody:
+        content:
+          application/json:             
+            example:
+              server_name: "SRVZinchenko"
+              server_hv: "DCSRVHV12"
+              service_name: "Apache2.4"
+              command: "restart"
+      responses:
+        400:
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                status: err
+                message:
+                  error: Неизвестная команда
+                  meta: command is undefined
+        401:
+          description: Токен истёк или недействителен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                status: err
+                message:
+                  error: Токен недействителен
+                  meta: not valid signature
+        200:
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                status: ok
+                message: "Команда выполнена успешно"
+    get:
+      tags:
+        - Сервера
+      summary: Службы сервера
+      description:
+        Получает список всех служб сервера
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              Bearer <token>
+          style: simple
+        - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
+      responses:
+              401:
+                description: Токен истёк или недействителен
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/Response'
+                    example:
+                      status: err
+                      message:
+                        error: Токен недействителен
+                        meta: not valid signature
+              500:
+                description: Ошибка БД
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/Response'
+                    example:
+                        status: err
+                        message:
+                          err: Ошибка БД
+                          meta: table is not exist
+              404:
+                description: Сервер не найден
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/Response'
+                    example:
+                      status: err
+                      message:
+                        error: Сервер не найден
+                        meta: no sql rows
+              200:
+                description: Успешно
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/Response'
+                    example:
+                      status: ok
+                      message:
+                        -
+                          name: Apache2.4
+                          display_name: Apache2.4
+                          status: Running
+                          user: Администратор
+                        -
+                          name: spooler
+                          display_name: Spooler
+                          status: Stopped
+                          user: System
+  /servers/{hv}/{name}/manager:
+    post:
+      tags:
+        - Сервера
+      summary: Процессы и RDP пользователи сервера
+      description:
+        Команды
+
+        - stop  - Завершить процесс
+
+        - disconnect  - Завершить сеанс RDP
+
+        Поддерживается выполнение **только одной** команды за запрос
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              Bearer <token>
+          style: simple
+        - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
+      requestBody:
+        content:
+          application/json:             
+            example:
+              server_name: SRVZinchenko
+              server_hv: DCSRVHV12
+              entity_id: "4"
+              command: "stop"
+      responses:
+        400:
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                status: err
+                message:
+                  error: Неизвестная команда
+                  meta: command is undefined
+        401:
+          description: Токен истёк или недействителен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                status: err
+                message:
+                  error: Токен недействителен
+                  meta: not valid signature
+        200:
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                status: ok
+                message: "Команда выполнена успешно"
+    get:
+      tags:
+        - Сервера
+      summary: Службы сервера
+      description:
+        Получает список всех сеансов RDP и процессов в этих сеансах
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              Bearer <token>
+          style: simple
+        - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            example:
+              application/json
+      responses:
+              401:
+                description: Токен истёк или недействителен
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/Response'
+                    example:
+                      status: err
+                      message:
+                        error: Токен недействителен
+                        meta: not valid signature
+              500:
+                description: Ошибка БД
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/Response'
+                    example:
+                        status: err
+                        message:
+                          err: Ошибка БД
+                          meta: table is not exist
+              404:
+                description: Сервер не найден
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/Response'
+                    example:
+                      status: err
+                      message:
+                        error: Сервер не найден
+                        meta: no sql rows
+              200:
+                description: Успешно
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/Response'
+                    example:
+                      status: ok
+                      message:
+                        -
+                          session_id: 5
+                          user_name: Администратор
+                          state: Active
+                          processes: 
+                            -
+                              session_id: 5
+                              id: 522
+                              name: chrome.exe
+                              user_name: programs
+                              cpu_load: 2.5
+                              memory: 968
+                            -
+                              session_id: 5
+                              id: 523
+                              name: notepad.exe
+                              user_name: programs
+                              cpu_load: 0.1
+                              memory: 4
+                        -
+                          session_id: 11
+                          user_name: anaxita
+                          state: disconnected
+                          processes: 
+                            -
+                              session_id: 11
+                              id: 4122
+                              name: 1cv7vs.exe
+                              user_name: u01
+                              cpu_load: 11.9
+                              memory: 2225
+                            -
+                              session_id: 11
+                              id: 1257
+                              name: word.exe
+                              user_name: u12
+                              cpu_load: 4
+                              memory: 600
+
+  /servers/{hv}/{name}/disks:
+    get:
+          tags:
+            - Сервера
+          summary: Свободное место на дисках
+          description:
+            Получает список всех дисков и их количество свободного пространства
+          parameters:
+            - name: Authorization
+              in: header
+              required: true
+              schema:
+                type: string
+                example:
+                  Bearer <token>
+              style: simple
+            - name: Accept
+              in: header
+              required: true
+              schema:
+                type: string
+                example:
+                  application/json
+          responses:
+                  401:
+                    description: Токен истёк или недействителен
+                    content:
+                      application/json:
+                        schema:
+                          $ref: '#/components/schemas/Response'
+                        example:
+                          status: err
+                          message:
+                            error: Токен недействителен
+                            meta: not valid signature
+                  500:
+                    description: Ошибка БД
+                    content:
+                      application/json:
+                        schema:
+                          $ref: '#/components/schemas/Response'
+                        example:
+                            status: err
+                            message:
+                              err: Ошибка БД
+                              meta: table is not exist
+                  404:
+                    description: Сервер не найден
+                    content:
+                      application/json:
+                        schema:
+                          $ref: '#/components/schemas/Response'
+                        example:
+                          status: err
+                          message:
+                            error: Сервер не найден
+                            meta: no sql rows
+                  200:
+                    description: Успешно
+                    content:
+                      application/json:
+                        schema:
+                          $ref: '#/components/schemas/Response'
+                        example:
+                          status: ok
+                          message:
+                            -
+                              disk_letter: C
+                              space_total: 99.8
+                              space_free: 11.2
+                            -
+                              disk_letter: D
+                              space_total: 99.8
+                              space_free: 11.2 
+                            -
+                              disk_letter: E
+                              space_total: 99.8
+                              space_free: 11.2 
+                                                         
+

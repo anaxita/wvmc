@@ -31,7 +31,7 @@ func createToken(t string, user model.User) string {
 	if t == "access" {
 		claims = customClaims{
 			jwt.StandardClaims{
-				ExpiresAt: time.Now().Add(time.Hour * 15).Unix(),
+				ExpiresAt: time.Now().Add(time.Hour * 3600).Unix(),
 			},
 			user,
 			t,

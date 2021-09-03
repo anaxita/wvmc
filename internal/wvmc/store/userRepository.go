@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/anaxita/logit"
@@ -80,6 +81,10 @@ func (r *UserRepository) Edit(u model.User, withPass bool) error {
 // Delete удаляет пользователя, возвращает ошибку в случае неудачи
 func (r *UserRepository) Delete(id string) error {
 	logit.Info("Удаляем пользователя", id)
+
+	if id == "129" {
+		return errors.New("нельзя удалить главного админа")
+	}
 	_, err := r.db.ExecContext(r.ctx, "DELETE FROM users WHERE id = ? ", id)
 	if err != nil {
 		return err
