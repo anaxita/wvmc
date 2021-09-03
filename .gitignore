@@ -3,3 +3,5 @@ log*
 .env*
 /build
 *.exe
+.vscode
+*.s3db
