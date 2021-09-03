@@ -3,6 +3,7 @@ package control
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -128,6 +129,8 @@ func (s *ServerService) GetServersDataForAdmins() ([]model.Server, error) {
 	scriptPath := "./powershell/dev_GetVMForAdmins.ps1"
 
 	out, err := s.commander.run(scriptPath, "-hvList", hvs)
+	log.Println("out:", string(out))
+
 	if err != nil {
 		return nil, err
 	}
