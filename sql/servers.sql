@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS `servers` (
-  `id` varchar(255) PRIMARY KEY,
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `vmid` varchar(255) NOT NULL DEFAULT "",
   `title` varchar(255) NOT NULL,
   `ip4` varchar(255) NOT NULL DEFAULT "",
   `hv` varchar(255) NOT NULL,

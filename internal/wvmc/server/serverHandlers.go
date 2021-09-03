@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
 
 	"github.com/anaxita/logit"
 	"github.com/anaxita/wvmc/internal/wvmc/control"
@@ -118,7 +119,7 @@ func (s *Server) CreateServer() http.HandlerFunc {
 
 		store := s.store.Server(r.Context())
 
-		_, err := store.Find("id", req.ID)
+		_, err := store.Find("vmid", req.ID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				_, err := store.Create(req)
@@ -151,7 +152,7 @@ func (s *Server) EditServer() http.HandlerFunc {
 
 		store := s.store.Server(r.Context())
 
-		_, err := store.Find("id", req.ID)
+		_, err := store.Find("vmid", req.ID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusOK, err, "Сервер не найден")
@@ -184,7 +185,7 @@ func (s *Server) DeleteServer() http.HandlerFunc {
 
 		store := s.store.Server(r.Context())
 
-		_, err := store.Find("id", req.ID)
+		_, err := store.Find("vmid", req.ID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusNotFound, err, "Сервер не найден")
@@ -245,6 +246,9 @@ func (s *Server) ControlServer() http.HandlerFunc {
 // UpdateAllServersInfo обновляет данные в БД по серверам
 func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		user := os.Getenv("SERVER_USER_NAME")
+		password := os.Getenv("SERVER_USER_PASSWORD")
+
 		servers, err := s.controlService.UpdateAllServersInfo()
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка powershell")
@@ -253,6 +257,8 @@ func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 		duplicates := make(map[string]int)
 		duplicatesServers := make([]model.Server, 0)
 		for _, server := range servers {
+			server.User = user
+			server.Password = password
 			if duplicates[server.ID] > 0 {
 				logit.Log("ДУБЛЬ", server.Name, server.ID)
 				duplicatesServers = append(duplicatesServers, server)
@@ -337,7 +343,7 @@ func (s *Server) ControlServerManager() http.HandlerFunc {
 	type req struct {
 		ServerHV   string `json:"server_hv"`
 		ServerName string `json:"server_name"`
-		EntityID    int    `json:"entity_id"`
+		EntityID   int    `json:"entity_id"`
 		Command    string `json:"command"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
