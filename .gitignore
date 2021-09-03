@@ -1,6 +1,5 @@
 log*
 .log
-/powershell/test*
 .env*
 /build
 *.exe
