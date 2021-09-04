@@ -64,7 +64,7 @@ func (c *Command) run(args ...string) ([]byte, error) {
 	logit.Log("COMMAND", e.Args)
 
 	out, err := e.Output()
-	logit.Log("out: ", string(out))
+	logit.Info("out script: ", string(out))
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +126,7 @@ func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]model.
 func (s *ServerService) GetServersDataForAdmins() ([]model.Server, error) {
 	hvs := os.Getenv("HV_LIST")
 
-	scriptPath := "./powershell/dev_GetVMForAdmins.ps1"
+	scriptPath := "./powershell/GetVmForAdmins.ps1"
 
 	out, err := s.commander.run(scriptPath, "-hvList", hvs)
 	log.Println("out:", string(out))
@@ -348,13 +348,16 @@ func (s *ServerService) GetProcesses(ip, user, password string) ([]WinRDPSesion,
 	}
 
 	// check if not sessions
-	if string(out) != "" {
+	if string(out) == "" {
+		logit.Log("string out", string(out))
 		return processes, nil
 	}
 
 	if err = json.Unmarshal(out, &processes); err != nil {
 		return processes, err
 	}
+
+	logit.Info("processes", processes)
 
 	return processes, nil
 }
