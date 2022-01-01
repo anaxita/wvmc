@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	err := godotenv.Load(".env_prod")
+	err := godotenv.Load(".env_dev")
 	if err != nil {
 		f, _ := os.OpenFile("./errors.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0200)
 		defer f.Close()

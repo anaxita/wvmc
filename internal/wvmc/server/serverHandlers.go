@@ -286,7 +286,7 @@ func (s *Server) GetServerServices() http.HandlerFunc {
 		hv := vars["hv"]
 		name := vars["name"]
 
-		srv, err := s.store.Server(r.Context()).FindByHVandName(hv, name)
+		srv, err := s.store.Server(r.Context()).FindByHvAndName(hv, name)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusNotFound, err, "server is not found")
@@ -315,7 +315,7 @@ func (s *Server) GetServerManager() http.HandlerFunc {
 		hv := vars["hv"]
 		name := vars["name"]
 
-		srv, err := s.store.Server(r.Context()).FindByHVandName(hv, name)
+		srv, err := s.store.Server(r.Context()).FindByHvAndName(hv, name)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusOK, err, "server is not found")
@@ -360,7 +360,7 @@ func (s *Server) ControlServerManager() http.HandlerFunc {
 		task.ServerHV = vars["hv"]
 		task.ServerName = vars["name"]
 
-		server, err := s.store.Server(r.Context()).FindByHVandName(task.ServerHV, task.ServerName)
+		server, err := s.store.Server(r.Context()).FindByHvAndName(task.ServerHV, task.ServerName)
 		if err != nil {
 			SendErr(w, http.StatusNotFound, err, "Server is not found")
 			return
@@ -392,7 +392,7 @@ func (s *Server) GetServerDisks() http.HandlerFunc {
 		hv := vars["hv"]
 		name := vars["name"]
 
-		srv, err := s.store.Server(r.Context()).FindByHVandName(hv, name)
+		srv, err := s.store.Server(r.Context()).FindByHvAndName(hv, name)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusOK, err, "server is not found")
@@ -435,7 +435,7 @@ func (s *Server) ControlServerServices() http.HandlerFunc {
 		task.ServerHV = vars["hv"]
 		task.ServerName = vars["name"]
 
-		server, err := s.store.Server(r.Context()).FindByHVandName(task.ServerHV, task.ServerName)
+		server, err := s.store.Server(r.Context()).FindByHvAndName(task.ServerHV, task.ServerName)
 		if err != nil {
 			SendErr(w, http.StatusNotFound, err, "Server is not found")
 			return
