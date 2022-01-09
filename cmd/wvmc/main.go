@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"time"
 
@@ -14,7 +16,7 @@ import (
 )
 
 func init() {
-	err := godotenv.Load(".env_dev")
+	err := godotenv.Load(".env_prod")
 	if err != nil {
 		f, _ := os.OpenFile("./errors.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0200)
 		defer f.Close()
@@ -44,6 +46,9 @@ func main() {
 	store := store.New(db)
 	serviceServer := control.NewServerService(new(control.Command))
 	s := server.New(store, serviceServer)
+
+	s.UpdateAllServersInfo()(httptest.NewRecorder(), &http.Request{})
+
 	if err = s.Start(); err != nil {
 		logit.Fatal("Ошибка запуска сервер", err)
 	}

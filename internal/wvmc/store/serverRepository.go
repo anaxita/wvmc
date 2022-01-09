@@ -182,7 +182,7 @@ func (r *ServerRepository) FindByUser(userID string) ([]model.Server, error) {
 
 	var servers []model.Server
 
-	rows, err := r.db.QueryContext(r.ctx, "SELECT s.id, s.title, s.ip4, s.hv, s.company, s.description, s.out_addr, s.user_name, s.user_password FROM servers as s INNER JOIN users_servers as us ON (s.id = us.server_ID) WHERE us.user_id = ?", userID)
+	rows, err := r.db.QueryContext(r.ctx, "SELECT s.vmid, s.title, s.ip4, s.hv, s.company, s.description, s.out_addr, s.user_name, s.user_password FROM servers as s INNER JOIN users_servers as us ON (s.id = us.server_ID) WHERE us.user_id = ?", userID)
 	if err != nil {
 		return servers, err
 	}

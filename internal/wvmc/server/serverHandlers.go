@@ -275,7 +275,7 @@ func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 
 		logit.Log("ДУБЛИ: ", duplicatesServers)
 
-		SendOK(w, http.StatusOK, "Updated")
+		// SendOK(w, http.StatusOK, "Updated")
 	}
 }
 
