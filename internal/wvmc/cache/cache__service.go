@@ -41,12 +41,12 @@ func (c *CacheService) SetServerState(s model.Server, state model.ServerState) {
 		return
 	}
 
-	for _, v := range c.servers {
+	for i, v := range c.servers {
 		if v.Name == s.Name &&
 			v.HV == s.HV {
 			log.Println("Успешно сменили статус")
 
-			v.State = string(state)
+			c.servers[i].State = string(state)
 
 			break
 		}
@@ -63,12 +63,12 @@ func (c *CacheService) SetServerNetwork(s model.Server, state model.ServerState)
 		return
 	}
 
-	for _, v := range c.servers {
+	for i, v := range c.servers {
 		if v.Name == s.Name &&
 			v.HV == s.HV {
 			log.Println("Успешно сменили сеть")
 
-			v.Network = string(state)
+			c.servers[i].Network = string(state)
 
 			break
 		}
