@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/anaxita/logit"
-	"github.com/anaxita/wvmc/internal/wvmc/control"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 	"github.com/gorilla/mux"
 )
@@ -96,7 +95,7 @@ func (s *Server) GetServer() http.HandlerFunc {
 			return
 		}
 
-		vmInfo, err := control.NewServerService(&control.Command{}).GetServerData(server, hv, name)
+		vmInfo, err := s.controlService.GetServerData(server, hv, name)
 		if err != nil {
 			SendErr(w, http.StatusOK, err, "can't to get vm info")
 			return
@@ -230,7 +229,7 @@ func (s *Server) ControlServer() http.HandlerFunc {
 		case "stop_network":
 			_, err = s.controlService.StopServerNetwork(server)
 		default:
-			SendErr(w, http.StatusBadRequest, errors.New("undefiend command"), "Неизвестная команда")
+			SendErr(w, http.StatusBadRequest, errors.New("incorrect command"), "Неизвестная команда")
 			return
 		}
 
@@ -297,7 +296,7 @@ func (s *Server) GetServerServices() http.HandlerFunc {
 			return
 		}
 
-		services, err := control.NewServerService(&control.Command{}).GetServerServices(srv.IP, srv.User, srv.Password)
+		services, err := s.controlService.GetServerServices(srv.IP, srv.User, srv.Password)
 		if err != nil {
 			SendErr(w, http.StatusOK, err, "Ошибка подключения к серверу")
 			return
@@ -326,7 +325,7 @@ func (s *Server) GetServerManager() http.HandlerFunc {
 			return
 		}
 
-		processes, err := control.NewServerService(&control.Command{}).GetProcesses(srv.IP, srv.User, srv.Password)
+		processes, err := s.controlService.GetProcesses(srv.IP, srv.User, srv.Password)
 		if err != nil {
 			SendErr(w, http.StatusOK, err, "Ошибка подключения к серверу")
 			return
@@ -402,7 +401,7 @@ func (s *Server) GetServerDisks() http.HandlerFunc {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 			return
 		}
-		disksInfo, err := control.NewServerService(&control.Command{}).GetDiskFreeSpace(srv.IP, srv.User, srv.Password)
+		disksInfo, err := s.controlService.GetDiskFreeSpace(srv.IP, srv.User, srv.Password)
 		if err != nil {
 			SendErr(w, http.StatusOK, err, "Ошибка подключения к серверу")
 			return

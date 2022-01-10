@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/anaxita/wvmc/internal/wvmc/cache"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -44,10 +45,19 @@ func main() {
 	}
 
 	store := store.New(db)
-	serviceServer := control.NewServerService(new(control.Command))
+	cacheService := cache.NewCacheService()
+
+	serviceServer := control.NewServerService(new(control.Command), cacheService)
 	s := server.New(store, serviceServer)
 
-	s.UpdateAllServersInfo()(httptest.NewRecorder(), &http.Request{})
+	go func() {
+		s.UpdateAllServersInfo()(httptest.NewRecorder(), &http.Request{})
+
+		for {
+			time.Sleep(time.Minute * 1)
+			serviceServer.GetServersDataForAdmins()
+		}
+	}()
 
 	if err = s.Start(); err != nil {
 		logit.Fatal("Ошибка запуска сервер", err)

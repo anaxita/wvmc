@@ -1,5 +1,14 @@
 package model
 
+type ServerState string
+
+const (
+	ServerStateRunning   ServerState = "Running"
+	ServerStateStopped   ServerState = "Off"
+	ServerNetworkRunning ServerState = "LAN - Virtual Switch"
+	ServerNetworkStopped ServerState = ""
+)
+
 // Server содержит модель сервера из БД
 type Server struct {
 	ID          string  `json:"id"`
