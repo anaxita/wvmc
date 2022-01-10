@@ -210,10 +210,10 @@ func (s *Server) DeleteServer() http.HandlerFunc {
 func (s *Server) ControlServer() http.HandlerFunc {
 
 	const notice = `
-User: %s %s %s\n
-Server: %s\n
-HV: %s\n
-Action: %s\n
+User: %s %s %s
+Server: %s
+HV: %s
+Action: %s
 `
 
 	return func(w http.ResponseWriter, r *http.Request) {
