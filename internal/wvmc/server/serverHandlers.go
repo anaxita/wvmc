@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -208,7 +209,16 @@ func (s *Server) DeleteServer() http.HandlerFunc {
 // ControlServer выполняет команды на сервере
 func (s *Server) ControlServer() http.HandlerFunc {
 
+	const notice = `
+User: %s %s %s\n
+Server: %s\n
+HV: %s\n
+Action: %s\n
+`
+
 	return func(w http.ResponseWriter, r *http.Request) {
+		user := r.Context().Value(CtxString("user")).(model.User)
+
 		var err error
 
 		server := r.Context().Value(CtxString("server")).(model.Server)
@@ -236,6 +246,11 @@ func (s *Server) ControlServer() http.HandlerFunc {
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка выполнения команды")
 			return
+		}
+
+		err = s.notify.Notify(fmt.Sprintf(notice, user.Email, user.Name, user.Company, server.Name, server.HV, command))
+		if err != nil {
+			logit.Info("Не удалось отправить уведомление", err)
 		}
 
 		SendOK(w, http.StatusOK, "Команда выполнена успешно")

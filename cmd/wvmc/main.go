@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/anaxita/wvmc/internal/wvmc/cache"
+	"github.com/anaxita/wvmc/internal/wvmc/notice"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -48,7 +49,8 @@ func main() {
 	cacheService := cache.NewCacheService()
 
 	serviceServer := control.NewServerService(new(control.Command), cacheService)
-	s := server.New(store, serviceServer)
+	noticeService := notice.NewNoticeService()
+	s := server.New(store, serviceServer, noticeService)
 
 	go func() {
 		s.UpdateAllServersInfo()(httptest.NewRecorder(), &http.Request{})

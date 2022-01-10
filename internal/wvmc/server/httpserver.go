@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/anaxita/wvmc/internal/wvmc/notice"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -17,14 +18,16 @@ type Server struct {
 	store          *store.Store
 	router         *mux.Router
 	controlService *control.ServerService
+	notify         *notice.NoticeService
 }
 
 // New - создает новый сервер
-func New(storage *store.Store, controlService *control.ServerService) *Server {
+func New(storage *store.Store, controlService *control.ServerService, notify *notice.NoticeService) *Server {
 	return &Server{
 		store:          storage,
 		router:         mux.NewRouter(),
 		controlService: controlService,
+		notify:         notify,
 	}
 }
 
