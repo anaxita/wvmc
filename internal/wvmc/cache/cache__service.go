@@ -2,6 +2,7 @@ package cache
 
 import (
 	"github.com/anaxita/wvmc/internal/wvmc/model"
+	"log"
 	"sync"
 )
 
@@ -32,6 +33,7 @@ func (c *CacheService) SetServers(s []model.Server) {
 }
 
 func (c *CacheService) SetServerState(s model.Server, state model.ServerState) {
+	log.Printf("Меняем статус сервера ID %s NAME %s HV %s на %s", s.ID, s.Name, s.HV, state)
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -42,6 +44,8 @@ func (c *CacheService) SetServerState(s model.Server, state model.ServerState) {
 	for _, v := range c.servers {
 		if v.Name == s.Name &&
 			v.HV == s.HV {
+			log.Println("Успешно сменили статус")
+
 			v.State = string(state)
 
 			break
@@ -50,6 +54,8 @@ func (c *CacheService) SetServerState(s model.Server, state model.ServerState) {
 }
 
 func (c *CacheService) SetServerNetwork(s model.Server, state model.ServerState) {
+	log.Printf("Меняем сеть сервера ID %s NAME %s HV %s на %s", s.ID, s.Name, s.HV, state)
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -60,6 +66,8 @@ func (c *CacheService) SetServerNetwork(s model.Server, state model.ServerState)
 	for _, v := range c.servers {
 		if v.Name == s.Name &&
 			v.HV == s.HV {
+			log.Println("Успешно сменили сеть")
+
 			v.Network = string(state)
 
 			break
