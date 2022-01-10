@@ -263,11 +263,12 @@ func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 		user := os.Getenv("SERVER_USER_NAME")
 		password := os.Getenv("SERVER_USER_PASSWORD")
 
-		servers, err := s.controlService.UpdateAllServersInfo()
+		servers, err := s.controlService.GetServersDataForAdmins()
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка powershell")
 			return
 		}
+
 		duplicates := make(map[string]int)
 		duplicatesServers := make([]model.Server, 0)
 		for _, server := range servers {

@@ -211,27 +211,6 @@ func (s *ServerService) StopServerNetwork(server model.Server) ([]byte, error) {
 	return out, nil
 }
 
-// UpdateAllServersInfo обновляет информацию по всем серверам в БД
-func (s *ServerService) UpdateAllServersInfo() ([]model.Server, error) {
-	hvs := os.Getenv("HV_LIST")
-
-	scriptPath := "./powershell/GetVmForAdmins.ps1"
-	// scriptPath := "./powershell/GetVmToDB.ps1"
-
-	out, err := s.commander.run(scriptPath, "-hvList", hvs)
-	if err != nil {
-		return nil, err
-	}
-
-	var servers []model.Server
-
-	if err = json.Unmarshal(out, &servers); err != nil {
-		return nil, err
-	}
-
-	return servers, nil
-}
-
 func (s *ServerService) GetServerData(server model.Server, hv string, name string) (model.Server, error) {
 	scriptPath := "./powershell/GetVmByHvAndName.ps1"
 
