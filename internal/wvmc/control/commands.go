@@ -195,7 +195,7 @@ func (s *ServerService) StartServerNetwork(server model.Server) ([]byte, error) 
 		return nil, err
 	}
 
-	s.cache.SetServerState(server, model.ServerNetworkRunning)
+	s.cache.SetServerNetwork(server, model.ServerNetworkRunning)
 	return out, nil
 }
 
@@ -207,7 +207,7 @@ func (s *ServerService) StopServerNetwork(server model.Server) ([]byte, error) {
 		return nil, err
 	}
 
-	s.cache.SetServerState(server, model.ServerNetworkStopped)
+	s.cache.SetServerNetwork(server, model.ServerNetworkStopped)
 	return out, nil
 }
 
