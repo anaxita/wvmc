@@ -98,7 +98,7 @@ func (s *Server) SignIn() http.HandlerFunc {
 		addr := strings.Split(r.RemoteAddr, ":")
 		ip := net.ParseIP(addr[0])
 		if !ip.IsPrivate() {
-			SendErr(w, http.StatusForbidden, err, "Доступ разрешен только с локального IP")
+			SendErr(w, http.StatusBadRequest, err, "Доступ разрешен только с локального IP")
 			return
 		}
 
