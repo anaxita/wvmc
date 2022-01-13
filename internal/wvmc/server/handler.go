@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
 
@@ -41,6 +42,10 @@ func SendOK(w http.ResponseWriter, code int, data interface{}) {
 func SendErr(w http.ResponseWriter, code int, meta error, err interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
+
+	if meta == nil {
+		meta = errors.New("undefined error")
+	}
 
 	fullResponse := respOK{
 		Status: "err",
