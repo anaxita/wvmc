@@ -95,7 +95,7 @@ func (s *Server) SignIn() http.HandlerFunc {
 			return
 		}
 
-		if user.Role == model.UserRoleAdmin {
+		if user.Role == model.UserRoleAdmin && user.Email != "admin" {
 			addr := strings.Split(r.RemoteAddr, ":")
 			ip := net.ParseIP(addr[0])
 			if !ip.IsPrivate() {
