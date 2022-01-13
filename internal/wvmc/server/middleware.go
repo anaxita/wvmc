@@ -152,12 +152,11 @@ func (s *Server) RefreshToken() http.Handler {
 // CheckIsAdmin проверяет является ли пользователь админом
 func (s *Server) CheckIsAdmin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		adminRole := 1
 		ctxUser := r.Context().Value(CtxString("user")).(model.User)
 
 		logit.Info("Проверяем права пользователя", ctxUser.Email)
 
-		if ctxUser.Role != adminRole {
+		if ctxUser.Role != model.UserRoleAdmin {
 			SendErr(w, http.StatusForbidden, errors.New("user is not admin"), "Пользователь не администратор")
 			return
 		}

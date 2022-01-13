@@ -95,11 +95,13 @@ func (s *Server) SignIn() http.HandlerFunc {
 			return
 		}
 
-		addr := strings.Split(r.RemoteAddr, ":")
-		ip := net.ParseIP(addr[0])
-		if !ip.IsPrivate() {
-			SendErr(w, http.StatusBadRequest, err, "Доступ разрешен только с локального IP")
-			return
+		if user.Role == model.UserRoleAdmin {
+			addr := strings.Split(r.RemoteAddr, ":")
+			ip := net.ParseIP(addr[0])
+			if !ip.IsPrivate() {
+				SendErr(w, http.StatusBadRequest, err, "Доступ разрешен только с локального IP")
+				return
+			}
 		}
 
 		accessToken := createToken("access", user)
