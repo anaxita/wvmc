@@ -34,7 +34,7 @@ func main() {
 	}
 	defer logit.Close()
 
-	db, err := store.Connect(os.Getenv("DB_TYPE"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_ADDR"), os.Getenv("DB_NAME"))
+	db, err := store.Connect(os.Getenv("DB_TYPE"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
 	if err != nil {
 		logit.Fatal("Ошибка соединения с БД:", err)
 	}

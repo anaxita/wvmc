@@ -10,7 +10,6 @@ import (
 	"github.com/anaxita/logit"
 	"github.com/anaxita/wvmc/internal/wvmc/hasher"
 
-	// _ "github.com/go-sql-driver/mysql" // ...
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -20,14 +19,9 @@ type Store struct {
 }
 
 // Connect создает подключение к БД
-func Connect(dbtype, user, password, addr, dbname string) (*sql.DB, error) {
+func Connect(scheme, user, password, dbname string) (*sql.DB, error) {
 	logit.Info("Соединяемся с БД ...")
-
-	// mysql
-	// db, err := sql.Open(dbtype, fmt.Sprintf("%s:%s@tcp(%s)/%s", user, password, addr, dbname))
-
-	// sqllite3
-	db, err := sql.Open(dbtype, fmt.Sprintf("file:%s?_auth&_auth_user=%s&_auth_pass=%s&_auth_crypt=sha512", dbname, user, password))
+	db, err := sql.Open(scheme, fmt.Sprintf("file:%s?_auth&_auth_user=%s&_auth_pass=%s&_auth_crypt=sha512", dbname, user, password))
 	if err != nil {
 		return nil, err
 	}

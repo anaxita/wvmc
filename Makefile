@@ -1,11 +1,10 @@
-.PHONY b:
-b:
-	# go build -v -o ./build/wvmc.exe ./cmd/wvmc
-	go build -v ./cmd/wvmc
+.PHONY build:
+build:
+	GOOS=windows GOARCH=arm64 go build -v -ldflags="-s -w -H windowsgui" -o ./wvmc.exe ./cmd/wvmc
 
-.PHONY bc:
-bc:
-	go build -v -ldflags="-s -w -H windowsgui" -o ./wvmc.exe ./cmd/wvmc
+.PHONY build-dev:
+build-dev:
+	GOOS=windows GOARCH=arm64 go build -v -ldflags="-s -w -H windowsgui" -o ./wvmc_dev.exe ./cmd/wvmc
 
 .PHONY run:
 run:
