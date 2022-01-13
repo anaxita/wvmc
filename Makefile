@@ -1,5 +1,5 @@
-.PHONY build:
-build:
+.PHONY build-prod:
+build-prod:
 	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o ./wvmc.exe ./cmd/wvmc
 
 .PHONY build-dev:
