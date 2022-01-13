@@ -97,9 +97,7 @@ func (s *Server) Start() error {
 
 	logit.Info("Сервер запущен на : ", os.Getenv("PORT_HTTPS"))
 
-	go http.ListenAndServe(os.Getenv("PORT_HTTP"), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "https://"+r.Host+r.URL.String(), http.StatusMovedPermanently)
-	}))
+	go http.ListenAndServe(os.Getenv("PORT_HTTP"), s.router)
 
 	return http.ListenAndServeTLS(os.Getenv("PORT_HTTPS"), goCer.Name(), "C:\\Apache24\\conf\\ssl\\kmsys.ru.key", s.router)
 
