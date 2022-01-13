@@ -18,7 +18,7 @@ import (
 )
 
 func init() {
-	err := godotenv.Load(".env_prod")
+	err := godotenv.Load(".env")
 	if err != nil {
 		f, _ := os.OpenFile("./errors.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0200)
 		defer f.Close()
@@ -45,12 +45,12 @@ func main() {
 		logit.Fatal("Ошибка миграции", err)
 	}
 
-	store := store.New(db)
+	repository := store.New(db)
 	cacheService := cache.NewCacheService()
 
 	serviceServer := control.NewServerService(new(control.Command), cacheService)
 	noticeService := notice.NewNoticeService()
-	s := server.New(store, serviceServer, noticeService)
+	s := server.New(repository, serviceServer, noticeService)
 
 	go func() {
 		s.UpdateAllServersInfo()(httptest.NewRecorder(), &http.Request{})
