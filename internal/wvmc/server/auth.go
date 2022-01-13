@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -91,6 +92,13 @@ func (s *Server) SignIn() http.HandlerFunc {
 		err = hasher.Compare(user.EncPassword, req.Password)
 		if err != nil {
 			SendErr(w, http.StatusOK, err, "Неверный логин или пароль")
+			return
+		}
+
+		addr := strings.Split(r.RemoteAddr, ":")
+		ip := net.ParseIP(addr[0])
+		if !ip.IsPrivate() {
+			SendErr(w, http.StatusForbidden, err, "Доступ разрешен только с локального IP")
 			return
 		}
 
