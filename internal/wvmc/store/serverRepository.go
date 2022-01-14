@@ -88,46 +88,6 @@ func (r *ServerRepository) Create(s model.Server) (int, error) {
 	return int(id), nil
 }
 
-// Edit обновляет данные сервера, возвращает ошибку в случае неудачи.
-func (r *ServerRepository) Edit(s model.Server) error {
-	logit.Info("Обновляем поля серверу:", s.Name)
-	var (
-		query string
-		err   error
-	)
-
-	if s.Password != "" {
-		query = "UPDATE servers SET company = ?,  description = ?, out_addr = ?, user_name = ?, user_password = ? WHERE id = ? AND hv = ?"
-		_, err = r.db.ExecContext(r.ctx, query, s.Company, s.Description, s.OutAddr, s.User, s.Password, s.ID, s.HV)
-	} else {
-		query = "UPDATE servers SET company = ?,  description = ?, out_addr = ?, user_name = ? WHERE id = ? AND hv = ?"
-		_, err = r.db.ExecContext(r.ctx, query, s.Company, s.Description, s.OutAddr, s.User, s.ID, s.HV)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	logit.Info("Успешно обновили поля сервер", s.Name)
-
-	return nil
-}
-
-// Delete удаляет сервер, возвращает ошибку в случае неудачи.
-func (r *ServerRepository) Delete(id string) error {
-	logit.Info("Удаляем сервер", id)
-
-	_, err := r.db.ExecContext(r.ctx, "DELETE FROM servers WHERE id = ? ORDER BY id LIMIT 1", id)
-
-	if err != nil {
-		return err
-	}
-
-	logit.Info("Успешно удалили сервер", id)
-
-	return err
-}
-
 // DeleteByUser удаляет доступ к серверам у определенного пользователя, возвращает ошибку в случае неудачи.
 func (r *ServerRepository) DeleteByUser(userID string) error {
 	logit.Info("Удаляем сервера у пользователя", userID)

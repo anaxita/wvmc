@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/anaxita/wvmc/internal/wvmc/model"
 	"github.com/anaxita/wvmc/internal/wvmc/notice"
 	"io/ioutil"
 	"net/http"
@@ -36,11 +37,10 @@ func (s *Server) configureRouter() {
 	r.Use(s.Cors)
 	r.Handle("/refresh", s.RefreshToken()).Methods("POST", "OPTIONS")
 	r.Handle("/signin", s.SignIn()).Methods("POST", "OPTIONS")
-	r.Handle("/update", s.UpdateAllServersInfo()).Methods("GET", "OPTIONS") // TODO: удалить когда уйдет в продакшен (аналог /servers/update)
-	// r.Handle("/log", s.Showlog()).Methods("GET", "OPTIONS")
 
 	users := r.NewRoute().Subrouter()
-	users.Use(s.Auth, s.CheckIsAdmin)
+	users.Use(s.Auth, s.RoleMiddleware(model.UserRoleAdmin))
+
 	users.Handle("/users", s.GetUsers()).Methods("OPTIONS", "GET")
 	users.Handle("/users", s.CreateUser()).Methods("OPTIONS", "POST")
 	users.Handle("/users", s.EditUser()).Methods("OPTIONS", "PATCH")
@@ -57,9 +57,8 @@ func (s *Server) configureRouter() {
 	serversControl.Handle("/servers/control", s.ControlServer()).Methods("POST", "OPTIONS")
 
 	servers := r.NewRoute().Subrouter()
-	servers.Use(s.Auth, s.CheckIsAdmin)
-	// servers.Handle("/servers", s.CreateServer()).Methods("POST", "OPTIONS") // disabled because working auto
-	servers.Handle("/servers", s.EditServer()).Methods("OPTIONS", "PATCH")
+	servers.Use(s.Auth, s.RoleMiddleware(model.UserRoleAdmin))
+
 	servers.Handle("/servers/{hv}/{name}", s.GetServer()).Methods("OPTIONS", "GET")
 	servers.Handle("/servers/{hv}/{name}/disks", s.GetServerDisks()).Methods("OPTIONS", "GET")
 	servers.Handle("/servers/{hv}/{name}/services", s.GetServerServices()).Methods("OPTIONS", "GET")
@@ -100,6 +99,4 @@ func (s *Server) Start() error {
 	go http.ListenAndServe(os.Getenv("PORT_HTTP"), s.router)
 
 	return http.ListenAndServeTLS(os.Getenv("PORT_HTTPS"), goCer.Name(), "C:\\Apache24\\conf\\ssl\\kmsys.ru.key", s.router)
-
-	// return http.ListenAndServe(os.Getenv("PORT"), s.router)
 }

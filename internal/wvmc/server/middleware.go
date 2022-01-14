@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
 
 	"net/http"
 	"os"
@@ -149,20 +150,25 @@ func (s *Server) RefreshToken() http.Handler {
 	})
 }
 
-// CheckIsAdmin проверяет является ли пользователь админом
-func (s *Server) CheckIsAdmin(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctxUser := r.Context().Value(CtxString("user")).(model.User)
+// RoleMiddleware проверяет является ли пользователь админом
+func (s *Server) RoleMiddleware(roles ...int) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctxUser := r.Context().Value(CtxString("user")).(model.User)
 
-		logit.Info("Проверяем права пользователя", ctxUser.Email)
+			logit.Info("Проверяем права пользователя", ctxUser.Email)
 
-		if ctxUser.Role != model.UserRoleAdmin {
-			SendErr(w, http.StatusForbidden, errors.New("user is not admin"), "Пользователь не администратор")
-			return
-		}
+			for _, v := range roles {
+				if ctxUser.Role == v {
+					next.ServeHTTP(w, r)
 
-		next.ServeHTTP(w, r)
-	})
+					return
+				}
+			}
+
+			SendErr(w, http.StatusForbidden, errors.New("user has no permissions"), "Недостаточно прав")
+		})
+	}
 }
 
 // CheckControlPermissions проверяет права на сервер у пользователя
@@ -172,19 +178,19 @@ func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
 		Command  string `json:"command"`
 	}
 
-	var adminRole = 1
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		req := controlRequest{}
+		var req controlRequest
 		var err error
+
 		if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 			SendErr(w, http.StatusBadRequest, errors.New("server_id and command fields cannot be empty"), "server_id и command не могут быть пустыми")
+
 			return
 		}
 
 		if req.ServerID == "" || req.Command == "" {
 			SendErr(w, http.StatusBadRequest, errors.New("fields cannot be empty"), "Все поля должны быть заполнены")
+
 			return
 		}
 
@@ -194,16 +200,18 @@ func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusBadRequest, err, "Сервер не найден")
+
 				return
 			}
 
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
+
 			return
 		}
 
 		logit.Info("Проверяем права на сервер у пользователя", ctxUser.Email)
 
-		if ctxUser.Role != adminRole {
+		if ctxUser.Role != model.UserRoleAdmin {
 			serversByUser, err := s.store.Server(r.Context()).FindByUser(ctxUser.ID)
 			if err != nil {
 				if err == sql.ErrNoRows {
@@ -219,21 +227,25 @@ func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
 				if srv.ID == req.ServerID {
 					ctxServer := CtxString("server")
 					ctxCommand := CtxString("command")
-					newctx := context.WithValue(r.Context(), ctxServer, srv)
-					newctx = context.WithValue(newctx, ctxCommand, req.Command)
-					next.ServeHTTP(w, r.WithContext(newctx))
+					newCtx := context.WithValue(r.Context(), ctxServer, srv)
+					newCtx = context.WithValue(newCtx, ctxCommand, req.Command)
+
+					next.ServeHTTP(w, r.WithContext(newCtx))
+
 					return
 				}
 			}
 
 			SendErr(w, http.StatusForbidden, err, "Доступ запрещен")
+
 			return
 		}
 
 		ctxServer := CtxString("server")
 		ctxCommand := CtxString("command")
-		newctx := context.WithValue(r.Context(), ctxServer, server)
-		newctx = context.WithValue(newctx, ctxCommand, req.Command)
-		next.ServeHTTP(w, r.WithContext(newctx))
+		newCtx := context.WithValue(r.Context(), ctxServer, server)
+		newCtx = context.WithValue(newCtx, ctxCommand, req.Command)
+
+		next.ServeHTTP(w, r.WithContext(newCtx))
 	})
 }
