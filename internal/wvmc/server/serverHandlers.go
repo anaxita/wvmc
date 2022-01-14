@@ -59,7 +59,8 @@ func (s *Server) GetServers() http.HandlerFunc {
 		loop:
 			for k, v := range vms {
 				for _, srv := range servers {
-					if srv.ID == v.ID {
+					if srv.VMID == v.VMID && srv.HV == v.HV {
+						vms[k].ID = srv.ID
 						vms[k].Company = srv.Company
 						vms[k].Description = srv.Description
 						vms[k].OutAddr = srv.OutAddr
