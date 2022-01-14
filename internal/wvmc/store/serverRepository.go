@@ -121,7 +121,7 @@ func (r *ServerRepository) All() ([]model.Server, error) {
 
 	for rows.Next() {
 		var s model.Server
-		err := rows.Scan(&s.ID, &s.VMID, s.Name, &s.IP, &s.HV, &s.Company, &s.User, &s.Password)
+		err := rows.Scan(&s.ID, &s.VMID, &s.Name, &s.IP, &s.HV, &s.Company, &s.User, &s.Password)
 		if err != nil {
 			return servers, err
 		}
