@@ -57,5 +57,6 @@ func SendErr(w http.ResponseWriter, code int, meta error, err interface{}) {
 		logit.Log("Ошибка отправки ответа в JSON", err)
 		return
 	}
+
 	logit.Info("RESPONSE: ", code, fullResponse)
 }

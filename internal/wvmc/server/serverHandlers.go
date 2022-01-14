@@ -31,8 +31,28 @@ func (s *Server) GetServers() http.HandlerFunc {
 			vms, err := s.controlService.GetServersDataForAdmins()
 			if err != nil {
 				SendErr(w, http.StatusOK, err, "Ошибка получения статусов")
-				logit.Log("PS", err)
 				return
+			}
+
+			servers, err := s.store.Server(r.Context()).All()
+			if err != nil {
+				SendErr(w, http.StatusOK, err, "Ошибка получения списка серверов")
+				return
+			}
+
+		loop:
+			for k, v := range vms {
+				for _, srv := range servers {
+					if srv.VMID == v.VMID && srv.HV == v.HV {
+						vms[k].ID = srv.ID
+						vms[k].Company = srv.Company
+						vms[k].Description = srv.Description
+						vms[k].OutAddr = srv.OutAddr
+						vms[k].IP = srv.IP
+
+						continue loop
+					}
+				}
 			}
 			SendOK(w, http.StatusOK, response{vms})
 			return
@@ -56,7 +76,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 				return
 			}
 
-		loop:
+		loop2:
 			for k, v := range vms {
 				for _, srv := range servers {
 					if srv.VMID == v.VMID && srv.HV == v.HV {
@@ -66,7 +86,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 						vms[k].OutAddr = srv.OutAddr
 						vms[k].IP = srv.IP
 
-						continue loop
+						continue loop2
 					}
 				}
 			}
