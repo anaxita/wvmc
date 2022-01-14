@@ -267,7 +267,7 @@ func (s *Server) GetUserServers() http.HandlerFunc {
 		vars := mux.Vars(r)
 		userID, ok := vars["user_id"]
 		if !ok {
-			SendErr(w, http.StatusBadRequest, errors.New("user id is undefiend"), "Неверный данные в запросе")
+			SendErr(w, http.StatusBadRequest, errors.New("user id is undefined"), "Неверный данные в запросе")
 			return
 		}
 

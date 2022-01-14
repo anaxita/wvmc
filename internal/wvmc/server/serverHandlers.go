@@ -107,39 +107,6 @@ func (s *Server) GetServer() http.HandlerFunc {
 	}
 }
 
-// CreateServer создает сервер
-func (s *Server) CreateServer() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		req := model.Server{}
-
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
-			return
-		}
-
-		store := s.store.Server(r.Context())
-
-		_, err := store.Find("vmid", req.ID)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				_, err := store.Create(req)
-				if err != nil {
-					SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
-					return
-				}
-
-				SendOK(w, http.StatusOK, "added")
-				return
-			}
-
-			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
-			return
-		}
-
-		SendErr(w, http.StatusOK, errors.New("server is already exists"), "Сервер уже существует")
-	}
-}
-
 // ControlServer выполняет команды на сервере
 func (s *Server) ControlServer() http.HandlerFunc {
 
