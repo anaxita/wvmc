@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/anaxita/wvmc/internal/wvmc/cache"
 	"github.com/anaxita/wvmc/internal/wvmc/notice"
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -14,21 +16,23 @@ import (
 	"github.com/anaxita/wvmc/internal/wvmc/control"
 	"github.com/anaxita/wvmc/internal/wvmc/server"
 	"github.com/anaxita/wvmc/internal/wvmc/store"
-	"github.com/joho/godotenv"
 )
 
-func init() {
-	err := godotenv.Load(".env")
+var envPath string
+
+func main() {
+	flag.StringVar(&envPath, "e", ".env", "path to .env")
+	flag.Parse()
+
+	err := godotenv.Load(envPath)
 	if err != nil {
 		f, _ := os.OpenFile("./errors.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0200)
 		defer f.Close()
 		f.WriteString(fmt.Sprintln(time.Now().Format("02.01.2006 15:04:05"), err))
 		log.Fatal("[FATAL] Cannot find env file")
 	}
-}
 
-func main() {
-	err := logit.New(os.Getenv("LOG"))
+	err = logit.New(os.Getenv("LOG"))
 	if err != nil {
 		log.Fatal("Не удалось запустить логгер", err)
 	}

@@ -1,10 +1,10 @@
 .PHONY build-prod:
 build-prod:
-	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o ./build/prod/wvmc.exe ./cmd/wvmc
+	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o ./wvmc.exe ./cmd/wvmc
 
 .PHONY build-dev:
 build-dev:
-	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o ./build/dev/wvmc_dev.exe ./cmd/wvmc
+	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o ./wvmc_dev.exe ./cmd/wvmc
 
 .PHONY run:
 run:
