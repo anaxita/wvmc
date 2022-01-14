@@ -170,7 +170,7 @@ func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 			return
 		}
 
-		duplicates := make(map[string]int)
+		duplicates := make(map[int64]int)
 		duplicatesServers := make([]model.Server, 0)
 		for _, server := range servers {
 			server.User = user

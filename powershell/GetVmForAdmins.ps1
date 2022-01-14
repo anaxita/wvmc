@@ -28,7 +28,7 @@ $servers =  $hvList | ForEach-Object -Parallel {
             }
 
             [PSCustomObject]@{
-                "id"      = $_.Id;
+                "vmid"      = $_.Id;
                 "name"    = $_.Name;
                 "state"   = $state;
                 "network" = [string]$networkAdapter.SwitchName;

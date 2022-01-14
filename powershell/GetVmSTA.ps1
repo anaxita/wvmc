@@ -14,7 +14,7 @@ foreach ($s in $servers)
         }
     
         $vm = @{
-            "id" = $s.Id;
+            "vmid" = $s.Id;
 			"name" = $s.Name;
             "state" = $state;
 			"hv" = $s.ComputerName;

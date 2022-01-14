@@ -13,7 +13,7 @@ param (
             }
             
             $data = @{
-                "id" = $vm.Id
+                "vmid" = $vm.Id
                 "name" = $vm.Name
                 "state" = $state
                 "cpu_load" = $vm.CPUUsage

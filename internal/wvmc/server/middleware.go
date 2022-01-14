@@ -174,7 +174,7 @@ func (s *Server) RoleMiddleware(roles ...int) mux.MiddlewareFunc {
 // CheckControlPermissions проверяет права на сервер у пользователя
 func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
 	type controlRequest struct {
-		ServerID string `json:"server_id"`
+		ServerID int64  `json:"server_id"`
 		Command  string `json:"command"`
 	}
 
@@ -188,7 +188,7 @@ func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
 			return
 		}
 
-		if req.ServerID == "" || req.Command == "" {
+		if req.ServerID == 0 || req.Command == "" {
 			SendErr(w, http.StatusBadRequest, errors.New("fields cannot be empty"), "Все поля должны быть заполнены")
 
 			return
@@ -196,7 +196,7 @@ func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
 
 		ctxUser := r.Context().Value(CtxString("user")).(model.User)
 
-		server, err := s.store.Server(r.Context()).Find("vmid", req.ServerID)
+		server, err := s.store.Server(r.Context()).Find("id", req.ServerID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusBadRequest, err, "Сервер не найден")

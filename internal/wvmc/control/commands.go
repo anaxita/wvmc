@@ -96,9 +96,9 @@ func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]model.
 		uniqHVs[v.HV] = false
 
 		if ids == "" {
-			ids = fmt.Sprintf("'%s'", v.ID)
+			ids = fmt.Sprintf("'%s'", v.VMID)
 		} else {
-			ids = fmt.Sprintf("%s, '%s'", ids, v.ID)
+			ids = fmt.Sprintf("%s, '%s'", ids, v.VMID)
 		}
 	}
 

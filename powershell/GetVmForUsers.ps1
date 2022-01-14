@@ -22,7 +22,7 @@ $result = $hvList | ForEach-Object -Parallel {
         }
 
         [pscustomobject]@{
-            "id" = $_.Id;
+            "vmid" = $_.Id;
             "name" = $_.Name;
             "network" = $network;
             "state" = $state;

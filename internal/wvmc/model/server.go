@@ -11,7 +11,8 @@ const (
 
 // Server содержит модель сервера из БД
 type Server struct {
-	ID          string  `json:"id"`
+	ID          int64   `json:"id"`
+	VMID        string  `json:"vmid"`
 	Name        string  `json:"name"`
 	HV          string  `json:"hv"`
 	IP          string  `json:"ip"`

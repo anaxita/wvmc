@@ -252,7 +252,8 @@ func (s *Server) AddServersToUser() http.HandlerFunc {
 // GetUserServers возвращат список серверов где доступные пользователю помечены полем added = true
 func (s *Server) GetUserServers() http.HandlerFunc {
 	type addedServers struct {
-		ID      string `json:"id"`
+		ID      int64  `json:"id"`
+		VMID    string `json:"vmid"`
 		Name    string `json:"name"`
 		HV      string `json:"hv"`
 		IP      string `json:"ip"`
@@ -292,7 +293,7 @@ func (s *Server) GetUserServers() http.HandlerFunc {
 		var res []addedServers
 
 		for _, srv := range allServers {
-			res = append(res, addedServers{ID: srv.ID, Name: srv.Name, Company: srv.Company})
+			res = append(res, addedServers{ID: srv.ID, VMID: srv.VMID, Name: srv.Name, Company: srv.Company})
 		}
 
 	loop:
