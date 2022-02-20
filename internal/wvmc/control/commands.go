@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/anaxita/wvmc/internal/wvmc/cache"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -63,7 +62,7 @@ func (c *Command) run(args ...string) ([]byte, error) {
 
 	e := exec.Command("pwsh", "-NoLogo", "-Mta", "-NoProfile", "-NonInteractive", "-Command",
 		command)
-	logit.Log("COMMAND", e.Args)
+	logit.Info("COMMAND", e.Args)
 
 	out, err := e.Output()
 	// logit.Info("out script: ", string(out))
@@ -136,8 +135,6 @@ func (s *ServerService) GetServersDataForAdmins() ([]model.Server, error) {
 	scriptPath := "./powershell/GetVmForAdmins.ps1"
 
 	out, err := s.commander.run(scriptPath, "-hvList", hvs)
-	log.Println("out:", string(out))
-
 	if err != nil {
 		return nil, err
 	}
@@ -145,6 +142,7 @@ func (s *ServerService) GetServersDataForAdmins() ([]model.Server, error) {
 	var servers []model.Server
 
 	if err = json.Unmarshal(out, &servers); err != nil {
+		logit.Log("OUTPUT:", string(out))
 		return nil, err
 	}
 
