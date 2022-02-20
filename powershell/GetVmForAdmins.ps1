@@ -7,7 +7,7 @@ param (
 $servers =  $hvList | ForEach-Object -Parallel {
     $vms = Get-VM -ComputerName "$_";
 
-    if ($null -ne $vms) {
+    if ($null -eq $vms) {
         continue
     }
 
