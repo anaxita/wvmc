@@ -66,10 +66,11 @@ func (c *Command) run(args ...string) ([]byte, error) {
 	logit.Log("COMMAND", e.Args)
 
 	out, err := e.Output()
-	logit.Info("out script: ", string(out))
+	// logit.Info("out script: ", string(out))
 	if err != nil {
 		return nil, err
 	}
+
 	return out, nil
 }
 
