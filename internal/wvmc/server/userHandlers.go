@@ -268,6 +268,7 @@ func (s *Server) GetUserServers() http.HandlerFunc {
 	type response struct {
 		Servers []addedServers `json:"servers"`
 	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		userID, ok := vars["user_id"]
@@ -295,7 +296,7 @@ func (s *Server) GetUserServers() http.HandlerFunc {
 			}
 		}
 
-		var res []addedServers
+		res := make([]addedServers, len(allServers))
 
 		for _, srv := range allServers {
 			res = append(res,
