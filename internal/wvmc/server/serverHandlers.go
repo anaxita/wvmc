@@ -161,7 +161,8 @@ Action: %s
 		case "stop_network":
 			_, err = s.controlService.StopServerNetwork(server)
 		default:
-			SendErr(w, http.StatusBadRequest, errors.New("incorrect command"), "Неизвестная команда")
+			SendErr(w, http.StatusBadRequest, errors.New("incorrect command"),
+				"Неизвестная команда")
 			return
 		}
 
@@ -170,9 +171,10 @@ Action: %s
 			return
 		}
 
-		err = s.notify.Notify(fmt.Sprintf(notice, user.Email, user.Name, user.Company, server.Name, server.HV, command))
+		err = s.notify.Notify(fmt.Sprintf(notice, user.Email, user.Name, user.Company, server.Name,
+			server.HV, command))
 		if err != nil {
-			logit.Info("Не удалось отправить уведомление", err)
+			logit.Log("Не удалось отправить уведомление", err)
 		}
 
 		SendOK(w, http.StatusOK, "Команда выполнена успешно")
@@ -191,17 +193,9 @@ func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 			return
 		}
 
-		duplicates := make(map[int64]int)
-		duplicatesServers := make([]model.Server, 0)
 		for _, server := range servers {
 			server.User = user
 			server.Password = password
-			if duplicates[server.ID] > 0 {
-				logit.Log("ДУБЛЬ", server.Name, server.ID)
-				duplicatesServers = append(duplicatesServers, server)
-			}
-			duplicates[server.ID] += 1
-
 			_, err := s.store.Server(r.Context()).Create(server)
 			if err != nil {
 				logit.Log("Невозможно добавить сервер", server.Name, err)
@@ -209,14 +203,10 @@ func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 				return
 			}
 		}
-
-		logit.Log("ДУБЛИ: ", duplicatesServers)
-
-		// SendOK(w, http.StatusOK, "Updated")
 	}
 }
 
-// Get services
+// GetServerServices ...
 func (s *Server) GetServerServices() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -245,7 +235,7 @@ func (s *Server) GetServerServices() http.HandlerFunc {
 	}
 }
 
-// Get processes
+// GetServerManager ...
 func (s *Server) GetServerManager() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -305,9 +295,11 @@ func (s *Server) ControlServerManager() http.HandlerFunc {
 
 		switch task.Command {
 		case "stop":
-			_, err = s.controlService.StoptWinProcess(server.IP, server.User, server.Password, task.EntityID)
+			_, err = s.controlService.StoptWinProcess(server.IP, server.User, server.Password,
+				task.EntityID)
 		case "disconnect":
-			_, err = s.controlService.DisconnectRDPUser(server.IP, server.User, server.Password, task.EntityID)
+			_, err = s.controlService.DisconnectRDPUser(server.IP, server.User, server.Password,
+				task.EntityID)
 		default:
 			SendErr(w, http.StatusBadRequest, errors.New("undefind command"), "Неизвестная команда")
 			return
@@ -380,11 +372,14 @@ func (s *Server) ControlServerServices() http.HandlerFunc {
 
 		switch task.Command {
 		case "start":
-			_, err = s.controlService.StartWinService(server.IP, server.User, server.Password, task.ServiceName)
+			_, err = s.controlService.StartWinService(server.IP, server.User, server.Password,
+				task.ServiceName)
 		case "stop":
-			_, err = s.controlService.StopWinService(server.IP, server.User, server.Password, task.ServiceName)
+			_, err = s.controlService.StopWinService(server.IP, server.User, server.Password,
+				task.ServiceName)
 		case "restart":
-			_, err = s.controlService.RestartWinService(server.IP, server.User, server.Password, task.ServiceName)
+			_, err = s.controlService.RestartWinService(server.IP, server.User, server.Password,
+				task.ServiceName)
 		default:
 			SendErr(w, http.StatusBadRequest, errors.New("undefind command"), "Неизвестная команда")
 			return

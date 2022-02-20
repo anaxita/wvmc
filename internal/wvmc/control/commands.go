@@ -62,11 +62,10 @@ func (c *Command) run(args ...string) ([]byte, error) {
 
 	e := exec.Command("pwsh", "-NoLogo", "-Mta", "-NoProfile", "-NonInteractive", "-Command",
 		command)
-	logit.Info("COMMAND", e.Args)
 
 	out, err := e.Output()
-	// logit.Info("out script: ", string(out))
 	if err != nil {
+		logit.Log("COMMAND", e.Args)
 		return nil, err
 	}
 
