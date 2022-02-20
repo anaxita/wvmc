@@ -57,18 +57,21 @@ func (s *Server) CreateUser() http.HandlerFunc {
 
 		logit.Info("Проверяем возможность создания пользователя с данными: ", req.Email, req.Name)
 		if req.Email == "" || req.Password == "" || req.Name == "" {
-			SendErr(w, http.StatusBadRequest, errors.New("email password or name cannot be empty"), "Поля email, password или name не могут быть пустыми")
+			SendErr(w, http.StatusBadRequest, errors.New("email password or name cannot be empty"),
+				"Поля email, password или name не могут быть пустыми")
 			return
 		}
 
-		match, err := regexp.Match(`^([a-zA-Z0-9\_]){3,15}$`, []byte(req.Email))
+		match, err := regexp.Match(`^([a-zA-Z0-9_]){3,15}$`, []byte(req.Email))
 		if err != nil {
-			SendErr(w, http.StatusInternalServerError, err, "incorrect regexp")
+			SendErr(w, http.StatusInternalServerError, err, "incorrect email")
 			return
 		}
 
 		if !match {
-			SendErr(w, http.StatusBadRequest, errors.New("email должен быть 3-15 символов, начинаться с буквы и содержать только английские буквы, цифры и знак подчеркивания"), "incorrect regexp")
+			SendErr(w, http.StatusBadRequest,
+				errors.New("email должен быть 3-15 символов, начинаться с буквы и содержать только английские буквы, цифры и знак подчеркивания"),
+				"incorrect regexp")
 			return
 		}
 
@@ -99,7 +102,8 @@ func (s *Server) CreateUser() http.HandlerFunc {
 			return
 		}
 
-		SendErr(w, http.StatusBadRequest, errors.New("user is exists"), "Пользователь уже существует")
+		SendErr(w, http.StatusBadRequest, errors.New("user is exists"),
+			"Пользователь уже существует")
 	}
 }
 
@@ -268,7 +272,8 @@ func (s *Server) GetUserServers() http.HandlerFunc {
 		vars := mux.Vars(r)
 		userID, ok := vars["user_id"]
 		if !ok {
-			SendErr(w, http.StatusBadRequest, errors.New("user id is undefined"), "Неверный данные в запросе")
+			SendErr(w, http.StatusBadRequest, errors.New("user id is undefined"),
+				"Неверный данные в запросе")
 			return
 		}
 
@@ -293,7 +298,14 @@ func (s *Server) GetUserServers() http.HandlerFunc {
 		var res []addedServers
 
 		for _, srv := range allServers {
-			res = append(res, addedServers{ID: srv.ID, VMID: srv.VMID, Name: srv.Name, Company: srv.Company})
+			res = append(res,
+				addedServers{
+					ID:      srv.ID,
+					VMID:    srv.VMID,
+					Name:    srv.Name,
+					HV:      srv.HV,
+					Company: srv.Company,
+				})
 		}
 
 	loop:

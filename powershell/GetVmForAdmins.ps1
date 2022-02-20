@@ -17,7 +17,7 @@ $servers =  $hvList | ForEach-Object -Parallel {
             $ip = ''
 
             $ip4 = $networkAdapter.IPAddresses
-            if ($null -ne $ip4[0]) {
+            if ($ip4 -gt 0) {
                 $ip = $ip4[0]
             }
             if ($state -eq 2) {
