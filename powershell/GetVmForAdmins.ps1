@@ -5,7 +5,7 @@ param (
 [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
 
 $servers =  $hvList | ForEach-Object -Parallel {
-    $vms = Get-VM -ComputerName "$_";
+    $vms = Get-VM -ComputerName "$_" | Where-Object {$_.ReplicationState -eq 0};
 
     if ($null -eq $vms) {
         continue
