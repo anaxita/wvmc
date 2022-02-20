@@ -1,13 +1,14 @@
 package cache
 
 import (
+	"fmt"
+	"github.com/anaxita/logit"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
-	"log"
 	"sync"
 )
 
 type CacheService struct {
-	mu      sync.Mutex
+	mu      sync.RWMutex
 	servers []model.Server
 }
 
@@ -16,10 +17,10 @@ func NewCacheService() *CacheService {
 }
 
 func (c *CacheService) Servers() []model.Server {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 
-	if len(c.servers) < 1 {
+	if len(c.servers) == 0 {
 		return nil
 	}
 
@@ -33,7 +34,8 @@ func (c *CacheService) SetServers(s []model.Server) {
 }
 
 func (c *CacheService) SetServerState(s model.Server, state model.ServerState) {
-	log.Printf("Меняем статус сервера ID %s NAME %s HV %s на %s", s.ID, s.Name, s.HV, state)
+	logit.Info(fmt.Printf("Меняем статус сервера ID %d NAME %s HV %s на %s", s.ID, s.Name, s.HV,
+		state))
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -44,7 +46,7 @@ func (c *CacheService) SetServerState(s model.Server, state model.ServerState) {
 	for i, v := range c.servers {
 		if v.Name == s.Name &&
 			v.HV == s.HV {
-			log.Println("Успешно сменили статус")
+			logit.Info("Успешно сменили статус")
 
 			c.servers[i].State = string(state)
 
@@ -54,7 +56,8 @@ func (c *CacheService) SetServerState(s model.Server, state model.ServerState) {
 }
 
 func (c *CacheService) SetServerNetwork(s model.Server, state model.ServerState) {
-	log.Printf("Меняем сеть сервера ID %s NAME %s HV %s на %s", s.ID, s.Name, s.HV, state)
+	logit.Info(fmt.Printf("Меняем сеть сервера ID %d NAME %s HV %s на %s", s.ID, s.Name, s.HV,
+		state))
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -66,7 +69,7 @@ func (c *CacheService) SetServerNetwork(s model.Server, state model.ServerState)
 	for i, v := range c.servers {
 		if v.Name == s.Name &&
 			v.HV == s.HV {
-			log.Println("Успешно сменили сеть")
+			logit.Info("Успешно сменили сеть")
 
 			c.servers[i].Network = string(state)
 
