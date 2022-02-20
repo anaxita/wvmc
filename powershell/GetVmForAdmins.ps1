@@ -8,7 +8,7 @@ $servers =  $hvList | ForEach-Object -Parallel {
     $vms = Get-VM -ComputerName "$_";
 
     if ($null -eq $vms) {
-        return $false
+        continue
     }
 
         $vms | ForEach-Object -Parallel {
@@ -17,7 +17,7 @@ $servers =  $hvList | ForEach-Object -Parallel {
             $ip = ''
 
             $ip4 = $networkAdapter.IPAddresses
-            if ($null -ne $ip4[0]) {
+            if ($ip4 -gt 0) {
                 $ip = $ip4[0]
             }
             if ($state -eq 2) {
@@ -32,7 +32,7 @@ $servers =  $hvList | ForEach-Object -Parallel {
                 "name"    = $_.Name;
                 "state"   = $state;
                 "network" = [string]$networkAdapter.SwitchName;
-                "status"  = $vm.Status;
+                "status"  = $_.Status;
                 "cpu"     = $_.CPUUsage;
                 "hv"      = $_.ComputerName;
                 "ip"      = $ip;
