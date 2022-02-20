@@ -296,7 +296,7 @@ func (s *Server) GetUserServers() http.HandlerFunc {
 			}
 		}
 
-		res := make([]addedServers, len(allServers))
+		res := make([]addedServers, 0, len(allServers))
 
 		for _, srv := range allServers {
 			res = append(res,
