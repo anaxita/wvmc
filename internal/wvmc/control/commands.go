@@ -61,7 +61,8 @@ type Command struct{}
 func (c *Command) run(args ...string) ([]byte, error) {
 	command := strings.Join(args, " ")
 
-	e := exec.Command("pwsh", "-NoLogo", "-Mta", "-NoProfile", "-NonInteractive", "-Command", command)
+	e := exec.Command("pwsh", "-NoLogo", "-Mta", "-NoProfile", "-NonInteractive", "-Command",
+		command)
 	logit.Log("COMMAND", e.Args)
 
 	out, err := e.Output()
@@ -153,7 +154,7 @@ func (s *ServerService) GetServersDataForAdmins() ([]model.Server, error) {
 
 // StopServer выключает сервер
 func (s *ServerService) StopServer(server model.Server) ([]byte, error) {
-	command := fmt.Sprintf("Stop-VM -Name '%s' -ComputerName '%s'", server.Name, server.HV)
+	command := fmt.Sprintf("Stop-VM -Name %s -ComputerName '%s'", server.Name, server.HV)
 	out, err := s.commander.run(command)
 	if err != nil {
 		return nil, err
@@ -165,7 +166,7 @@ func (s *ServerService) StopServer(server model.Server) ([]byte, error) {
 
 // StopServerForce принудительно выключает сервер
 func (s *ServerService) StopServerForce(server model.Server) ([]byte, error) {
-	command := fmt.Sprintf("Stop-VM -Name '%s' -Force -ComputerName '%s'", server.Name, server.HV)
+	command := fmt.Sprintf("Stop-VM -Name %s -Force -ComputerName '%s'", server.Name, server.HV)
 	out, err := s.commander.run(command)
 	if err != nil {
 		return nil, err
@@ -177,7 +178,7 @@ func (s *ServerService) StopServerForce(server model.Server) ([]byte, error) {
 
 // StartServer включает сервер
 func (s *ServerService) StartServer(server model.Server) ([]byte, error) {
-	command := fmt.Sprintf("Start-VM -Name '%s' -ComputerName '%s'", server.Name, server.HV)
+	command := fmt.Sprintf("Start-VM -Name %s -ComputerName '%s'", server.Name, server.HV)
 	out, err := s.commander.run(command)
 	if err != nil {
 		return nil, err
@@ -189,7 +190,8 @@ func (s *ServerService) StartServer(server model.Server) ([]byte, error) {
 
 // StartServerNetwork включает сеть на сервере
 func (s *ServerService) StartServerNetwork(server model.Server) ([]byte, error) {
-	command := fmt.Sprintf("Connect-VMNetworkAdapter -VMName %s -SwitchName \"DMZ - Virtual Switch\" -ComputerName '%s'", server.Name, server.HV)
+	command := fmt.Sprintf("Connect-VMNetworkAdapter -VMName %s -SwitchName \"DMZ - Virtual Switch\" -ComputerName '%s'",
+		server.Name, server.HV)
 	out, err := s.commander.run(command)
 	if err != nil {
 		return nil, err
@@ -201,7 +203,8 @@ func (s *ServerService) StartServerNetwork(server model.Server) ([]byte, error) 
 
 // StopServerNetwork выключает сеть на сервере
 func (s *ServerService) StopServerNetwork(server model.Server) ([]byte, error) {
-	command := fmt.Sprintf("Disconnect-VMNetworkAdapter -VMName %s -ComputerName '%s'", server.Name, server.HV)
+	command := fmt.Sprintf("Disconnect-VMNetworkAdapter -VMName %s -ComputerName '%s'", server.Name,
+		server.HV)
 	out, err := s.commander.run(command)
 	if err != nil {
 		return nil, err
@@ -211,7 +214,8 @@ func (s *ServerService) StopServerNetwork(server model.Server) ([]byte, error) {
 	return out, nil
 }
 
-func (s *ServerService) GetServerData(server model.Server, hv string, name string) (model.Server, error) {
+func (s *ServerService) GetServerData(server model.Server, hv string, name string) (model.Server,
+	error) {
 	scriptPath := "./powershell/GetVmByHvAndName.ps1"
 
 	out, err := s.commander.run(scriptPath, "-hv", hv, "-name", name)
@@ -247,21 +251,24 @@ func (s *ServerService) GetServerServices(ip, user, password string) ([]WinServi
 // StartWinService включает службу сервера
 func (s *ServerService) StartWinService(ip, user, password, serviceName string) ([]byte, error) {
 	scriptPath := "./powershell/StartService.ps1"
-	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -name '%s'", scriptPath, ip, user, password, serviceName)
+	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -name '%s'", scriptPath, ip, user, password,
+		serviceName)
 	return s.commander.run(args)
 }
 
 // StopWinService выключает службу сервера
 func (s *ServerService) StopWinService(ip, user, password, serviceName string) ([]byte, error) {
 	scriptPath := "./powershell/StopService.ps1"
-	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -name '%s'", scriptPath, ip, user, password, serviceName)
+	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -name '%s'", scriptPath, ip, user, password,
+		serviceName)
 	return s.commander.run(args)
 }
 
 // RestartWinService переззагружает службу сервера
 func (s *ServerService) RestartWinService(ip, user, password, serviceName string) ([]byte, error) {
 	scriptPath := "./powershell/RestartService.ps1"
-	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -name '%s'", scriptPath, ip, user, password, serviceName)
+	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -name '%s'", scriptPath, ip, user, password,
+		serviceName)
 	return s.commander.run(args)
 }
 
@@ -316,8 +323,10 @@ func (s *ServerService) StoptWinProcess(ip, user, password string, id int) ([]by
 }
 
 // DisconnectRDPUser close RDP user session
-func (s *ServerService) DisconnectRDPUser(ip, user, password string, sessionID int) ([]byte, error) {
+func (s *ServerService) DisconnectRDPUser(ip, user, password string, sessionID int) ([]byte,
+	error) {
 	scriptPath := "./powershell/DisconnectRDPUser.ps1"
-	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -id %d", scriptPath, ip, user, password, sessionID)
+	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -id %d", scriptPath, ip, user, password,
+		sessionID)
 	return s.commander.run(args)
 }
