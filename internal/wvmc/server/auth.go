@@ -3,6 +3,8 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/anaxita/wvmc/internal/wvmc/domain"
 	"net"
 	"net/http"
 	"os"
@@ -79,7 +81,8 @@ func (s *Server) SignIn() http.HandlerFunc {
 		req.Password = strings.TrimSpace(req.Password)
 
 		if req.Email == "" || req.Password == "" {
-			SendErr(w, http.StatusBadRequest, errors.New("email or password cannot be empty"), "Поля email или password не могут быть пустыми")
+			SendErr(w, http.StatusBadRequest, errors.New("email or password cannot be empty"),
+				"Поля email или password не могут быть пустыми")
 			return
 		}
 
@@ -99,7 +102,12 @@ func (s *Server) SignIn() http.HandlerFunc {
 			addr := strings.Split(r.RemoteAddr, ":")
 			ip := net.ParseIP(addr[0])
 			if !ip.IsPrivate() {
-				SendErr(w, http.StatusBadRequest, err, "Доступ разрешен только с локального IP")
+				SendErr(
+					w, http.StatusBadRequest,
+					domain.ErrAccessDenied,
+					fmt.Sprintf("Доступ разрешен только с локального IP, ваш айпи %v", r.RemoteAddr),
+				)
+
 				return
 			}
 		}
