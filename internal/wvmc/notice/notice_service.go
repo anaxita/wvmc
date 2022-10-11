@@ -50,8 +50,8 @@ func (s *KMSBOT) Notify(text string) error {
 
 func (s *KMSBOT) AddIPToWL(userName, ip4, comment string) {
 	msg := addIPToWLRequest{
-		IP4:      userName,
-		UserName: ip4,
+		IP4:      ip4,
+		UserName: userName,
 		Comment:  comment,
 	}
 
