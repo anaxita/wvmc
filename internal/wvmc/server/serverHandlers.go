@@ -8,8 +8,8 @@ import (
 	"github.com/anaxita/logit"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 	"github.com/gorilla/mux"
+	"net"
 	"net/http"
-	"net/netip"
 	"os"
 	"strings"
 )
@@ -27,7 +27,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 		user := r.Context().Value(CtxString("user")).(model.User)
 
 		{
-			ip4 := netip.MustParseAddr(strings.Split(r.RemoteAddr, ":")[0])
+			ip4 := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
 			if !ip4.IsPrivate() && !ip4.IsUnspecified() {
 				defer s.notify.AddIPToWL(user.Name, ip4.String(), "vmcontrol")
 			}
