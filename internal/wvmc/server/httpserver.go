@@ -19,11 +19,11 @@ type Server struct {
 	store          *store.Store
 	router         *mux.Router
 	controlService *control.ServerService
-	notify         *notice.NoticeService
+	notify         *notice.KMSBOT
 }
 
 // New - создает новый сервер
-func New(storage *store.Store, controlService *control.ServerService, notify *notice.NoticeService) *Server {
+func New(storage *store.Store, controlService *control.ServerService, notify *notice.KMSBOT) *Server {
 	return &Server{
 		store:          storage,
 		router:         mux.NewRouter(),

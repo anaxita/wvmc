@@ -4,24 +4,31 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/anaxita/logit"
 	"net/http"
 )
 
 const botUrl = "http://localhost:8085"
 
-type NoticeService struct {
+type KMSBOT struct {
 }
 
-func NewNoticeService() *NoticeService {
-	return &NoticeService{}
+func NewNoticeService() *KMSBOT {
+	return &KMSBOT{}
 }
 
-type notice struct {
+type notifyRequest struct {
 	Text string `json:"text"`
 }
 
-func (s *NoticeService) Notify(text string) error {
-	msg := notice{text}
+type addIPToWLRequest struct {
+	IP4      string `json:"ip4"`
+	UserName string `json:"user_name"`
+	Comment  string `json:"comment"`
+}
+
+func (s *KMSBOT) Notify(text string) error {
+	msg := notifyRequest{text}
 	b, err := json.Marshal(msg)
 	if err != nil {
 		return err
@@ -39,4 +46,30 @@ func (s *NoticeService) Notify(text string) error {
 	}
 
 	return nil
+}
+
+func (s *KMSBOT) AddIPToWL(userName, ip4, comment string) {
+	msg := addIPToWLRequest{
+		IP4:      userName,
+		UserName: ip4,
+		Comment:  comment,
+	}
+
+	b, err := json.Marshal(msg)
+	if err != nil {
+		logit.Log("failed to marshal to json request for adding ip to wl: ", err)
+		return
+	}
+
+	body := bytes.NewReader(b)
+
+	w, err := http.Post(botUrl+"/wl", "application/json", body)
+	if err != nil {
+		logit.Log("failed to send request for adding ip to wl: ", err)
+		return
+	}
+
+	if w.StatusCode != http.StatusOK {
+		logit.Log("failed to add ip to wl, status code: ", w.StatusCode)
+	}
 }

@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
-	"os"
-
 	"github.com/anaxita/logit"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 	"github.com/gorilla/mux"
+	"net/http"
+	"net/netip"
+	"os"
+	"strings"
 )
 
 // GetServers возвращает список серверов
@@ -23,11 +24,16 @@ func (s *Server) GetServers() http.HandlerFunc {
 	var userRole = 0
 
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		user := r.Context().Value(CtxString("user")).(model.User)
 
-		if user.Role == adminRole {
+		{
+			ip4 := netip.MustParseAddr(strings.Split(r.RemoteAddr, ":")[0])
+			if !ip4.IsPrivate() && !ip4.IsUnspecified() {
+				defer s.notify.AddIPToWL(user.Name, ip4.String(), "vmcontrol")
+			}
+		}
 
+		if user.Role == adminRole {
 			vms, err := s.controlService.GetServersDataForAdmins()
 			if err != nil {
 				SendErr(w, http.StatusOK, err, "Ошибка получения статусов")
@@ -40,7 +46,6 @@ func (s *Server) GetServers() http.HandlerFunc {
 				return
 			}
 
-		loop:
 			for k, v := range vms {
 				for _, srv := range servers {
 					if srv.VMID == v.VMID && srv.HV == v.HV {
@@ -50,7 +55,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 						vms[k].OutAddr = srv.OutAddr
 						vms[k].IP = srv.IP
 
-						continue loop
+						break
 					}
 				}
 			}
@@ -76,7 +81,6 @@ func (s *Server) GetServers() http.HandlerFunc {
 				return
 			}
 
-		loop2:
 			for k, v := range vms {
 				for _, srv := range servers {
 					if srv.VMID == v.VMID && srv.HV == v.HV {
@@ -86,7 +90,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 						vms[k].OutAddr = srv.OutAddr
 						vms[k].IP = srv.IP
 
-						continue loop2
+						break
 					}
 				}
 			}
