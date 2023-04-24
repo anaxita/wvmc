@@ -15,16 +15,16 @@ import (
 )
 
 func main() {
-	l, err := app.NewLogger()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer l.Sync()
-
 	c, err := app.NewConfig()
 	if err != nil {
-		l.Fatalf("failed to load config: %v", err)
+		log.Fatalf(`{"msg": "failed to load config: %v"}`, err)
 	}
+
+	l, err := app.NewLogger(c.LogFile)
+	if err != nil {
+		log.Fatalf(`{"msg": "failed to create logger: %v"}`, err)
+	}
+	defer l.Sync()
 
 	db, err := app.NewSQLite3Client(c.DB)
 	if err != nil {
