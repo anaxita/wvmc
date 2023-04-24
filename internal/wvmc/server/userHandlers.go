@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/anaxita/logit"
 	"github.com/anaxita/wvmc/internal/wvmc/hasher"
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 	"github.com/gorilla/mux"
@@ -55,7 +54,6 @@ func (s *Server) CreateUser() http.HandlerFunc {
 		req.Name = strings.TrimSpace(req.Name)
 		req.Company = strings.TrimSpace(req.Company)
 
-		logit.Info("Проверяем возможность создания пользователя с данными: ", req.Email, req.Name)
 		if req.Email == "" || req.Password == "" || req.Name == "" {
 			SendErr(w, http.StatusBadRequest, errors.New("email password or name cannot be empty"),
 				"Поля email, password или name не могут быть пустыми")

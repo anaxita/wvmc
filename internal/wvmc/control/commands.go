@@ -3,12 +3,12 @@ package control
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/anaxita/wvmc/internal/wvmc/cache"
 	"os"
 	"os/exec"
 	"strings"
 
-	"github.com/anaxita/logit"
+	"github.com/anaxita/wvmc/internal/wvmc/cache"
+
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 )
 
@@ -65,7 +65,6 @@ func (c *Command) run(args ...string) ([]byte, error) {
 
 	out, err := e.Output()
 	if err != nil {
-		logit.Log("COMMAND", e.Args)
 		return nil, err
 	}
 
@@ -112,12 +111,10 @@ func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]model.
 
 	out, err := s.commander.run(scriptPath, "-hvList", hvs, "-idList", ids)
 	if err != nil {
-		logit.Log("Ошибка powershell ", err)
 		return vms, err
 	}
 
 	if err = json.Unmarshal(out, &vms); err != nil {
-		logit.Log("Ошибка json unmarshal ", err)
 		return vms, err
 	}
 	return vms, nil
@@ -141,7 +138,6 @@ func (s *ServerService) GetServersDataForAdmins() ([]model.Server, error) {
 	var servers []model.Server
 
 	if err = json.Unmarshal(out, &servers); err != nil {
-		logit.Log("OUTPUT:", string(out))
 		return nil, err
 	}
 
@@ -300,15 +296,12 @@ func (s *ServerService) GetProcesses(ip, user, password string) ([]WinRDPSesion,
 
 	// check if not sessions
 	if string(out) == "" {
-		logit.Log("string out", string(out))
 		return processes, nil
 	}
 
 	if err = json.Unmarshal(out, &processes); err != nil {
 		return processes, err
 	}
-
-	logit.Info("processes", processes)
 
 	return processes, nil
 }

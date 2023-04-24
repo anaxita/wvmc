@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/anaxita/logit"
+	"log"
 	"net/http"
 )
 
@@ -57,7 +57,6 @@ func (s *KMSBOT) AddIPToWL(userName, ip4, comment string) {
 
 	b, err := json.Marshal(msg)
 	if err != nil {
-		logit.Log("failed to marshal to json request for adding ip to wl: ", err)
 		return
 	}
 
@@ -65,11 +64,10 @@ func (s *KMSBOT) AddIPToWL(userName, ip4, comment string) {
 
 	w, err := http.Post(botUrl+"/wl", "application/json", body)
 	if err != nil {
-		logit.Log("failed to send request for adding ip to wl: ", err)
 		return
 	}
 
 	if w.StatusCode != http.StatusOK {
-		logit.Log("failed to add ip to wl, status code: ", w.StatusCode)
+		log.Println("failed to add ip to wl, status code: ", w.StatusCode)
 	}
 }

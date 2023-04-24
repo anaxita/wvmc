@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/anaxita/logit"
-	"github.com/anaxita/wvmc/internal/wvmc/model"
-	"github.com/gorilla/mux"
+	"log"
 	"net"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/anaxita/wvmc/internal/wvmc/model"
+	"github.com/gorilla/mux"
 )
 
 // GetServers возвращает список серверов
@@ -178,7 +179,7 @@ Action: %s
 		err = s.notify.Notify(fmt.Sprintf(notice, user.Email, user.Name, user.Company, server.Name,
 			server.HV, command))
 		if err != nil {
-			logit.Log("Не удалось отправить уведомление", err)
+			log.Println("Не удалось отправить уведомление", err)
 		}
 
 		SendOK(w, http.StatusOK, "Команда выполнена успешно")
@@ -202,7 +203,6 @@ func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 			server.Password = password
 			_, err := s.store.Server(r.Context()).Create(server)
 			if err != nil {
-				logit.Log("Невозможно добавить сервер", server.Name, err)
 				SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 				return
 			}

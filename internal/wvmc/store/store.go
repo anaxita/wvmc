@@ -7,26 +7,36 @@ import (
 	"os"
 	"time"
 
-	"github.com/anaxita/logit"
 	"github.com/anaxita/wvmc/internal/wvmc/hasher"
+	"github.com/jmoiron/sqlx"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 // Store содержит в себе подключение к базе данных и репозитории
 type Store struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
 // Connect создает подключение к БД
 func Connect(scheme, user, password, dbname string) (*sql.DB, error) {
-	logit.Info("Соединяемся с БД ...")
-	db, err := sql.Open(scheme, fmt.Sprintf("file:%s?_auth&_auth_user=%s&_auth_pass=%s&_auth_crypt=sha512", dbname, user, password))
+	db, err := sql.Open(scheme,
+		fmt.Sprintf("file:%s?_auth&_auth_user=%s&_auth_pass=%s&_auth_crypt=sha512", dbname, user,
+			password))
 	if err != nil {
 		return nil, err
 	}
 
-	if err = db.Ping(); err != nil {
+	for i := 0; i < 3; i++ {
+		err = db.Ping()
+		if err == nil {
+			break
+		}
+
+		time.Sleep(time.Second)
+	}
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -34,13 +44,11 @@ func Connect(scheme, user, password, dbname string) (*sql.DB, error) {
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(10)
 
-	logit.Info("Успешно соединились с БД", dbname)
-
 	return db, nil
 }
 
 // New создает новый стор с подключением к БД
-func New(db *sql.DB) *Store {
+func New(db *sqlx.DB) *Store {
 	return &Store{
 		db: db,
 	}
@@ -64,13 +72,11 @@ func (s *Store) Server(c context.Context) *ServerRepository {
 
 // Migrate создает таблицы в БД, если их еще не существует
 func Migrate(db *sql.DB) error {
-	logit.Info("Выполняем миграции ...")
-
-	createUsersTable, _ := os.ReadFile("./sql/users.sql")
-	createServersTable, _ := os.ReadFile("./sql/servers.sql")
-	createUsersServersTable, _ := os.ReadFile("./sql/users_servers.sql")
-	createRefreshTokkensTable, _ := os.ReadFile("./sql/refresh_tokens.sql")
-	createHypervsTable, _ := os.ReadFile("./sql/hypervs.sql")
+	createUsersTable, _ := os.ReadFile("./migrations/users.migrations")
+	createServersTable, _ := os.ReadFile("./migrations/servers.migrations")
+	createUsersServersTable, _ := os.ReadFile("./migrations/users_servers.migrations")
+	createRefreshTokkensTable, _ := os.ReadFile("./migrations/refresh_tokens.migrations")
+	createHypervsTable, _ := os.ReadFile("./migrations/hypervs.migrations")
 
 	_, err := db.Exec(string(createUsersTable))
 	if err != nil {
@@ -108,6 +114,5 @@ func Migrate(db *sql.DB) error {
 		return err
 	}
 
-	logit.Info("Миграции выполнены успешно")
 	return nil
 }

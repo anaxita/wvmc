@@ -1,9 +1,9 @@
-/logs
 *.log
+*.db
+*.s3db
 .env*
 /build
 *.exe
 .vscode
-*.s3db
 *.txt
 *.idea

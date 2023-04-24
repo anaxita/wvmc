@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"github.com/anaxita/logit"
 	"net/http"
 )
 
@@ -30,10 +29,8 @@ func SendOK(w http.ResponseWriter, code int, data interface{}) {
 	}
 
 	if err := json.NewEncoder(w).Encode(fullResponse); err != nil {
-		logit.Log("Ошибка отправки ответа в JSON", err)
 		return
 	}
-	logit.Info("RESPONSE: ", code, fullResponse.Status)
 }
 
 // SendErr отправляет http ответ в формате JSON
@@ -54,9 +51,6 @@ func SendErr(w http.ResponseWriter, code int, meta error, err interface{}) {
 	}
 
 	if err := json.NewEncoder(w).Encode(fullResponse); err != nil {
-		logit.Log("Ошибка отправки ответа в JSON", err)
 		return
 	}
-
-	logit.Info("RESPONSE: ", code, fullResponse)
 }

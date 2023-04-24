@@ -6,13 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
-
 	"net/http"
 	"os"
 	"strings"
 
-	"github.com/anaxita/logit"
+	"github.com/gorilla/mux"
+
 	"github.com/anaxita/wvmc/internal/wvmc/model"
 	"github.com/dgrijalva/jwt-go"
 )
@@ -24,17 +23,18 @@ func (s *Server) Auth(next http.Handler) http.Handler {
 		tokenString := strings.Split(authHeader, " ")
 
 		if len(tokenString) != 2 || tokenString[0] != "Bearer" {
-			logit.Info("Нет токена в заголовке", authHeader)
-			SendErr(w, http.StatusUnauthorized, errors.New("no token in headers"), "Нет токена в заголовке")
+			SendErr(w, http.StatusUnauthorized, errors.New("no token in headers"),
+				"Нет токена в заголовке")
 			return
 		}
 
-		token, err := jwt.ParseWithClaims(tokenString[1], &customClaims{}, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(os.Getenv("TOKEN")), nil
-		})
+		token, err := jwt.ParseWithClaims(tokenString[1], &customClaims{},
+			func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+				}
+				return []byte(os.Getenv("TOKEN")), nil
+			})
 
 		if err != nil {
 			SendErr(w, http.StatusUnauthorized, err, "Токен истёк")
@@ -45,13 +45,13 @@ func (s *Server) Auth(next http.Handler) http.Handler {
 			if claims.Type == "access" {
 				ctxUser := CtxString("user")
 
-				logit.Info("Авторизация: ", claims.User.Email)
-
-				next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxUser, claims.User)))
+				next.ServeHTTP(w,
+					r.WithContext(context.WithValue(r.Context(), ctxUser, claims.User)))
 				return
 			}
 
-			SendErr(w, http.StatusUnauthorized, errors.New("token it not 'access'"), "Неверный тип токен")
+			SendErr(w, http.StatusUnauthorized, errors.New("token it not 'access'"),
+				"Неверный тип токен")
 			return
 		}
 		SendErr(w, http.StatusUnauthorized, err, "Токен не валиден")
@@ -72,7 +72,6 @@ func (s *Server) Cors(next http.Handler) http.Handler {
 			return
 		}
 
-		logit.Info("REQUEST", r.Method, r.RemoteAddr, r.RequestURI)
 		next.ServeHTTP(w, r)
 	})
 }
@@ -143,7 +142,8 @@ func (s *Server) RefreshToken() http.Handler {
 				SendOK(w, http.StatusOK, tokens)
 				return
 			}
-			SendErr(w, http.StatusBadRequest, errors.New("token type is not refresh"), "Неверный тип токена")
+			SendErr(w, http.StatusBadRequest, errors.New("token type is not refresh"),
+				"Неверный тип токена")
 			return
 		}
 		SendErr(w, http.StatusUnauthorized, errors.New("token is invalid"), "Токен невалидный")
@@ -156,8 +156,6 @@ func (s *Server) RoleMiddleware(roles ...int) mux.MiddlewareFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctxUser := r.Context().Value(CtxString("user")).(model.User)
 
-			logit.Info("Проверяем права пользователя", ctxUser.Email)
-
 			for _, v := range roles {
 				if ctxUser.Role == v {
 					next.ServeHTTP(w, r)
@@ -166,7 +164,8 @@ func (s *Server) RoleMiddleware(roles ...int) mux.MiddlewareFunc {
 				}
 			}
 
-			SendErr(w, http.StatusForbidden, errors.New("user has no permissions"), "Недостаточно прав")
+			SendErr(w, http.StatusForbidden, errors.New("user has no permissions"),
+				"Недостаточно прав")
 		})
 	}
 }
@@ -183,13 +182,16 @@ func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
 		var err error
 
 		if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
-			SendErr(w, http.StatusBadRequest, errors.New("server_id and command fields cannot be empty"), "server_id и command не могут быть пустыми")
+			SendErr(w, http.StatusBadRequest,
+				errors.New("server_id and command fields cannot be empty"),
+				"server_id и command не могут быть пустыми")
 
 			return
 		}
 
 		if req.ServerID == 0 || req.Command == "" {
-			SendErr(w, http.StatusBadRequest, errors.New("fields cannot be empty"), "Все поля должны быть заполнены")
+			SendErr(w, http.StatusBadRequest, errors.New("fields cannot be empty"),
+				"Все поля должны быть заполнены")
 
 			return
 		}
@@ -208,8 +210,6 @@ func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
 
 			return
 		}
-
-		logit.Info("Проверяем права на сервер у пользователя", ctxUser.Email)
 
 		if ctxUser.Role != model.UserRoleAdmin {
 			serversByUser, err := s.store.Server(r.Context()).FindByUser(ctxUser.ID)

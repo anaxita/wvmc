@@ -1,53 +1,40 @@
 package main
 
 import (
-	"flag"
-	"fmt"
-	"github.com/anaxita/wvmc/internal/wvmc/cache"
-	"github.com/anaxita/wvmc/internal/wvmc/notice"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"time"
 
-	"github.com/anaxita/logit"
+	"github.com/anaxita/wvmc/internal/app"
+	"github.com/anaxita/wvmc/internal/wvmc/cache"
 	"github.com/anaxita/wvmc/internal/wvmc/control"
+	"github.com/anaxita/wvmc/internal/wvmc/notice"
 	"github.com/anaxita/wvmc/internal/wvmc/server"
 	"github.com/anaxita/wvmc/internal/wvmc/store"
 )
 
-var envPath string
-
 func main() {
-	flag.StringVar(&envPath, "e", ".env", "path to .env")
-	flag.Parse()
-
-	err := godotenv.Load(envPath)
+	l, err := app.NewLogger()
 	if err != nil {
-		f, _ := os.OpenFile("./errors.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0200)
-		defer f.Close()
-		f.WriteString(fmt.Sprintln(time.Now().Format("02.01.2006 15:04:05"), err))
-		log.Fatal("[FATAL] Cannot find env file")
+		log.Fatal(err)
+	}
+	defer l.Sync()
+
+	c, err := app.NewConfig()
+	if err != nil {
+		l.Fatalf("failed to load config: %v", err)
 	}
 
-	err = logit.New(os.Getenv("LOG"))
+	db, err := app.NewSQLite3Client(c.DB)
 	if err != nil {
-		log.Fatal("Не удалось запустить логгер", err)
-	}
-	defer logit.Close()
-
-	db, err := store.Connect(os.Getenv("DB_TYPE"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"))
-	if err != nil {
-		logit.Fatal("Ошибка соединения с БД:", err)
+		l.Fatalf("failed to connect to DB: %v", err)
 	}
 	defer db.Close()
 
-	err = store.Migrate(db)
+	err = app.UpMigrations(db.DB, c.DB.Name, c.DB.MigrationsPath)
 	if err != nil {
-		logit.Fatal("Ошибка миграции", err)
+		l.Fatalf("failed to run migrations: %v", err)
 	}
 
 	repository := store.New(db)
@@ -65,12 +52,12 @@ func main() {
 
 			_, err := serviceServer.GetServersDataForAdmins()
 			if err != nil {
-				logit.Log("update cache servers: ", err)
+				log.Println("update cache servers: ", err)
 			}
 		}
 	}()
 
 	if err = s.Start(); err != nil {
-		logit.Fatal("Ошибка запуска сервер", err)
+		log.Fatal("Ошибка запуска сервер", err)
 	}
 }

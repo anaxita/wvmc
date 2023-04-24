@@ -11,7 +11,7 @@ $servers =  $hvList | ForEach-Object -Parallel {
         continue
     }
 
-        $vms | ForEach-Object -Parallel {
+        $vms | ForEach-Object {
             $state = $_.State;
             $networkAdapter = $_ | Get-VMNetworkAdapter;
             $ip = ''
@@ -39,7 +39,7 @@ $servers =  $hvList | ForEach-Object -Parallel {
             }
         
     }
-} -ThrottleLimit 30;
+} -ThrottleLimit 4;
 
 
 $servers | ConvertTo-Json -AsArray -Compress

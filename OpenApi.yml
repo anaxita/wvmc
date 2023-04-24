@@ -159,7 +159,7 @@ paths:
                       status: err
                       message:
                         error: Неверный логин или пароль
-                        meta: "no sql rows"
+                        meta: "no migrations rows"
   /refresh:
     post:
       tags:
@@ -450,7 +450,7 @@ paths:
                 status: err
                 message:
                   error: Пользователь не найден
-                  meta: no sql rows
+                  meta: no migrations rows
         500:
           description: Ошибка БД
           content:
@@ -528,7 +528,7 @@ paths:
                 status: err
                 message:
                   error: Пользователь не найден
-                  meta: no sql rows
+                  meta: no migrations rows
         500:
           description: Ошибка БД
           content:
@@ -1010,7 +1010,7 @@ paths:
                 status: err
                 message:
                   error: Сервер не найден
-                  meta: no sql rows
+                  meta: no migrations rows
         500:
           description: Ошибка БД
           content:
@@ -1088,7 +1088,7 @@ paths:
                 status: err
                 message:
                   error: Сервер не найден
-                  meta: no sql rows
+                  meta: no migrations rows
         500:
           description: Ошибка БД
           content:
@@ -1191,7 +1191,7 @@ paths:
                 status: err
                 message:
                   error: Сервер не найден
-                  meta: no sql rows
+                  meta: no migrations rows
         403:
           description: Нет прав к данному серверу
           content:
@@ -1356,7 +1356,7 @@ paths:
                       status: err
                       message:
                         error: Сервер не найден
-                        meta: no sql rows
+                        meta: no migrations rows
               200:
                 description: Успешно
                 content:
@@ -1507,7 +1507,7 @@ paths:
                       status: err
                       message:
                         error: Сервер не найден
-                        meta: no sql rows
+                        meta: no migrations rows
               200:
                 description: Успешно
                 content:
@@ -1612,7 +1612,7 @@ paths:
                           status: err
                           message:
                             error: Сервер не найден
-                            meta: no sql rows
+                            meta: no migrations rows
                   200:
                     description: Успешно
                     content:

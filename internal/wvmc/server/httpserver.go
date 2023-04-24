@@ -2,13 +2,14 @@ package server
 
 import (
 	"fmt"
-	"github.com/anaxita/wvmc/internal/wvmc/model"
-	"github.com/anaxita/wvmc/internal/wvmc/notice"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 
-	"github.com/anaxita/logit"
+	"github.com/anaxita/wvmc/internal/wvmc/model"
+	"github.com/anaxita/wvmc/internal/wvmc/notice"
+
 	"github.com/anaxita/wvmc/internal/wvmc/control"
 	"github.com/anaxita/wvmc/internal/wvmc/store"
 	"github.com/gorilla/mux"
@@ -23,7 +24,11 @@ type Server struct {
 }
 
 // New - создает новый сервер
-func New(storage *store.Store, controlService *control.ServerService, notify *notice.KMSBOT) *Server {
+func New(
+	storage *store.Store,
+	controlService *control.ServerService,
+	notify *notice.KMSBOT,
+) *Server {
 	return &Server{
 		store:          storage,
 		router:         mux.NewRouter(),
@@ -62,9 +67,11 @@ func (s *Server) configureRouter() {
 	servers.Handle("/servers/{hv}/{name}", s.GetServer()).Methods("OPTIONS", "GET")
 	servers.Handle("/servers/{hv}/{name}/disks", s.GetServerDisks()).Methods("OPTIONS", "GET")
 	servers.Handle("/servers/{hv}/{name}/services", s.GetServerServices()).Methods("OPTIONS", "GET")
-	servers.Handle("/servers/{hv}/{name}/services", s.ControlServerServices()).Methods("OPTIONS", "POST")
+	servers.Handle("/servers/{hv}/{name}/services", s.ControlServerServices()).Methods("OPTIONS",
+		"POST")
 	servers.Handle("/servers/{hv}/{name}/manager", s.GetServerManager()).Methods("OPTIONS", "GET")
-	servers.Handle("/servers/{hv}/{name}/manager", s.ControlServerManager()).Methods("OPTIONS", "POST")
+	servers.Handle("/servers/{hv}/{name}/manager", s.ControlServerManager()).Methods("OPTIONS",
+		"POST")
 	servers.Handle("/servers/update", s.UpdateAllServersInfo()).Methods("POST", "OPTIONS")
 }
 
@@ -75,12 +82,12 @@ func (s *Server) Start() error {
 	cer, err := ioutil.ReadFile("C:\\Apache24\\conf\\ssl\\kmsys.ru.cer")
 
 	if err != nil {
-		logit.Fatal("Ошибка открытия kmsys.ru.cer:", err)
+		log.Fatal("Ошибка открытия kmsys.ru.cer:", err)
 	}
 
 	ca, err := ioutil.ReadFile("C:\\Apache24\\conf\\ssl\\ca.cer")
 	if err != nil {
-		logit.Fatal("Ошибка открытия ca.cer :", err)
+		log.Fatal("Ошибка открытия ca.cer :", err)
 	}
 
 	c := fmt.Sprintf("%v \n %v", string(cer), string(ca))
@@ -88,15 +95,14 @@ func (s *Server) Start() error {
 	goCer, err := os.Create("C:\\Apache24\\conf\\ssl\\anaxita.cer")
 
 	if err != nil {
-		logit.Fatal("Ошибка создания anaxita.cer :", err)
+		log.Fatal("Ошибка создания anaxita.cer :", err)
 	}
 
 	goCer.WriteString(c)
 	defer goCer.Close()
 
-	logit.Info("Сервер запущен на : ", os.Getenv("PORT_HTTPS"))
-
 	go http.ListenAndServe(os.Getenv("PORT_HTTP"), s.router)
 
-	return http.ListenAndServeTLS(os.Getenv("PORT_HTTPS"), goCer.Name(), "C:\\Apache24\\conf\\ssl\\kmsys.ru.key", s.router)
+	return http.ListenAndServeTLS(os.Getenv("PORT_HTTPS"), goCer.Name(),
+		"C:\\Apache24\\conf\\ssl\\kmsys.ru.key", s.router)
 }
