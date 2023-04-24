@@ -76,7 +76,6 @@ func Migrate(db *sql.DB) error {
 	createServersTable, _ := os.ReadFile("./migrations/servers.migrations")
 	createUsersServersTable, _ := os.ReadFile("./migrations/users_servers.migrations")
 	createRefreshTokkensTable, _ := os.ReadFile("./migrations/refresh_tokens.migrations")
-	createHypervsTable, _ := os.ReadFile("./migrations/hypervs.migrations")
 
 	_, err := db.Exec(string(createUsersTable))
 	if err != nil {
@@ -105,11 +104,6 @@ func Migrate(db *sql.DB) error {
 	}
 
 	_, err = db.Exec(string(createRefreshTokkensTable))
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(string(createHypervsTable))
 	if err != nil {
 		return err
 	}

@@ -1,9 +1,6 @@
 package server
 
 import (
-	"fmt"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 
@@ -79,30 +76,5 @@ func (s *Server) configureRouter() {
 func (s *Server) Start() error {
 	s.configureRouter()
 
-	cer, err := ioutil.ReadFile("C:\\Apache24\\conf\\ssl\\kmsys.ru.cer")
-
-	if err != nil {
-		log.Fatal("Ошибка открытия kmsys.ru.cer:", err)
-	}
-
-	ca, err := ioutil.ReadFile("C:\\Apache24\\conf\\ssl\\ca.cer")
-	if err != nil {
-		log.Fatal("Ошибка открытия ca.cer :", err)
-	}
-
-	c := fmt.Sprintf("%v \n %v", string(cer), string(ca))
-
-	goCer, err := os.Create("C:\\Apache24\\conf\\ssl\\anaxita.cer")
-
-	if err != nil {
-		log.Fatal("Ошибка создания anaxita.cer :", err)
-	}
-
-	goCer.WriteString(c)
-	defer goCer.Close()
-
-	go http.ListenAndServe(os.Getenv("PORT_HTTP"), s.router)
-
-	return http.ListenAndServeTLS(os.Getenv("PORT_HTTPS"), goCer.Name(),
-		"C:\\Apache24\\conf\\ssl\\kmsys.ru.key", s.router)
+	return http.ListenAndServe(os.Getenv("HTTP_PORT"), s.router)
 }

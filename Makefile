@@ -1,17 +1,24 @@
-.PHONY build-prod:
-build-prod:
-	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o ./wvmc.exe ./cmd/wvmc
+-include .env
 
-.PHONY build-dev:
-build-dev:
-	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o ./wvmc_dev.exe ./cmd/wvmc
+# install a migrate tool
+migrate-install:
+	go install -tags 'sqlite3' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.15.2
 
-.PHONY run:
-run:
-	go run ./cmd/wvmc/main.go
+# create new migrations
+migrate-new:
+	migrate create -ext sql -dir ./migrations "$(name)"
 
-.PHONY test:
-test:
-	go test ./...
+LOCAL_DB_DSN = "sqlite3://${SQLITE_NAME}?query&_auth&_auth_user=${SQLITE_USER}&_auth_pass=${SQLITE_PASSWORD}&_auth_crypt=sha512"
 
-.DEFAULT_GOAL := run
+# up migrations
+migrate-up:
+	migrate -path ./migrations -database ${LOCAL_DB_DSN} up
+
+# rollback the last migration
+migrate-down:
+	migrate -path ./migrations -database ${LOCAL_DB_DSN} down
+
+# generate mock
+gen:
+	go generate ./...
+
