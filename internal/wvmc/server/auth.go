@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/anaxita/wvmc/internal/wvmc/domain"
 	"net"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/anaxita/wvmc/internal/wvmc/hasher"
-	"github.com/anaxita/wvmc/internal/wvmc/model"
+	"github.com/anaxita/wvmc/internal/wvmc/domain"
+	"github.com/anaxita/wvmc/pkg/hasher"
+
+	"github.com/anaxita/wvmc/internal/wvmc/entity"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -21,12 +22,12 @@ type CtxString string
 
 type customClaims struct {
 	jwt.StandardClaims
-	User model.User
+	User entity.User
 	Type string
 }
 
 // createToken создает новый access токен и записывает в него модель пользователя
-func createToken(t string, user model.User) string {
+func createToken(t string, user entity.User) string {
 
 	// Создаем данные токена с временем жизни 15 минут и моделью пользователя
 	var claims customClaims
@@ -98,14 +99,15 @@ func (s *Server) SignIn() http.HandlerFunc {
 			return
 		}
 
-		if user.Role == model.UserRoleAdmin && user.Email != "admin" {
+		if user.Role == entity.UserRoleAdmin && user.Email != "admin" {
 			addr := strings.Split(r.RemoteAddr, ":")
 			ip := net.ParseIP(addr[0])
 			if !ip.IsPrivate() {
 				SendErr(
 					w, http.StatusBadRequest,
 					domain.ErrAccessDenied,
-					fmt.Sprintf("Доступ разрешен только с локального IP, ваш айпи %v", r.RemoteAddr),
+					fmt.Sprintf("Доступ разрешен только с локального IP, ваш айпи %v",
+						r.RemoteAddr),
 				)
 
 				return

@@ -9,7 +9,7 @@ import (
 
 	"github.com/anaxita/wvmc/internal/wvmc/cache"
 
-	"github.com/anaxita/wvmc/internal/wvmc/model"
+	"github.com/anaxita/wvmc/internal/wvmc/entity"
 )
 
 type VM struct {
@@ -56,7 +56,7 @@ type Commander interface {
 // Command содержит методы Run для запуска powershell команд
 type Command struct{}
 
-// run запускает команду powershell,возвращает вывод и ошибку
+// run запускает команду powershell,возвращает вывод и ошибку // TODO DEPRECATED
 func (c *Command) run(args ...string) ([]byte, error) {
 	command := strings.Join(args, " ")
 
@@ -71,24 +71,35 @@ func (c *Command) run(args ...string) ([]byte, error) {
 	return out, nil
 }
 
-// ServerService содержит структуру, которая реализует интерфейс Commander
-type ServerService struct {
-	commander Commander
-	cache     *cache.CacheService
+// Service содержит структуру, которая реализует интерфейс Commander
+type Service struct {
+	cache *cache.CacheService
 }
 
-func NewServerService(commander Commander, cache *cache.CacheService) *ServerService {
-	return &ServerService{commander: commander, cache: cache}
+func NewServerService(cache *cache.CacheService) *Service {
+	return &Service{cache: cache}
 }
 
-// NewServerService ...
+func (s *Service) run(args ...string) ([]byte, error) {
+	command := strings.Join(args, " ")
+
+	e := exec.Command("pwsh", "-NoLogo", "-Mta", "-NoProfile", "-NonInteractive", "-Command",
+		command)
+
+	out, err := e.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
 
 // GetServersDataForUsers получает статус работы и сети ВМ servers по их Name
-func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]model.Server, error) {
+func (s *Service) GetServersDataForUsers(servers []entity.Server) ([]entity.Server, error) {
 	var uniqHVs = make(map[string]bool)
 	var ids string
 	var hvs string
-	var vms = make([]model.Server, 0)
+	var vms = make([]entity.Server, 0)
 	var scriptPath = "./powershell/GetVmForUsers.ps1"
 
 	for _, v := range servers {
@@ -109,7 +120,7 @@ func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]model.
 		}
 	}
 
-	out, err := s.commander.run(scriptPath, "-hvList", hvs, "-idList", ids)
+	out, err := s.run(scriptPath, "-hvList", hvs, "-idList", ids)
 	if err != nil {
 		return vms, err
 	}
@@ -121,7 +132,7 @@ func (s *ServerService) GetServersDataForUsers(servers []model.Server) ([]model.
 }
 
 // GetServersDataForAdmins получает статус работы всех ВМ servers
-func (s *ServerService) GetServersDataForAdmins() ([]model.Server, error) {
+func (s *Service) GetServersDataForAdmins() ([]entity.Server, error) {
 	if s.cache.Servers() != nil {
 		return s.cache.Servers(), nil
 	}
@@ -130,12 +141,12 @@ func (s *ServerService) GetServersDataForAdmins() ([]model.Server, error) {
 
 	scriptPath := "./powershell/GetVmForAdmins.ps1"
 
-	out, err := s.commander.run(scriptPath, "-hvList", hvs)
+	out, err := s.run(scriptPath, "-hvList", hvs)
 	if err != nil {
 		return nil, err
 	}
 
-	var servers []model.Server
+	var servers []entity.Server
 
 	if err = json.Unmarshal(out, &servers); err != nil {
 		return nil, err
@@ -147,72 +158,72 @@ func (s *ServerService) GetServersDataForAdmins() ([]model.Server, error) {
 }
 
 // StopServer выключает сервер
-func (s *ServerService) StopServer(server model.Server) ([]byte, error) {
+func (s *Service) StopServer(server entity.Server) ([]byte, error) {
 	command := fmt.Sprintf("Stop-VM -Name %s -ComputerName '%s'", server.Name, server.HV)
-	out, err := s.commander.run(command)
+	out, err := s.run(command)
 	if err != nil {
 		return nil, err
 	}
 
-	s.cache.SetServerState(server, model.ServerStateStopped)
+	s.cache.SetServerState(server, entity.ServerStateStopped)
 	return out, nil
 }
 
 // StopServerForce принудительно выключает сервер
-func (s *ServerService) StopServerForce(server model.Server) ([]byte, error) {
+func (s *Service) StopServerForce(server entity.Server) ([]byte, error) {
 	command := fmt.Sprintf("Stop-VM -Name %s -Force -ComputerName '%s'", server.Name, server.HV)
-	out, err := s.commander.run(command)
+	out, err := s.run(command)
 	if err != nil {
 		return nil, err
 	}
 
-	s.cache.SetServerState(server, model.ServerStateStopped)
+	s.cache.SetServerState(server, entity.ServerStateStopped)
 	return out, nil
 }
 
 // StartServer включает сервер
-func (s *ServerService) StartServer(server model.Server) ([]byte, error) {
+func (s *Service) StartServer(server entity.Server) ([]byte, error) {
 	command := fmt.Sprintf("Start-VM -Name %s -ComputerName '%s'", server.Name, server.HV)
-	out, err := s.commander.run(command)
+	out, err := s.run(command)
 	if err != nil {
 		return nil, err
 	}
 
-	s.cache.SetServerState(server, model.ServerStateRunning)
+	s.cache.SetServerState(server, entity.ServerStateRunning)
 	return out, nil
 }
 
 // StartServerNetwork включает сеть на сервере
-func (s *ServerService) StartServerNetwork(server model.Server) ([]byte, error) {
+func (s *Service) StartServerNetwork(server entity.Server) ([]byte, error) {
 	command := fmt.Sprintf("Connect-VMNetworkAdapter -VMName %s -SwitchName \"DMZ - Virtual Switch\" -ComputerName '%s'",
 		server.Name, server.HV)
-	out, err := s.commander.run(command)
+	out, err := s.run(command)
 	if err != nil {
 		return nil, err
 	}
 
-	s.cache.SetServerNetwork(server, model.ServerNetworkRunning)
+	s.cache.SetServerNetwork(server, entity.ServerNetworkRunning)
 	return out, nil
 }
 
 // StopServerNetwork выключает сеть на сервере
-func (s *ServerService) StopServerNetwork(server model.Server) ([]byte, error) {
+func (s *Service) StopServerNetwork(server entity.Server) ([]byte, error) {
 	command := fmt.Sprintf("Disconnect-VMNetworkAdapter -VMName %s -ComputerName '%s'", server.Name,
 		server.HV)
-	out, err := s.commander.run(command)
+	out, err := s.run(command)
 	if err != nil {
 		return nil, err
 	}
 
-	s.cache.SetServerNetwork(server, model.ServerNetworkStopped)
+	s.cache.SetServerNetwork(server, entity.ServerNetworkStopped)
 	return out, nil
 }
 
-func (s *ServerService) GetServerData(server model.Server, hv string, name string) (model.Server,
+func (s *Service) GetServerData(server entity.Server, hv string, name string) (entity.Server,
 	error) {
 	scriptPath := "./powershell/GetVmByHvAndName.ps1"
 
-	out, err := s.commander.run(scriptPath, "-hv", hv, "-name", name)
+	out, err := s.run(scriptPath, "-hv", hv, "-name", name)
 	if err != nil {
 		return server, err
 	}
@@ -225,12 +236,12 @@ func (s *ServerService) GetServerData(server model.Server, hv string, name strin
 }
 
 // GetServerServices получает список служб сервера
-func (s *ServerService) GetServerServices(ip, user, password string) ([]WinServices, error) {
+func (s *Service) GetServerServices(ip, user, password string) ([]WinServices, error) {
 	var services []WinServices
 	scriptPath := "./powershell/GetServerServices.ps1"
 	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s'", scriptPath, ip, user, password)
 
-	out, err := s.commander.run(args)
+	out, err := s.run(args)
 	if err != nil {
 		return services, err
 	}
@@ -243,35 +254,35 @@ func (s *ServerService) GetServerServices(ip, user, password string) ([]WinServi
 }
 
 // StartWinService включает службу сервера
-func (s *ServerService) StartWinService(ip, user, password, serviceName string) ([]byte, error) {
+func (s *Service) StartWinService(ip, user, password, serviceName string) ([]byte, error) {
 	scriptPath := "./powershell/StartService.ps1"
 	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -name '%s'", scriptPath, ip, user, password,
 		serviceName)
-	return s.commander.run(args)
+	return s.run(args)
 }
 
 // StopWinService выключает службу сервера
-func (s *ServerService) StopWinService(ip, user, password, serviceName string) ([]byte, error) {
+func (s *Service) StopWinService(ip, user, password, serviceName string) ([]byte, error) {
 	scriptPath := "./powershell/StopService.ps1"
 	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -name '%s'", scriptPath, ip, user, password,
 		serviceName)
-	return s.commander.run(args)
+	return s.run(args)
 }
 
 // RestartWinService переззагружает службу сервера
-func (s *ServerService) RestartWinService(ip, user, password, serviceName string) ([]byte, error) {
+func (s *Service) RestartWinService(ip, user, password, serviceName string) ([]byte, error) {
 	scriptPath := "./powershell/RestartService.ps1"
 	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -name '%s'", scriptPath, ip, user, password,
 		serviceName)
-	return s.commander.run(args)
+	return s.run(args)
 }
 
 // GetServerServices получает информацию о свободном мсесте на дисках
-func (s *ServerService) GetDiskFreeSpace(ip, user, password string) ([]WinVolume, error) {
+func (s *Service) GetDiskFreeSpace(ip, user, password string) ([]WinVolume, error) {
 	var disks []WinVolume
 	scriptPath := "./powershell/GetDiskFreeSpace.ps1"
 	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s'", scriptPath, ip, user, password)
-	out, err := s.commander.run(args)
+	out, err := s.run(args)
 	if err != nil {
 		return disks, err
 	}
@@ -284,12 +295,12 @@ func (s *ServerService) GetDiskFreeSpace(ip, user, password string) ([]WinVolume
 }
 
 // GetProcesses получает информацию о процессах (диспетчер задач)
-func (s *ServerService) GetProcesses(ip, user, password string) ([]WinRDPSesion, error) {
+func (s *Service) GetProcesses(ip, user, password string) ([]WinRDPSesion, error) {
 	processes := []WinRDPSesion{}
 	scriptPath := "./powershell/getProcesses.ps1"
 	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s'", scriptPath, ip, user, password)
 
-	out, err := s.commander.run(args)
+	out, err := s.run(args)
 	if err != nil {
 		return processes, err
 	}
@@ -307,17 +318,17 @@ func (s *ServerService) GetProcesses(ip, user, password string) ([]WinRDPSesion,
 }
 
 // StoptWinProcess force stop process by id
-func (s *ServerService) StoptWinProcess(ip, user, password string, id int) ([]byte, error) {
+func (s *Service) StoptWinProcess(ip, user, password string, id int) ([]byte, error) {
 	scriptPath := "./powershell/StopProcess.ps1"
 	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -id '%d'", scriptPath, ip, user, password, id)
-	return s.commander.run(args)
+	return s.run(args)
 }
 
 // DisconnectRDPUser close RDP user session
-func (s *ServerService) DisconnectRDPUser(ip, user, password string, sessionID int) ([]byte,
+func (s *Service) DisconnectRDPUser(ip, user, password string, sessionID int) ([]byte,
 	error) {
 	scriptPath := "./powershell/DisconnectRDPUser.ps1"
 	args := fmt.Sprintf("%s -ip %s -u '%s' -p '%s' -id %d", scriptPath, ip, user, password,
 		sessionID)
-	return s.commander.run(args)
+	return s.run(args)
 }

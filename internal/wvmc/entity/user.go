@@ -1,4 +1,4 @@
-package model
+package entity
 
 const (
 	UserRoleUser  = 0

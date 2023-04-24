@@ -4,26 +4,26 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/anaxita/wvmc/internal/wvmc/model"
+	"github.com/anaxita/wvmc/internal/wvmc/entity"
 	"github.com/anaxita/wvmc/internal/wvmc/notice"
 
 	"github.com/anaxita/wvmc/internal/wvmc/control"
-	"github.com/anaxita/wvmc/internal/wvmc/store"
+	"github.com/anaxita/wvmc/internal/wvmc/dal"
 	"github.com/gorilla/mux"
 )
 
 // Server - структура http сервера
 type Server struct {
-	store          *store.Store
+	store          *dal.Store
 	router         *mux.Router
-	controlService *control.ServerService
+	controlService *control.Service
 	notify         *notice.KMSBOT
 }
 
 // New - создает новый сервер
 func New(
-	storage *store.Store,
-	controlService *control.ServerService,
+	storage *dal.Store,
+	controlService *control.Service,
 	notify *notice.KMSBOT,
 ) *Server {
 	return &Server{
@@ -41,7 +41,7 @@ func (s *Server) configureRouter() {
 	r.Handle("/signin", s.SignIn()).Methods("POST", "OPTIONS")
 
 	users := r.NewRoute().Subrouter()
-	users.Use(s.Auth, s.RoleMiddleware(model.UserRoleAdmin))
+	users.Use(s.Auth, s.RoleMiddleware(entity.UserRoleAdmin))
 
 	users.Handle("/users", s.GetUsers()).Methods("OPTIONS", "GET")
 	users.Handle("/users", s.CreateUser()).Methods("OPTIONS", "POST")
@@ -59,7 +59,7 @@ func (s *Server) configureRouter() {
 	serversControl.Handle("/servers/control", s.ControlServer()).Methods("POST", "OPTIONS")
 
 	servers := r.NewRoute().Subrouter()
-	servers.Use(s.Auth, s.RoleMiddleware(model.UserRoleAdmin))
+	servers.Use(s.Auth, s.RoleMiddleware(entity.UserRoleAdmin))
 
 	servers.Handle("/servers/{hv}/{name}", s.GetServer()).Methods("OPTIONS", "GET")
 	servers.Handle("/servers/{hv}/{name}/disks", s.GetServerDisks()).Methods("OPTIONS", "GET")

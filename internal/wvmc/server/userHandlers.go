@@ -8,22 +8,22 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/anaxita/wvmc/internal/wvmc/hasher"
-	"github.com/anaxita/wvmc/internal/wvmc/model"
+	"github.com/anaxita/wvmc/internal/wvmc/entity"
+	"github.com/anaxita/wvmc/pkg/hasher"
 	"github.com/gorilla/mux"
 )
 
 // GetUsers возвращает список всех пользователей
 func (s *Server) GetUsers() http.HandlerFunc {
 	type response struct {
-		User []model.User `json:"users"`
+		User []entity.User `json:"users"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		users, err := s.store.User(r.Context()).All()
 		if err != nil {
 			if err == sql.ErrNoRows {
-				SendOK(w, http.StatusOK, response{make([]model.User, 0)})
+				SendOK(w, http.StatusOK, response{make([]entity.User, 0)})
 				return
 			}
 
@@ -42,7 +42,7 @@ func (s *Server) CreateUser() http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := model.User{}
+		req := entity.User{}
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
@@ -108,7 +108,7 @@ func (s *Server) CreateUser() http.HandlerFunc {
 // EditUser обновляет данные пользователя
 func (s *Server) EditUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := model.User{}
+		req := entity.User{}
 		var err error
 
 		if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -157,7 +157,7 @@ func (s *Server) EditUser() http.HandlerFunc {
 // DeleteUser удаляет пользователя
 func (s *Server) DeleteUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := model.User{}
+		req := entity.User{}
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
@@ -190,8 +190,8 @@ func (s *Server) DeleteUser() http.HandlerFunc {
 // AddServersToUser добавляет пользователю сервер
 func (s *Server) AddServersToUser() http.HandlerFunc {
 	type request struct {
-		UserID  string         `json:"user_id"`
-		Servers []model.Server `json:"servers"`
+		UserID  string          `json:"user_id"`
+		Servers []entity.Server `json:"servers"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -230,7 +230,7 @@ func (s *Server) AddServersToUser() http.HandlerFunc {
 			return
 		}
 
-		serversToAdd := make([]model.Server, 0)
+		serversToAdd := make([]entity.Server, 0)
 	loop:
 		for _, server := range allServers {
 			for _, reqServer := range req.Servers {
@@ -287,7 +287,7 @@ func (s *Server) GetUserServers() http.HandlerFunc {
 		userServers, err := store.FindByUser(userID)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				userServers = make([]model.Server, 0)
+				userServers = make([]entity.Server, 0)
 			} else {
 				SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 				return

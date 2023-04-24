@@ -9,9 +9,9 @@ import (
 	"github.com/anaxita/wvmc/internal/app"
 	"github.com/anaxita/wvmc/internal/wvmc/cache"
 	"github.com/anaxita/wvmc/internal/wvmc/control"
+	"github.com/anaxita/wvmc/internal/wvmc/dal"
 	"github.com/anaxita/wvmc/internal/wvmc/notice"
 	"github.com/anaxita/wvmc/internal/wvmc/server"
-	"github.com/anaxita/wvmc/internal/wvmc/store"
 )
 
 func main() {
@@ -37,10 +37,10 @@ func main() {
 		l.Fatalf("failed to run migrations: %v", err)
 	}
 
-	repository := store.New(db)
+	repository := dal.New(db)
 	cacheService := cache.NewCacheService()
 
-	serviceServer := control.NewServerService(new(control.Command), cacheService)
+	serviceServer := control.NewServerService(cacheService)
 	noticeService := notice.NewNoticeService()
 	s := server.New(repository, serviceServer, noticeService)
 

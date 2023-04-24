@@ -11,21 +11,21 @@ import (
 	"os"
 	"strings"
 
-	"github.com/anaxita/wvmc/internal/wvmc/model"
+	"github.com/anaxita/wvmc/internal/wvmc/entity"
 	"github.com/gorilla/mux"
 )
 
 // GetServers возвращает список серверов
 func (s *Server) GetServers() http.HandlerFunc {
 	type response struct {
-		Servers []model.Server `json:"servers"`
+		Servers []entity.Server `json:"servers"`
 	}
 
 	var adminRole = 1
 	var userRole = 0
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := r.Context().Value(CtxString("user")).(model.User)
+		user := r.Context().Value(CtxString("user")).(entity.User)
 
 		{
 			ip4 := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
@@ -68,7 +68,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 			servers, err := s.store.Server(r.Context()).FindByUser(user.ID)
 			if err != nil {
 				if err == sql.ErrNoRows {
-					SendOK(w, http.StatusOK, response{make([]model.Server, 0)})
+					SendOK(w, http.StatusOK, response{make([]entity.Server, 0)})
 					return
 				}
 
@@ -144,11 +144,11 @@ Action: %s
 `
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := r.Context().Value(CtxString("user")).(model.User)
+		user := r.Context().Value(CtxString("user")).(entity.User)
 
 		var err error
 
-		server := r.Context().Value(CtxString("server")).(model.Server)
+		server := r.Context().Value(CtxString("server")).(entity.Server)
 		command := r.Context().Value(CtxString("command")).(string)
 
 		switch command {

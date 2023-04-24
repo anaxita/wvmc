@@ -12,7 +12,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/anaxita/wvmc/internal/wvmc/model"
+	"github.com/anaxita/wvmc/internal/wvmc/entity"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -114,7 +114,7 @@ func (s *Server) RefreshToken() http.Handler {
 			tokenType, ok := claims["Type"]
 			if ok && tokenType == "refresh" {
 
-				u := model.User{}
+				u := entity.User{}
 				userjson, _ := json.Marshal(claims["User"])
 				json.Unmarshal(userjson, &u)
 
@@ -154,7 +154,7 @@ func (s *Server) RefreshToken() http.Handler {
 func (s *Server) RoleMiddleware(roles ...int) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctxUser := r.Context().Value(CtxString("user")).(model.User)
+			ctxUser := r.Context().Value(CtxString("user")).(entity.User)
 
 			for _, v := range roles {
 				if ctxUser.Role == v {
@@ -196,7 +196,7 @@ func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
 			return
 		}
 
-		ctxUser := r.Context().Value(CtxString("user")).(model.User)
+		ctxUser := r.Context().Value(CtxString("user")).(entity.User)
 
 		server, err := s.store.Server(r.Context()).Find("id", req.ServerID)
 		if err != nil {
@@ -211,7 +211,7 @@ func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
 			return
 		}
 
-		if ctxUser.Role != model.UserRoleAdmin {
+		if ctxUser.Role != entity.UserRoleAdmin {
 			serversByUser, err := s.store.Server(r.Context()).FindByUser(ctxUser.ID)
 			if err != nil {
 				if err == sql.ErrNoRows {

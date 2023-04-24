@@ -1,11 +1,11 @@
-package store
+package dal
 
 import (
 	"context"
 	"errors"
 	"fmt"
 
-	"github.com/anaxita/wvmc/internal/wvmc/model"
+	"github.com/anaxita/wvmc/internal/wvmc/entity"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -16,8 +16,8 @@ type UserRepository struct {
 }
 
 // Find ищет первое совпадение пользователя с заданным ключом и значением, возвращает модель либо ошибку
-func (r *UserRepository) Find(key, value string) (model.User, error) {
-	u := model.User{}
+func (r *UserRepository) Find(key, value string) (entity.User, error) {
+	u := entity.User{}
 
 	query := fmt.Sprintf("SELECT id, name, email, password, company, role FROM users WHERE %s = ?",
 		key)
@@ -36,7 +36,7 @@ func (r *UserRepository) Find(key, value string) (model.User, error) {
 }
 
 // Create создает пользователя и возвращает его ID, либо ошибку
-func (r *UserRepository) Create(u model.User) (int, error) {
+func (r *UserRepository) Create(u entity.User) (int, error) {
 	query := "INSERT INTO users (name, email, company, password, role) VALUES (?, ?, ?, ?, ?)"
 
 	result, err := r.db.ExecContext(r.ctx, query, u.Name, u.Email, u.Company, u.EncPassword, u.Role)
@@ -52,7 +52,7 @@ func (r *UserRepository) Create(u model.User) (int, error) {
 }
 
 // Edit обновляет данные пользователя u с паролем или без withPass, возвращает ошибку в случае неудачи
-func (r *UserRepository) Edit(u model.User, withPass bool) error {
+func (r *UserRepository) Edit(u entity.User, withPass bool) error {
 	var query string
 	var err error
 
@@ -84,8 +84,8 @@ func (r *UserRepository) Delete(id string) error {
 }
 
 // All возвращает массив из пользователей БД или ошибку
-func (r *UserRepository) All() ([]model.User, error) {
-	var users []model.User
+func (r *UserRepository) All() ([]entity.User, error) {
+	var users []entity.User
 
 	rows, err := r.db.QueryContext(r.ctx, "SELECT id, name, email, company, role FROM users")
 	if err != nil {
@@ -94,7 +94,7 @@ func (r *UserRepository) All() ([]model.User, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var user model.User
+		var user entity.User
 		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Company, &user.Role)
 		if err != nil {
 			return users, err
@@ -135,7 +135,7 @@ func (r *UserRepository) GetRefreshToken(token string) error {
 }
 
 // AddServer добавляет сервера пользователю по его айди
-func (r *UserRepository) AddServer(userID string, servers []model.Server) error {
+func (r *UserRepository) AddServer(userID string, servers []entity.Server) error {
 	query := "INSERT INTO users_servers (user_id, server_id) VALUES(?, ?)"
 
 	stmt, err := r.db.PrepareContext(r.ctx, query)

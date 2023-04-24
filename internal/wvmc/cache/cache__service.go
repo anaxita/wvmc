@@ -3,19 +3,19 @@ package cache
 import (
 	"sync"
 
-	"github.com/anaxita/wvmc/internal/wvmc/model"
+	"github.com/anaxita/wvmc/internal/wvmc/entity"
 )
 
 type CacheService struct {
 	mu      sync.RWMutex
-	servers []model.Server
+	servers []entity.Server
 }
 
 func NewCacheService() *CacheService {
 	return &CacheService{}
 }
 
-func (c *CacheService) Servers() []model.Server {
+func (c *CacheService) Servers() []entity.Server {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -26,13 +26,13 @@ func (c *CacheService) Servers() []model.Server {
 	return c.servers
 }
 
-func (c *CacheService) SetServers(s []model.Server) {
+func (c *CacheService) SetServers(s []entity.Server) {
 	c.mu.Lock()
 	c.servers = s
 	c.mu.Unlock()
 }
 
-func (c *CacheService) SetServerState(s model.Server, state model.ServerState) {
+func (c *CacheService) SetServerState(s entity.Server, state entity.ServerState) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -50,7 +50,7 @@ func (c *CacheService) SetServerState(s model.Server, state model.ServerState) {
 	}
 }
 
-func (c *CacheService) SetServerNetwork(s model.Server, state model.ServerState) {
+func (c *CacheService) SetServerNetwork(s entity.Server, state entity.ServerState) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

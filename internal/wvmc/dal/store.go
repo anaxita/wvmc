@@ -1,4 +1,4 @@
-package store
+package dal
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/anaxita/wvmc/internal/wvmc/hasher"
+	"github.com/anaxita/wvmc/pkg/hasher"
 	"github.com/jmoiron/sqlx"
 
 	_ "github.com/mattn/go-sqlite3"
