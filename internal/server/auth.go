@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
+	entity2 "github.com/anaxita/wvmc/internal/entity"
 	"github.com/anaxita/wvmc/pkg/hasher"
 
-	"github.com/anaxita/wvmc/internal/wvmc/entity"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -21,12 +21,12 @@ type CtxString string
 
 type customClaims struct {
 	jwt.StandardClaims
-	User entity.User
+	User entity2.User
 	Type string
 }
 
 // createToken создает новый access токен и записывает в него модель пользователя
-func createToken(t string, user entity.User) string {
+func createToken(t string, user entity2.User) string {
 
 	// Создаем данные токена с временем жизни 15 минут и моделью пользователя
 	var claims customClaims
@@ -98,13 +98,13 @@ func (s *Server) SignIn() http.HandlerFunc {
 			return
 		}
 
-		if user.Role == entity.UserRoleAdmin && user.Email != "admin" {
+		if user.Role == entity2.UserRoleAdmin && user.Email != "admin" {
 			addr := strings.Split(r.RemoteAddr, ":")
 			ip := net.ParseIP(addr[0])
 			if !ip.IsPrivate() {
 				SendErr(
 					w, http.StatusBadRequest,
-					entity.ErrAccessDenied,
+					entity2.ErrAccessDenied,
 					fmt.Sprintf("Доступ разрешен только с локального IP, ваш айпи %v",
 						r.RemoteAddr),
 				)

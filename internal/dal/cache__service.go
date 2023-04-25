@@ -1,21 +1,21 @@
-package cache
+package dal
 
 import (
 	"sync"
 
-	"github.com/anaxita/wvmc/internal/wvmc/entity"
+	"github.com/anaxita/wvmc/internal/entity"
 )
 
-type CacheService struct {
+type Cache struct {
 	mu      sync.RWMutex
 	servers []entity.Server
 }
 
-func NewCacheService() *CacheService {
-	return &CacheService{}
+func NewCache() *Cache {
+	return &Cache{}
 }
 
-func (c *CacheService) Servers() []entity.Server {
+func (c *Cache) Servers() []entity.Server {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -26,13 +26,13 @@ func (c *CacheService) Servers() []entity.Server {
 	return c.servers
 }
 
-func (c *CacheService) SetServers(s []entity.Server) {
+func (c *Cache) SetServers(s []entity.Server) {
 	c.mu.Lock()
 	c.servers = s
 	c.mu.Unlock()
 }
 
-func (c *CacheService) SetServerState(s entity.Server, state entity.ServerState) {
+func (c *Cache) SetServerState(s entity.Server, state entity.ServerState) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -50,7 +50,7 @@ func (c *CacheService) SetServerState(s entity.Server, state entity.ServerState)
 	}
 }
 
-func (c *CacheService) SetServerNetwork(s entity.Server, state entity.ServerState) {
+func (c *Cache) SetServerNetwork(s entity.Server, state entity.ServerState) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

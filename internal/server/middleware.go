@@ -10,9 +10,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/anaxita/wvmc/internal/entity"
 	"github.com/gorilla/mux"
 
-	"github.com/anaxita/wvmc/internal/wvmc/entity"
 	"github.com/dgrijalva/jwt-go"
 )
 

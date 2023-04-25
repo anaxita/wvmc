@@ -11,14 +11,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/anaxita/wvmc/internal/wvmc/entity"
+	entity2 "github.com/anaxita/wvmc/internal/entity"
 	"github.com/gorilla/mux"
 )
 
 // GetServers возвращает список серверов
 func (s *Server) GetServers() http.HandlerFunc {
 	type response struct {
-		Servers []entity.Server `json:"servers"`
+		Servers []entity2.Server `json:"servers"`
 	}
 
 	var adminRole = 1
@@ -27,7 +27,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		user := r.Context().Value(CtxString("user")).(entity.User)
+		user := r.Context().Value(CtxString("user")).(entity2.User)
 
 		{
 			ip4 := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
@@ -70,7 +70,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 			servers, err := s.serverService.FindByUserID(ctx, user.ID)
 			if err != nil {
 				if err == sql.ErrNoRows {
-					SendOK(w, http.StatusOK, response{make([]entity.Server, 0)})
+					SendOK(w, http.StatusOK, response{make([]entity2.Server, 0)})
 					return
 				}
 
@@ -145,11 +145,11 @@ Action: %s
 `
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := r.Context().Value(CtxString("user")).(entity.User)
+		user := r.Context().Value(CtxString("user")).(entity2.User)
 
 		var err error
 
-		server := r.Context().Value(CtxString("server")).(entity.Server)
+		server := r.Context().Value(CtxString("server")).(entity2.Server)
 		command := r.Context().Value(CtxString("command")).(string)
 
 		switch command {

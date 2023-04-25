@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/anaxita/wvmc/internal/wvmc/entity"
+	entity2 "github.com/anaxita/wvmc/internal/entity"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -20,13 +20,13 @@ func NewServerRepository(db *sqlx.DB) *ServerRepository {
 	}
 }
 
-func (r *ServerRepository) FindByTitle(ctx context.Context, title string) (s entity.Server, err error) {
+func (r *ServerRepository) FindByTitle(ctx context.Context, title string) (s entity2.Server, err error) {
 	query := "SELECT id, vmid, title, ip4, hv, company, out_addr, description, user_name, user_password FROM servers WHERE title = ?"
 
 	err = r.db.GetContext(ctx, &s, query, title)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return s, entity.ErrNotFound
+			return s, entity2.ErrNotFound
 		}
 
 		return s, err
@@ -35,13 +35,13 @@ func (r *ServerRepository) FindByTitle(ctx context.Context, title string) (s ent
 	return s, nil
 }
 
-func (r *ServerRepository) FindByID(ctx context.Context, id int64) (s entity.Server, err error) {
+func (r *ServerRepository) FindByID(ctx context.Context, id int64) (s entity2.Server, err error) {
 	q := "SELECT id, vmid, title, ip4, hv, company, out_addr, description, user_name, user_password FROM servers WHERE id = ?"
 
 	err = r.db.GetContext(ctx, &s, q, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return s, entity.ErrNotFound
+			return s, entity2.ErrNotFound
 		}
 
 		return s, err
@@ -51,12 +51,12 @@ func (r *ServerRepository) FindByID(ctx context.Context, id int64) (s entity.Ser
 }
 
 // FindByHvAndTitle ищет сервер по местоположению и имени, возвращает модель либо ошибку.
-func (r *ServerRepository) FindByHvAndTitle(ctx context.Context, hv, name string) (s entity.Server, err error) {
+func (r *ServerRepository) FindByHvAndTitle(ctx context.Context, hv, name string) (s entity2.Server, err error) {
 	query := "SELECT id, vmid, title, ip4, hv, company, out_addr, description, user_name, user_password FROM servers WHERE hv = ? AND title = ?"
 	err = r.db.GetContext(ctx, &s, query, hv, name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return s, entity.ErrNotFound
+			return s, entity2.ErrNotFound
 		}
 
 		return s, err
@@ -66,7 +66,7 @@ func (r *ServerRepository) FindByHvAndTitle(ctx context.Context, hv, name string
 }
 
 // Upsert создает сервер и возвращает его ID, либо ошибку.
-func (r *ServerRepository) Upsert(ctx context.Context, s entity.Server) (int64, error) {
+func (r *ServerRepository) Upsert(ctx context.Context, s entity2.Server) (int64, error) {
 	query := `INSERT INTO servers (vmid, title, ip4, hv, company, user_name, user_password) 
     VALUES (?, ?, ?, ?, ?, ?, ?) 
     ON CONFLICT (title, hv) 
@@ -97,7 +97,7 @@ func (r *ServerRepository) DeleteByUser(ctx context.Context, userID string) erro
 }
 
 // Servers возвращает массив из серверов БД или ошибку.
-func (r *ServerRepository) Servers(ctx context.Context) (s []entity.Server, err error) {
+func (r *ServerRepository) Servers(ctx context.Context) (s []entity2.Server, err error) {
 	q := "SELECT id, vmid, title, ip4, hv, company, user_name, user_password FROM servers"
 
 	err = r.db.SelectContext(ctx, &s, q)
@@ -109,7 +109,7 @@ func (r *ServerRepository) Servers(ctx context.Context) (s []entity.Server, err 
 }
 
 // FindByUser возвращает массив серверов пользователя по его ID.
-func (r *ServerRepository) FindByUser(ctx context.Context, userID int64) (s []entity.Server, err error) {
+func (r *ServerRepository) FindByUser(ctx context.Context, userID int64) (s []entity2.Server, err error) {
 	q := `
 	SELECT 
 		s.id, 
@@ -136,7 +136,7 @@ func (r *ServerRepository) FindByUser(ctx context.Context, userID int64) (s []en
 }
 
 // AddServersToUser добавляет сервера пользователю по его айди
-func (r *ServerRepository) AddServersToUser(ctx context.Context, userID int64, servers []entity.Server) error {
+func (r *ServerRepository) AddServersToUser(ctx context.Context, userID int64, servers []entity2.Server) error {
 	query := "INSERT INTO users_servers (user_id, server_id) VALUES(?, ?)"
 
 	stmt, err := r.db.PrepareContext(ctx, query)

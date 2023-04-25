@@ -4,18 +4,16 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/anaxita/wvmc/internal/entity"
+	"github.com/anaxita/wvmc/internal/notice"
 	"github.com/anaxita/wvmc/internal/service"
-	"github.com/anaxita/wvmc/internal/wvmc/entity"
-	"github.com/anaxita/wvmc/internal/wvmc/notice"
-
-	"github.com/anaxita/wvmc/internal/wvmc/control"
 	"github.com/gorilla/mux"
 )
 
 // Server - структура http сервера
 type Server struct {
 	router         *mux.Router
-	controlService *control.Service
+	controlService *service.ControlService
 	notify         *notice.KMSBOT
 	userService    *service.User
 	serverService  *service.Server
@@ -24,7 +22,7 @@ type Server struct {
 
 // New - создает новый сервер
 func New(
-	controlService *control.Service,
+	controlService *service.ControlService,
 	notify *notice.KMSBOT,
 	userService *service.User,
 	serverService *service.Server,

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/anaxita/wvmc/internal/wvmc/dal"
-	"github.com/anaxita/wvmc/internal/wvmc/entity"
+	"github.com/anaxita/wvmc/internal/dal"
+	"github.com/anaxita/wvmc/internal/entity"
 )
 
 type Server struct {

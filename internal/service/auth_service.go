@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/anaxita/wvmc/internal/wvmc/dal"
+	"github.com/anaxita/wvmc/internal/dal"
 )
 
 type Auth struct {

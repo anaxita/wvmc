@@ -7,12 +7,10 @@ import (
 	"time"
 
 	"github.com/anaxita/wvmc/internal/app"
+	dal2 "github.com/anaxita/wvmc/internal/dal"
+	"github.com/anaxita/wvmc/internal/notice"
+	"github.com/anaxita/wvmc/internal/server"
 	"github.com/anaxita/wvmc/internal/service"
-	"github.com/anaxita/wvmc/internal/wvmc/cache"
-	"github.com/anaxita/wvmc/internal/wvmc/control"
-	"github.com/anaxita/wvmc/internal/wvmc/dal"
-	"github.com/anaxita/wvmc/internal/wvmc/notice"
-	"github.com/anaxita/wvmc/internal/wvmc/server"
 )
 
 func main() {
@@ -38,14 +36,14 @@ func main() {
 		l.Fatalf("failed to run migrations: %v", err)
 	}
 
-	userRepo := dal.NewUserRepository(db)
-	serverRepo := dal.NewServerRepository(db)
+	userRepo := dal2.NewUserRepository(db)
+	serverRepo := dal2.NewServerRepository(db)
 
 	userService := service.NewUserService(userRepo)
 	serverService := service.NewServerService(serverRepo)
 	authService := service.NewAuthService(userRepo)
-	cacheService := cache.NewCacheService()
-	controlService := control.NewControlService(cacheService)
+	cacheService := dal2.NewCache()
+	controlService := service.NewControlService(cacheService)
 	noticeService := notice.NewNoticeService()
 
 	s := server.New(controlService, noticeService, userService, serverService, authService)
