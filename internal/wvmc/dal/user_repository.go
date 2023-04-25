@@ -60,16 +60,16 @@ func (r *UserRepository) Create(ctx context.Context, user entity.User) (int64, e
 }
 
 // Edit обновляет данные пользователя u с паролем или без withPass, возвращает ошибку в случае неудачи
-func (r *UserRepository) Edit(u entity.User, withPass bool) error {
+func (r *UserRepository) Edit(ctx context.Context, u entity.User, withPass bool) error {
 	var query string
 	var err error
 
 	if withPass {
 		query = "UPDATE users SET name = ?, company = ?, role = ?, password = ? WHERE id = ? "
-		_, err = r.db.ExecContext(r.ctx, query, u.Name, u.Company, u.Role, u.EncPassword, u.ID)
+		_, err = r.db.ExecContext(ctx, query, u.Name, u.Company, u.Role, u.EncPassword, u.ID)
 	} else {
 		query = "UPDATE users SET name = ?, company = ?, role = ? WHERE id = ? "
-		_, err = r.db.ExecContext(r.ctx, query, u.Name, u.Company, u.Role, u.ID)
+		_, err = r.db.ExecContext(ctx, query, u.Name, u.Company, u.Role, u.ID)
 	}
 	if err != nil {
 		return err

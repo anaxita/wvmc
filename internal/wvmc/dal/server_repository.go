@@ -20,7 +20,7 @@ func NewServerRepository(db *sqlx.DB) *ServerRepository {
 	}
 }
 
-func (r *ServerRepository) FindByTitle(ctx context.Context, title interface{}) (s entity.Server, err error) {
+func (r *ServerRepository) FindByTitle(ctx context.Context, title string) (s entity.Server, err error) {
 	query := "SELECT id, vmid, title, ip4, hv, company, out_addr, description, user_name, user_password FROM servers WHERE title = ?"
 
 	err = r.db.GetContext(ctx, &s, query, title)
@@ -35,10 +35,25 @@ func (r *ServerRepository) FindByTitle(ctx context.Context, title interface{}) (
 	return s, nil
 }
 
+func (r *ServerRepository) FindByID(ctx context.Context, id int64) (s entity.Server, err error) {
+	q := "SELECT id, vmid, title, ip4, hv, company, out_addr, description, user_name, user_password FROM servers WHERE id = ?"
+
+	err = r.db.GetContext(ctx, &s, q, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return s, entity.ErrNotFound
+		}
+
+		return s, err
+	}
+
+	return s, nil
+}
+
 // FindByHvAndTitle ищет сервер по местоположению и имени, возвращает модель либо ошибку.
 func (r *ServerRepository) FindByHvAndTitle(ctx context.Context, hv, name string) (s entity.Server, err error) {
 	query := "SELECT id, vmid, title, ip4, hv, company, out_addr, description, user_name, user_password FROM servers WHERE hv = ? AND title = ?"
-	err = r.db.GetContext(ctx, &s, query, title)
+	err = r.db.GetContext(ctx, &s, query, hv, name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return s, entity.ErrNotFound
@@ -72,8 +87,8 @@ func (r *ServerRepository) Upsert(ctx context.Context, s entity.Server) (int64, 
 }
 
 // DeleteByUser удаляет доступ к серверам у определенного пользователя, возвращает ошибку в случае неудачи.
-func (r *ServerRepository) DeleteByUser(userID string) error {
-	_, err := r.db.ExecContext(r.ctx, "DELETE FROM users_servers WHERE user_id = ?", userID)
+func (r *ServerRepository) DeleteByUser(ctx context.Context, userID string) error {
+	_, err := r.db.ExecContext(ctx, "DELETE FROM users_servers WHERE user_id = ?", userID)
 	if err != nil {
 		return err
 	}

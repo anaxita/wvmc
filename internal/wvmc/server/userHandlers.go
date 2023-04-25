@@ -116,8 +116,6 @@ func (s *Server) EditUser() http.HandlerFunc {
 			return
 		}
 
-		store := s.store.User(r.Context())
-
 		_, err = s.userService.FindByID(r.Context(), req.ID)
 		if err != nil {
 			if err == sql.ErrNoRows {
@@ -139,10 +137,10 @@ func (s *Server) EditUser() http.HandlerFunc {
 
 			req.EncPassword = string(encPassword)
 
-			err = store.Edit(req, true)
+			err = s.userService.Edit(r.Context(), req, true)
 
 		} else {
-			err = store.Edit(req, false)
+			err = s.userService.Edit(r.Context(), req, false)
 		}
 
 		if err != nil {

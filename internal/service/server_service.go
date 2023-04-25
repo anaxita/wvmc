@@ -76,3 +76,13 @@ func (s *Server) Create(ctx context.Context, server entity.Server) (entity.Serve
 
 	return server, nil
 }
+
+// FindByID get server by id.
+func (s *Server) FindByID(ctx context.Context, id int64) (entity.Server, error) {
+	server, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return server, fmt.Errorf("get server with id %d: %w", id, err)
+	}
+
+	return server, nil
+}

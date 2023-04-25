@@ -197,7 +197,7 @@ func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
 
 		ctxUser := r.Context().Value(CtxString("user")).(entity.User)
 
-		server, err := s.store.Server(r.Context()).Find("id", req.ServerID)
+		server, err := s.serverService.FindByID(r.Context(), req.ServerID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusBadRequest, err, "Сервер не найден")

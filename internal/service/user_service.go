@@ -71,3 +71,17 @@ func (s *User) Create(ctx context.Context, user entity.User) (entity.User, error
 
 	return user, nil
 }
+
+// Edit edits user.
+func (s *User) Edit(ctx context.Context, user entity.User, withPass bool) error {
+	_, err := s.repo.FindByID(ctx, user.ID)
+	if err != nil {
+		return fmt.Errorf("get user with id %d: %w", user.ID, err)
+	}
+
+	if err = s.repo.Edit(ctx, user, withPass); err != nil {
+		return fmt.Errorf("edit user with id %d: %w", user.ID, err)
+	}
+
+	return nil
+}

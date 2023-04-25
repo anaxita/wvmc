@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/anaxita/wvmc/internal/app"
+	"github.com/anaxita/wvmc/internal/service"
 	"github.com/anaxita/wvmc/internal/wvmc/cache"
 	"github.com/anaxita/wvmc/internal/wvmc/control"
 	"github.com/anaxita/wvmc/internal/wvmc/dal"
@@ -37,12 +38,17 @@ func main() {
 		l.Fatalf("failed to run migrations: %v", err)
 	}
 
-	repository := dal.New(db)
-	cacheService := cache.NewCacheService()
+	userRepo := dal.NewUserRepository(db)
+	serverRepo := dal.NewServerRepository(db)
 
-	serviceServer := control.NewControlService(cacheService)
+	userService := service.NewUserService(userRepo)
+	serverService := service.NewServerService(serverRepo)
+	authService := service.NewAuthService(userRepo)
+	cacheService := cache.NewCacheService()
+	controlService := control.NewControlService(cacheService)
 	noticeService := notice.NewNoticeService()
-	s := server.New(repository, serviceServer, noticeService)
+
+	s := server.New(controlService, noticeService, userService, serverService, authService)
 
 	go func() {
 		s.UpdateAllServersInfo()(httptest.NewRecorder(), &http.Request{})
@@ -50,7 +56,7 @@ func main() {
 		for {
 			time.Sleep(time.Minute * 1)
 
-			_, err := serviceServer.GetServersDataForAdmins()
+			_, err := controlService.GetServersDataForAdmins()
 			if err != nil {
 				log.Println("update cache servers: ", err)
 			}
