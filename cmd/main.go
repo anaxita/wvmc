@@ -6,10 +6,10 @@ import (
 	"net/http/httptest"
 	"time"
 
+	"github.com/anaxita/wvmc/internal/api"
 	"github.com/anaxita/wvmc/internal/app"
 	dal2 "github.com/anaxita/wvmc/internal/dal"
 	"github.com/anaxita/wvmc/internal/notice"
-	"github.com/anaxita/wvmc/internal/server"
 	"github.com/anaxita/wvmc/internal/service"
 )
 
@@ -46,7 +46,7 @@ func main() {
 	controlService := service.NewControlService(cacheService)
 	noticeService := notice.NewNoticeService()
 
-	s := server.New(controlService, noticeService, userService, serverService, authService)
+	s := api.New(controlService, noticeService, userService, serverService, authService)
 
 	go func() {
 		s.UpdateAllServersInfo()(httptest.NewRecorder(), &http.Request{})
