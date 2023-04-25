@@ -20,8 +20,8 @@ type Server struct {
 	authService    *service.Auth
 }
 
-// New - создает новый сервер
-func New(
+// NewServer - создает новый сервер
+func NewServer(
 	controlService *service.ControlService,
 	notify *notice.KMSBOT,
 	userService *service.User,

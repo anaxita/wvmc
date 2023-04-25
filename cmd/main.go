@@ -46,7 +46,7 @@ func main() {
 	controlService := service.NewControlService(cacheService)
 	noticeService := notice.NewNoticeService()
 
-	s := api.New(controlService, noticeService, userService, serverService, authService)
+	s := api.NewServer(controlService, noticeService, userService, serverService, authService)
 
 	go func() {
 		s.UpdateAllServersInfo()(httptest.NewRecorder(), &http.Request{})

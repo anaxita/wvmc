@@ -18,7 +18,14 @@ migrate-up:
 migrate-down:
 	migrate -path ./migrations -database ${LOCAL_DB_DSN} down
 
-# generate mock
+# generate
+deps:
+	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4 # OpenAPI
+	go install github.com/golang/mock/mockgen@v1.6.0 # Mock
+
 gen:
 	go generate ./...
+	oapi-codegen -generate gorilla -package gen OpenApi.yml > internal/api/gen/server.go
+	oapi-codegen -generate types -package gen OpenApi.yml > internal/api/gen/types.go
+	#mockgen -source=internal/service/bonuses.go -destination=../tests/mocks.go -package=tests
 

@@ -70,14 +70,6 @@ paths:
         - Регистрация и аутентификация
       summary: Обновление пары токенов
       description: Обновление пары токенов
-        - name: Content-Type
-          in: header
-          required: true
-          schema:
-            type: string
-            example:
-              application/json
-          style: simple
       requestBody:
         content:
           application/json:
