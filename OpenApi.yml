@@ -3,6 +3,8 @@ info:
   title: WVMC
   version: 2.0.0
 servers:
+  - url: http://localhost:8101
+    description: localhost
   -
     url: https://dc.kmsys.ru:53338
     description: Основной сервер
@@ -116,8 +118,8 @@ paths:
             schema:
                 $ref: '#/components/schemas/User'
             example:
-              email: anaxita
-              password: qwerty123
+              email: admin
+              password: dev
       responses:              
         400:
           description: Некорректный запрос

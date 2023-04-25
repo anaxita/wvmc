@@ -6,6 +6,7 @@ import (
 
 	"github.com/anaxita/wvmc/internal/wvmc/dal"
 	"github.com/anaxita/wvmc/internal/wvmc/entity"
+	"github.com/anaxita/wvmc/pkg/hasher"
 )
 
 type User struct {
@@ -62,6 +63,13 @@ func (s *User) Delete(ctx context.Context, id int64) error {
 
 // Create creates user.
 func (s *User) Create(ctx context.Context, user entity.User) (entity.User, error) {
+	hashedPassword, err := hasher.Hash(user.Password)
+	if err != nil {
+		return user, fmt.Errorf("hash password: %w", err)
+	}
+
+	user.Password = string(hashedPassword)
+
 	id, err := s.repo.Create(ctx, user)
 	if err != nil {
 		return user, fmt.Errorf("create user: %w", err)

@@ -92,7 +92,7 @@ func (s *Server) SignIn() http.HandlerFunc {
 			return
 		}
 
-		err = hasher.Compare(user.EncPassword, req.Password)
+		err = hasher.Compare(user.Password, req.Password)
 		if err != nil {
 			SendErr(w, http.StatusOK, err, "Неверный логин или пароль")
 			return

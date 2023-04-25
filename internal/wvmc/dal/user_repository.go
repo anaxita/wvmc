@@ -47,7 +47,7 @@ func (r *UserRepository) FindByID(ctx context.Context, id int64) (u entity.User,
 func (r *UserRepository) Create(ctx context.Context, user entity.User) (int64, error) {
 	query := "INSERT INTO users (name, email, company, password, role) VALUES (?, ?, ?, ?, ?)"
 
-	result, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Company, user.EncPassword, user.Role)
+	result, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Company, user.Password, user.Role)
 	if err != nil {
 		return 0, err
 	}
@@ -66,7 +66,7 @@ func (r *UserRepository) Edit(ctx context.Context, u entity.User, withPass bool)
 
 	if withPass {
 		query = "UPDATE users SET name = ?, company = ?, role = ?, password = ? WHERE id = ? "
-		_, err = r.db.ExecContext(ctx, query, u.Name, u.Company, u.Role, u.EncPassword, u.ID)
+		_, err = r.db.ExecContext(ctx, query, u.Name, u.Company, u.Role, u.Password, u.ID)
 	} else {
 		query = "UPDATE users SET name = ?, company = ?, role = ? WHERE id = ? "
 		_, err = r.db.ExecContext(ctx, query, u.Name, u.Company, u.Role, u.ID)

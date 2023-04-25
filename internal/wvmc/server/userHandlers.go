@@ -84,7 +84,7 @@ func (s *Server) CreateUser() http.HandlerFunc {
 					return
 				}
 
-				req.EncPassword = string(encPassword)
+				req.Password = string(encPassword)
 
 				user, err := s.userService.Create(ctx, req)
 				if err != nil {
@@ -135,7 +135,7 @@ func (s *Server) EditUser() http.HandlerFunc {
 				return
 			}
 
-			req.EncPassword = string(encPassword)
+			req.Password = string(encPassword)
 
 			err = s.userService.Edit(r.Context(), req, true)
 
