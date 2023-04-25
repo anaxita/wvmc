@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/anaxita/wvmc/internal/wvmc/entity"
@@ -20,7 +21,7 @@ func (s *Server) GetUsers() http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		users, err := s.store.User(r.Context()).All()
+		users, err := s.userService.Users(r.Context())
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendOK(w, http.StatusOK, response{make([]entity.User, 0)})
@@ -38,11 +39,12 @@ func (s *Server) GetUsers() http.HandlerFunc {
 // CreateUser создает пользователя
 func (s *Server) CreateUser() http.HandlerFunc {
 	type response struct {
-		UserID int `json:"id,string"`
+		UserID int64 `json:"id,string"` // TODO why string?
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := entity.User{}
+		ctx := r.Context()
+		var req entity.User
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			SendErr(w, http.StatusBadRequest, err, "Неверный данные в запросе")
@@ -73,9 +75,7 @@ func (s *Server) CreateUser() http.HandlerFunc {
 			return
 		}
 
-		store := s.store.User(r.Context())
-
-		_, err = store.Find("email", req.Email)
+		_, err = s.userService.FindByEmail(r.Context(), req.Email)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				encPassword, err := hasher.Hash(req.Password)
@@ -86,13 +86,13 @@ func (s *Server) CreateUser() http.HandlerFunc {
 
 				req.EncPassword = string(encPassword)
 
-				createdID, err := store.Create(req)
+				user, err := s.userService.Create(ctx, req)
 				if err != nil {
 					SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 					return
 				}
 
-				SendOK(w, http.StatusCreated, response{createdID})
+				SendOK(w, http.StatusCreated, response{user.ID})
 				return
 			}
 
@@ -118,7 +118,7 @@ func (s *Server) EditUser() http.HandlerFunc {
 
 		store := s.store.User(r.Context())
 
-		_, err = store.Find("id", req.ID)
+		_, err = s.userService.FindByID(r.Context(), req.ID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusNotFound, err, "Пользователь не найден")
@@ -164,9 +164,7 @@ func (s *Server) DeleteUser() http.HandlerFunc {
 			return
 		}
 
-		store := s.store.User(r.Context())
-
-		_, err := store.Find("id", req.ID)
+		_, err := s.userService.FindByID(r.Context(), req.ID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusNotFound, err, "Пользователь не найден")
@@ -177,7 +175,7 @@ func (s *Server) DeleteUser() http.HandlerFunc {
 			return
 		}
 
-		err = store.Delete(req.ID)
+		err = s.userService.Delete(r.Context(), req.ID)
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 			return
@@ -190,7 +188,7 @@ func (s *Server) DeleteUser() http.HandlerFunc {
 // AddServersToUser добавляет пользователю сервер
 func (s *Server) AddServersToUser() http.HandlerFunc {
 	type request struct {
-		UserID  string          `json:"user_id"`
+		UserID  int64           `json:"user_id"`
 		Servers []entity.Server `json:"servers"`
 	}
 
@@ -202,7 +200,7 @@ func (s *Server) AddServersToUser() http.HandlerFunc {
 			return
 		}
 
-		_, err := s.store.User(r.Context()).Find("id", req.UserID)
+		_, err := s.userService.FindByID(r.Context(), req.UserID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusNotFound, err, "User not found")
@@ -213,13 +211,7 @@ func (s *Server) AddServersToUser() http.HandlerFunc {
 			return
 		}
 
-		err = s.store.Server(r.Context()).DeleteByUser(req.UserID)
-		if err != nil {
-			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
-			return
-		}
-
-		allServers, err := s.store.Server(r.Context()).All()
+		allServers, err := s.serverService.Servers(r.Context())
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusNotFound, err, "User not found")
@@ -241,7 +233,7 @@ func (s *Server) AddServersToUser() http.HandlerFunc {
 			}
 		}
 
-		err = s.store.User(r.Context()).AddServer(req.UserID, serversToAdd)
+		err = s.serverService.AddServersToUser(r.Context(), req.UserID, serversToAdd)
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 			return
@@ -268,6 +260,8 @@ func (s *Server) GetUserServers() http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		vars := mux.Vars(r)
 		userID, ok := vars["user_id"]
 		if !ok {
@@ -276,15 +270,19 @@ func (s *Server) GetUserServers() http.HandlerFunc {
 			return
 		}
 
-		store := s.store.Server(r.Context())
+		uID, err := strconv.ParseInt(userID, 10, 64)
+		if err != nil {
+			SendErr(w, http.StatusBadRequest, err, "user id is not number")
+			return
+		}
 
-		allServers, err := store.All()
+		allServers, err := s.serverService.Servers(ctx)
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 			return
 		}
 
-		userServers, err := store.FindByUser(userID)
+		userServers, err := s.serverService.FindByUserID(ctx, uID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				userServers = make([]entity.Server, 0)

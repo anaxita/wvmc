@@ -76,7 +76,7 @@ type Service struct {
 	cache *cache.CacheService
 }
 
-func NewServerService(cache *cache.CacheService) *Service {
+func NewControlService(cache *cache.CacheService) *Service {
 	return &Service{cache: cache}
 }
 

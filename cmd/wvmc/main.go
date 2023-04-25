@@ -40,7 +40,7 @@ func main() {
 	repository := dal.New(db)
 	cacheService := cache.NewCacheService()
 
-	serviceServer := control.NewServerService(cacheService)
+	serviceServer := control.NewControlService(cacheService)
 	noticeService := notice.NewNoticeService()
 	s := server.New(repository, serviceServer, noticeService)
 

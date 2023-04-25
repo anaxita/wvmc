@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anaxita/wvmc/internal/wvmc/domain"
 	"github.com/anaxita/wvmc/pkg/hasher"
 
 	"github.com/anaxita/wvmc/internal/wvmc/entity"
@@ -87,7 +86,7 @@ func (s *Server) SignIn() http.HandlerFunc {
 			return
 		}
 
-		user, err := s.store.User(r.Context()).Find("email", req.Email)
+		user, err := s.userService.FindByEmail(r.Context(), req.Email)
 		if err != nil {
 			SendErr(w, http.StatusOK, err, "Неверный логин или пароль")
 			return
@@ -105,7 +104,7 @@ func (s *Server) SignIn() http.HandlerFunc {
 			if !ip.IsPrivate() {
 				SendErr(
 					w, http.StatusBadRequest,
-					domain.ErrAccessDenied,
+					entity.ErrAccessDenied,
 					fmt.Sprintf("Доступ разрешен только с локального IP, ваш айпи %v",
 						r.RemoteAddr),
 				)
@@ -117,7 +116,7 @@ func (s *Server) SignIn() http.HandlerFunc {
 		accessToken := createToken("access", user)
 		refreshToken := createToken("refresh", user)
 
-		err = s.store.User(r.Context()).CreateRefreshToken(user.ID, refreshToken)
+		err = s.authService.CreateRefreshToken(r.Context(), user.ID, refreshToken)
 		if err != nil {
 			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 			return

@@ -2,6 +2,7 @@ package dal
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -11,35 +12,42 @@ import (
 
 // UserRepository - содержит методы работы с пользовательскими моделями
 type UserRepository struct {
-	db  *sqlx.DB
-	ctx context.Context
+	db *sqlx.DB
+}
+
+func NewUserRepository(db *sqlx.DB) *UserRepository {
+	return &UserRepository{db: db}
 }
 
 // Find ищет первое совпадение пользователя с заданным ключом и значением, возвращает модель либо ошибку
-func (r *UserRepository) Find(key, value string) (entity.User, error) {
-	u := entity.User{}
+func (r *UserRepository) find(ctx context.Context, key string, value any) (u entity.User, err error) {
+	q := fmt.Sprintf("SELECT id, name, email, password, company, role FROM users WHERE %s = ? LIMIT 1", key)
 
-	query := fmt.Sprintf("SELECT id, name, email, password, company, role FROM users WHERE %s = ?",
-		key)
-	if err := r.db.QueryRowContext(r.ctx, query, value).Scan(
-		&u.ID,
-		&u.Name,
-		&u.Email,
-		&u.EncPassword,
-		&u.Company,
-		&u.Role,
-	); err != nil {
+	err = r.db.GetContext(ctx, &u, q, value)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return u, entity.ErrNotFound
+		}
+
 		return u, err
 	}
 
 	return u, nil
 }
 
+func (r *UserRepository) FindByEmail(ctx context.Context, email string) (u entity.User, err error) {
+	return r.find(ctx, "email", email)
+}
+
+func (r *UserRepository) FindByID(ctx context.Context, id int64) (u entity.User, err error) {
+	return r.find(ctx, "id", id)
+}
+
 // Create создает пользователя и возвращает его ID, либо ошибку
-func (r *UserRepository) Create(u entity.User) (int, error) {
+func (r *UserRepository) Create(ctx context.Context, user entity.User) (int64, error) {
 	query := "INSERT INTO users (name, email, company, password, role) VALUES (?, ?, ?, ?, ?)"
 
-	result, err := r.db.ExecContext(r.ctx, query, u.Name, u.Email, u.Company, u.EncPassword, u.Role)
+	result, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Company, user.EncPassword, user.Role)
 	if err != nil {
 		return 0, err
 	}
@@ -48,7 +56,7 @@ func (r *UserRepository) Create(u entity.User) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	return int(id), nil
+	return id, nil
 }
 
 // Edit обновляет данные пользователя u с паролем или без withPass, возвращает ошибку в случае неудачи
@@ -71,49 +79,28 @@ func (r *UserRepository) Edit(u entity.User, withPass bool) error {
 }
 
 // Delete удаляет пользователя, возвращает ошибку в случае неудачи
-func (r *UserRepository) Delete(id string) error {
-	if id == "129" {
-		return errors.New("нельзя удалить главного админа")
-	}
-	_, err := r.db.ExecContext(r.ctx, "DELETE FROM users WHERE id = ? ", id)
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (r *UserRepository) Delete(ctx context.Context, id int64) error {
+	_, err := r.db.ExecContext(ctx, "DELETE FROM users WHERE id = ? ", id)
+	return err
 }
 
-// All возвращает массив из пользователей БД или ошибку
-func (r *UserRepository) All() ([]entity.User, error) {
-	var users []entity.User
+// Users возвращает массив из пользователей БД или ошибку
+func (r *UserRepository) Users(ctx context.Context) (users []entity.User, err error) {
+	q := "SELECT id, name, email, company, role FROM users"
 
-	rows, err := r.db.QueryContext(r.ctx, "SELECT id, name, email, company, role FROM users")
+	err = r.db.SelectContext(ctx, &users, q)
 	if err != nil {
 		return users, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var user entity.User
-		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Company, &user.Role)
-		if err != nil {
-			return users, err
-		}
-		users = append(users, user)
-	}
-
-	err = rows.Err()
-	if err != nil {
-		return nil, err
 	}
 
 	return users, nil
 }
 
-// CreateRefreshToken добавляет  запись о токене или обновляет , если запись уже есть
-func (r *UserRepository) CreateRefreshToken(userID, refreshToken string) error {
+// CreateRefreshToken добавляет запись о токене или обновляет, если запись уже есть
+func (r *UserRepository) CreateRefreshToken(ctx context.Context, userID int64, refreshToken string) error {
 	query := "INSERT INTO refresh_tokens (user_id, token) VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE SET user_id = user_id, token = ? "
-	_, err := r.db.ExecContext(r.ctx, query, userID, refreshToken, refreshToken)
+
+	_, err := r.db.ExecContext(ctx, query, userID, refreshToken, refreshToken)
 	if err != nil {
 		return err
 	}
@@ -122,35 +109,11 @@ func (r *UserRepository) CreateRefreshToken(userID, refreshToken string) error {
 }
 
 // GetRefreshToken проверяет есть ли в базе токен
-func (r *UserRepository) GetRefreshToken(token string) error {
+func (r *UserRepository) GetRefreshToken(ctx context.Context, token string) error {
 	var t string
 
 	query := "SELECT user_id FROM refresh_tokens WHERE token = ?"
-	err := r.db.QueryRowContext(r.ctx, query, token).Scan(&t)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// AddServer добавляет сервера пользователю по его айди
-func (r *UserRepository) AddServer(userID string, servers []entity.Server) error {
-	query := "INSERT INTO users_servers (user_id, server_id) VALUES(?, ?)"
-
-	stmt, err := r.db.PrepareContext(r.ctx, query)
-	if err != nil {
-		return err
-	}
-
-	for _, v := range servers {
-		_, err := stmt.ExecContext(r.ctx, userID, v.ID)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = stmt.Close()
+	err := r.db.QueryRowContext(ctx, query, token).Scan(&t)
 	if err != nil {
 		return err
 	}

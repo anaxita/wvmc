@@ -7,11 +7,11 @@ const (
 
 // User ...
 type User struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	Company     string `json:"company"`
-	Role        int    `json:"role"`
-	Password    string `json:"password,omitempty"`
-	EncPassword string `json:"-"`
+	ID          int64  `json:"id" db:"id"`
+	Name        string `json:"name" db:"name"`
+	Email       string `json:"email" db:"email"`
+	Company     string `json:"company" db:"company"`
+	Role        int    `json:"role" db:"role"`
+	Password    string `json:"password,omitempty" db:"password"`
+	EncPassword string `json:"-" db:"-"`
 }

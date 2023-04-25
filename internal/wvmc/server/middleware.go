@@ -118,8 +118,7 @@ func (s *Server) RefreshToken() http.Handler {
 				userjson, _ := json.Marshal(claims["User"])
 				json.Unmarshal(userjson, &u)
 
-				store := s.store.User(r.Context())
-				err = store.GetRefreshToken(req.RefreshToken)
+				err = s.authService.RefreshToken(r.Context(), req.RefreshToken)
 
 				if err != nil {
 					SendErr(w, http.StatusUnauthorized, err, "Токен уже использовался")
@@ -128,7 +127,7 @@ func (s *Server) RefreshToken() http.Handler {
 
 				refreshToken := createToken("refresh", u)
 
-				err = store.CreateRefreshToken(u.ID, refreshToken)
+				err = s.authService.CreateRefreshToken(r.Context(), u.ID, refreshToken)
 				if err != nil {
 					SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 					return
@@ -212,7 +211,7 @@ func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
 		}
 
 		if ctxUser.Role != entity.UserRoleAdmin {
-			serversByUser, err := s.store.Server(r.Context()).FindByUser(ctxUser.ID)
+			serversByUser, err := s.serverService.FindByUserID(r.Context(), ctxUser.ID)
 			if err != nil {
 				if err == sql.ErrNoRows {
 					SendErr(w, http.StatusBadRequest, err, "Сервер не найден")

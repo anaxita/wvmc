@@ -25,6 +25,8 @@ func (s *Server) GetServers() http.HandlerFunc {
 	var userRole = 0
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		user := r.Context().Value(CtxString("user")).(entity.User)
 
 		{
@@ -41,7 +43,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 				return
 			}
 
-			servers, err := s.store.Server(r.Context()).All()
+			servers, err := s.serverService.Servers(ctx)
 			if err != nil {
 				SendErr(w, http.StatusOK, err, "Ошибка получения списка серверов")
 				return
@@ -65,7 +67,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 		}
 
 		if user.Role == userRole {
-			servers, err := s.store.Server(r.Context()).FindByUser(user.ID)
+			servers, err := s.serverService.FindByUserID(ctx, user.ID)
 			if err != nil {
 				if err == sql.ErrNoRows {
 					SendOK(w, http.StatusOK, response{make([]entity.Server, 0)})
@@ -105,13 +107,12 @@ func (s *Server) GetServers() http.HandlerFunc {
 // GetServer получает информацию об 1 сервере по его хв и имени
 func (s *Server) GetServer() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		vars := mux.Vars(r)
 		hv := vars["hv"]
 		name := vars["name"]
 
-		store := s.store.Server(r.Context())
-
-		server, err := store.Find("title", name)
+		server, err := s.serverService.FindByTitle(ctx, name)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusOK, err, "server is not found")
@@ -201,7 +202,7 @@ func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 		for _, server := range servers {
 			server.User = user
 			server.Password = password
-			_, err := s.store.Server(r.Context()).Create(server)
+			_, err := s.serverService.Create(r.Context(), server)
 			if err != nil {
 				SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
 				return
@@ -217,7 +218,7 @@ func (s *Server) GetServerServices() http.HandlerFunc {
 		hv := vars["hv"]
 		name := vars["name"]
 
-		srv, err := s.store.Server(r.Context()).FindByHvAndName(hv, name)
+		srv, err := s.serverService.FindByHvAndTitle(r.Context(), hv, name)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusNotFound, err, "server is not found")
@@ -242,11 +243,12 @@ func (s *Server) GetServerServices() http.HandlerFunc {
 // GetServerManager ...
 func (s *Server) GetServerManager() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		vars := mux.Vars(r)
 		hv := vars["hv"]
 		name := vars["name"]
 
-		srv, err := s.store.Server(r.Context()).FindByHvAndName(hv, name)
+		srv, err := s.serverService.FindByHvAndTitle(ctx, hv, name)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusOK, err, "server is not found")
@@ -278,6 +280,7 @@ func (s *Server) ControlServerManager() http.HandlerFunc {
 		Command    string `json:"command"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		vars := mux.Vars(r)
 		var err error
 		var task req
@@ -291,7 +294,7 @@ func (s *Server) ControlServerManager() http.HandlerFunc {
 		task.ServerHV = vars["hv"]
 		task.ServerName = vars["name"]
 
-		server, err := s.store.Server(r.Context()).FindByHvAndName(task.ServerHV, task.ServerName)
+		server, err := s.serverService.FindByHvAndTitle(ctx, task.ServerHV, task.ServerName)
 		if err != nil {
 			SendErr(w, http.StatusNotFound, err, "Server is not found")
 			return
@@ -321,11 +324,12 @@ func (s *Server) ControlServerManager() http.HandlerFunc {
 // GetServerDisks return info about disks like letter, total and free size
 func (s *Server) GetServerDisks() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		vars := mux.Vars(r)
 		hv := vars["hv"]
 		name := vars["name"]
 
-		srv, err := s.store.Server(r.Context()).FindByHvAndName(hv, name)
+		srv, err := s.serverService.FindByHvAndTitle(ctx, hv, name)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				SendErr(w, http.StatusOK, err, "server is not found")
@@ -355,6 +359,7 @@ func (s *Server) ControlServerServices() http.HandlerFunc {
 		Command     string `json:"command"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		vars := mux.Vars(r)
 		var err error
 		var task req
@@ -368,7 +373,7 @@ func (s *Server) ControlServerServices() http.HandlerFunc {
 		task.ServerHV = vars["hv"]
 		task.ServerName = vars["name"]
 
-		server, err := s.store.Server(r.Context()).FindByHvAndName(task.ServerHV, task.ServerName)
+		server, err := s.serverService.FindByHvAndTitle(ctx, task.ServerHV, task.ServerName)
 		if err != nil {
 			SendErr(w, http.StatusNotFound, err, "Server is not found")
 			return
@@ -385,7 +390,7 @@ func (s *Server) ControlServerServices() http.HandlerFunc {
 			_, err = s.controlService.RestartWinService(server.IP, server.User, server.Password,
 				task.ServiceName)
 		default:
-			SendErr(w, http.StatusBadRequest, errors.New("undefind command"), "Неизвестная команда")
+			SendErr(w, http.StatusBadRequest, errors.New("undefined command"), "Неизвестная команда")
 			return
 		}
 
