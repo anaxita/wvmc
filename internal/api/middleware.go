@@ -11,13 +11,23 @@ import (
 	"strings"
 
 	"github.com/anaxita/wvmc/internal/entity"
+	"github.com/anaxita/wvmc/internal/service"
 	"github.com/gorilla/mux"
 
 	"github.com/dgrijalva/jwt-go"
 )
 
+type Middleware struct {
+	userService   *service.User
+	serverService *service.Server
+}
+
+func NewMiddleware(us *service.User, ss *service.Server) *Middleware {
+	return &Middleware{us, ss}
+}
+
 // Auth выполняет проверку токена
-func (s *Server) Auth(next http.Handler) http.Handler {
+func (s *Middleware) Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		tokenString := strings.Split(authHeader, " ")
@@ -59,7 +69,7 @@ func (s *Server) Auth(next http.Handler) http.Handler {
 }
 
 // Cors устанавливает cors заголовки
-func (s *Server) Cors(next http.Handler) http.Handler {
+func (s *Middleware) Cors(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -76,81 +86,8 @@ func (s *Server) Cors(next http.Handler) http.Handler {
 	})
 }
 
-// RefreshToken выполняет переиздание токена
-func (s *Server) RefreshToken() http.Handler {
-	type respTokens struct {
-		AccessToken  string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
-	}
-
-	type reqTokens struct {
-		RefreshToken string `json:"refresh_token"`
-	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		req := reqTokens{}
-		err := json.NewDecoder(r.Body).Decode(&req)
-		if err != nil {
-			SendErr(w, http.StatusBadRequest, err, "Неверный формат запроса")
-			return
-		}
-
-		// Парсим токен
-		token, err := jwt.Parse(req.RefreshToken, func(token *jwt.Token) (interface{}, error) {
-			// Проверяем, что метод авторизации верный
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			// Если все ок - возвращаем ключ подписи
-			return []byte(os.Getenv("TOKEN")), nil
-		})
-
-		if err != nil {
-			SendErr(w, http.StatusUnauthorized, err, "Ошибка проверки сигнатуры")
-			return
-		}
-
-		// Проверяем корректность Claims (Данных внутри токена) и проверяем Валидность (не совсем понимаю что это значит) ключа подписи
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			tokenType, ok := claims["Type"]
-			if ok && tokenType == "refresh" {
-
-				u := entity.User{}
-				userjson, _ := json.Marshal(claims["User"])
-				json.Unmarshal(userjson, &u)
-
-				err = s.authService.RefreshToken(r.Context(), req.RefreshToken)
-
-				if err != nil {
-					SendErr(w, http.StatusUnauthorized, err, "Токен уже использовался")
-					return
-				}
-
-				refreshToken := createToken("refresh", u)
-
-				err = s.authService.CreateRefreshToken(r.Context(), u.ID, refreshToken)
-				if err != nil {
-					SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
-					return
-				}
-
-				tokens := respTokens{
-					AccessToken:  createToken("access", u),
-					RefreshToken: refreshToken,
-				}
-
-				SendOK(w, http.StatusOK, tokens)
-				return
-			}
-			SendErr(w, http.StatusBadRequest, errors.New("token type is not refresh"),
-				"Неверный тип токена")
-			return
-		}
-		SendErr(w, http.StatusUnauthorized, errors.New("token is invalid"), "Токен невалидный")
-	})
-}
-
 // RoleMiddleware проверяет является ли пользователь админом
-func (s *Server) RoleMiddleware(roles ...int) mux.MiddlewareFunc {
+func (s *Middleware) RoleMiddleware(roles ...int) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctxUser := r.Context().Value(CtxString("user")).(entity.User)
@@ -170,7 +107,7 @@ func (s *Server) RoleMiddleware(roles ...int) mux.MiddlewareFunc {
 }
 
 // CheckControlPermissions проверяет права на сервер у пользователя
-func (s *Server) CheckControlPermissions(next http.Handler) http.Handler {
+func (s *Middleware) CheckControlPermissions(next http.Handler) http.Handler {
 	type controlRequest struct {
 		ServerID int64  `json:"server_id"`
 		Command  string `json:"command"`

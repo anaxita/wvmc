@@ -8,7 +8,7 @@ import (
 
 	"github.com/anaxita/wvmc/internal/api"
 	"github.com/anaxita/wvmc/internal/app"
-	dal2 "github.com/anaxita/wvmc/internal/dal"
+	"github.com/anaxita/wvmc/internal/dal"
 	"github.com/anaxita/wvmc/internal/notice"
 	"github.com/anaxita/wvmc/internal/service"
 )
@@ -36,20 +36,25 @@ func main() {
 		l.Fatalf("failed to run migrations: %v", err)
 	}
 
-	userRepo := dal2.NewUserRepository(db)
-	serverRepo := dal2.NewServerRepository(db)
+	userRepo := dal.NewUserRepository(db)
+	serverRepo := dal.NewServerRepository(db)
 
 	userService := service.NewUserService(userRepo)
 	serverService := service.NewServerService(serverRepo)
 	authService := service.NewAuthService(userRepo)
-	cacheService := dal2.NewCache()
+	cacheService := dal.NewCache()
 	controlService := service.NewControlService(cacheService)
-	noticeService := notice.NewNoticeService()
+	notifier := notice.NewNoticeService()
 
-	s := api.NewServer(controlService, noticeService, userService, serverService, authService)
+	userHandler := api.NewUserHandler(userService, serverService)
+	serverHandler := api.NewServerHandler(serverService, controlService, notifier)
+	authHandler := api.NewAuthHandler(userService, authService)
+	mw := api.NewMiddleware(userService, serverService)
+
+	s := api.NewServer(c.HTTPPort, userHandler, authHandler, serverHandler, mw)
 
 	go func() {
-		s.UpdateAllServersInfo()(httptest.NewRecorder(), &http.Request{})
+		serverHandler.UpdateAllServersInfo()(httptest.NewRecorder(), &http.Request{})
 
 		for {
 			time.Sleep(time.Minute * 1)
@@ -61,7 +66,7 @@ func main() {
 		}
 	}()
 
-	if err = s.Start(); err != nil {
+	if err = s.ListenAndServe(); err != nil {
 		log.Fatal("Ошибка запуска сервер", err)
 	}
 }

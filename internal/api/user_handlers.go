@@ -10,12 +10,22 @@ import (
 	"strings"
 
 	entity2 "github.com/anaxita/wvmc/internal/entity"
+	"github.com/anaxita/wvmc/internal/service"
 	"github.com/anaxita/wvmc/pkg/hasher"
 	"github.com/gorilla/mux"
 )
 
+type UserHandler struct {
+	userService   *service.User
+	serverService *service.Server
+}
+
+func NewUserHandler(us *service.User, ss *service.Server) *UserHandler {
+	return &UserHandler{us, ss}
+}
+
 // GetUsers возвращает список всех пользователей
-func (s *Server) GetUsers() http.HandlerFunc {
+func (s *UserHandler) GetUsers() http.HandlerFunc {
 	type response struct {
 		User []entity2.User `json:"users"`
 	}
@@ -37,7 +47,7 @@ func (s *Server) GetUsers() http.HandlerFunc {
 }
 
 // CreateUser создает пользователя
-func (s *Server) CreateUser() http.HandlerFunc {
+func (s *UserHandler) CreateUser() http.HandlerFunc {
 	type response struct {
 		UserID int64 `json:"id,string"` // TODO why string?
 	}
@@ -106,7 +116,7 @@ func (s *Server) CreateUser() http.HandlerFunc {
 }
 
 // EditUser обновляет данные пользователя
-func (s *Server) EditUser() http.HandlerFunc {
+func (s *UserHandler) EditUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := entity2.User{}
 		var err error
@@ -153,7 +163,7 @@ func (s *Server) EditUser() http.HandlerFunc {
 }
 
 // DeleteUser удаляет пользователя
-func (s *Server) DeleteUser() http.HandlerFunc {
+func (s *UserHandler) DeleteUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := entity2.User{}
 
@@ -184,7 +194,7 @@ func (s *Server) DeleteUser() http.HandlerFunc {
 }
 
 // AddServersToUser добавляет пользователю сервер
-func (s *Server) AddServersToUser() http.HandlerFunc {
+func (s *UserHandler) AddServersToUser() http.HandlerFunc {
 	type request struct {
 		UserID  int64            `json:"user_id"`
 		Servers []entity2.Server `json:"servers"`
@@ -242,7 +252,7 @@ func (s *Server) AddServersToUser() http.HandlerFunc {
 }
 
 // GetUserServers возвращат список серверов где доступные пользователю помечены полем added = true
-func (s *Server) GetUserServers() http.HandlerFunc {
+func (s *UserHandler) GetUserServers() http.HandlerFunc {
 	type addedServers struct {
 		ID      int64  `json:"id"`
 		VMID    string `json:"vmid"`

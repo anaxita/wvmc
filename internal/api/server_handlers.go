@@ -11,14 +11,26 @@ import (
 	"os"
 	"strings"
 
-	entity2 "github.com/anaxita/wvmc/internal/entity"
+	"github.com/anaxita/wvmc/internal/entity"
+	"github.com/anaxita/wvmc/internal/notice"
+	"github.com/anaxita/wvmc/internal/service"
 	"github.com/gorilla/mux"
 )
 
+type ServerHandler struct {
+	serverService  *service.Server
+	controlService *service.Control
+	notifier       *notice.KMSBOT
+}
+
+func NewServerHandler(ss *service.Server, cs *service.Control, notifier *notice.KMSBOT) *ServerHandler {
+	return &ServerHandler{serverService: ss, controlService: cs, notifier: notifier}
+}
+
 // GetServers возвращает список серверов
-func (s *Server) GetServers() http.HandlerFunc {
+func (s *ServerHandler) GetServers() http.HandlerFunc {
 	type response struct {
-		Servers []entity2.Server `json:"servers"`
+		Servers []entity.Server `json:"servers"`
 	}
 
 	var adminRole = 1
@@ -27,12 +39,12 @@ func (s *Server) GetServers() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		user := r.Context().Value(CtxString("user")).(entity2.User)
+		user := r.Context().Value(CtxString("user")).(entity.User)
 
 		{
 			ip4 := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
 			if !ip4.IsPrivate() && !ip4.IsUnspecified() {
-				defer s.notify.AddIPToWL(user.Name, ip4.String(), "vmcontrol")
+				defer s.notifier.AddIPToWL(user.Name, ip4.String(), "vmcontrol")
 			}
 		}
 
@@ -70,7 +82,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 			servers, err := s.serverService.FindByUserID(ctx, user.ID)
 			if err != nil {
 				if err == sql.ErrNoRows {
-					SendOK(w, http.StatusOK, response{make([]entity2.Server, 0)})
+					SendOK(w, http.StatusOK, response{make([]entity.Server, 0)})
 					return
 				}
 
@@ -105,7 +117,7 @@ func (s *Server) GetServers() http.HandlerFunc {
 }
 
 // GetServer получает информацию об 1 сервере по его хв и имени
-func (s *Server) GetServer() http.HandlerFunc {
+func (s *ServerHandler) GetServer() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		vars := mux.Vars(r)
@@ -135,7 +147,7 @@ func (s *Server) GetServer() http.HandlerFunc {
 }
 
 // ControlServer выполняет команды на сервере
-func (s *Server) ControlServer() http.HandlerFunc {
+func (s *ServerHandler) ControlServer() http.HandlerFunc {
 
 	const notice = `
 User: %s %s %s
@@ -145,11 +157,11 @@ Action: %s
 `
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := r.Context().Value(CtxString("user")).(entity2.User)
+		user := r.Context().Value(CtxString("user")).(entity.User)
 
 		var err error
 
-		server := r.Context().Value(CtxString("server")).(entity2.Server)
+		server := r.Context().Value(CtxString("server")).(entity.Server)
 		command := r.Context().Value(CtxString("command")).(string)
 
 		switch command {
@@ -177,7 +189,7 @@ Action: %s
 			return
 		}
 
-		err = s.notify.Notify(fmt.Sprintf(notice, user.Email, user.Name, user.Company, server.Name,
+		err = s.notifier.Notify(fmt.Sprintf(notice, user.Email, user.Name, user.Company, server.Name,
 			server.HV, command))
 		if err != nil {
 			log.Println("Не удалось отправить уведомление", err)
@@ -188,7 +200,7 @@ Action: %s
 }
 
 // UpdateAllServersInfo обновляет данные в БД по серверам
-func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
+func (s *ServerHandler) UpdateAllServersInfo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := os.Getenv("SERVER_USER_NAME")
 		password := os.Getenv("SERVER_USER_PASSWORD")
@@ -212,7 +224,7 @@ func (s *Server) UpdateAllServersInfo() http.HandlerFunc {
 }
 
 // GetServerServices ...
-func (s *Server) GetServerServices() http.HandlerFunc {
+func (s *ServerHandler) GetServerServices() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		hv := vars["hv"]
@@ -241,7 +253,7 @@ func (s *Server) GetServerServices() http.HandlerFunc {
 }
 
 // GetServerManager ...
-func (s *Server) GetServerManager() http.HandlerFunc {
+func (s *ServerHandler) GetServerManager() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		vars := mux.Vars(r)
@@ -271,7 +283,7 @@ func (s *Server) GetServerManager() http.HandlerFunc {
 }
 
 // ControlServerManager control processes and user rdp sessions
-func (s *Server) ControlServerManager() http.HandlerFunc {
+func (s *ServerHandler) ControlServerManager() http.HandlerFunc {
 
 	type req struct {
 		ServerHV   string `json:"server_hv"`
@@ -322,7 +334,7 @@ func (s *Server) ControlServerManager() http.HandlerFunc {
 }
 
 // GetServerDisks return info about disks like letter, total and free size
-func (s *Server) GetServerDisks() http.HandlerFunc {
+func (s *ServerHandler) GetServerDisks() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		vars := mux.Vars(r)
@@ -350,7 +362,7 @@ func (s *Server) GetServerDisks() http.HandlerFunc {
 }
 
 // ControlServerServices управляет службами сервера
-func (s *Server) ControlServerServices() http.HandlerFunc {
+func (s *ServerHandler) ControlServerServices() http.HandlerFunc {
 
 	type req struct {
 		ServerHV    string `json:"server_hv"`
