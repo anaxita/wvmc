@@ -15,16 +15,23 @@ import (
 	"github.com/anaxita/wvmc/internal/notice"
 	"github.com/anaxita/wvmc/internal/service"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 type ServerHandler struct {
+	*helperHandler
 	serverService  *service.Server
 	controlService *service.Control
 	notifier       *notice.KMSBOT
 }
 
-func NewServerHandler(ss *service.Server, cs *service.Control, notifier *notice.KMSBOT) *ServerHandler {
-	return &ServerHandler{serverService: ss, controlService: cs, notifier: notifier}
+func NewServerHandler(l *zap.SugaredLogger, ss *service.Server, cs *service.Control, notifier *notice.KMSBOT) *ServerHandler {
+	return &ServerHandler{
+		helperHandler:  newHelperHandler(l),
+		serverService:  ss,
+		controlService: cs,
+		notifier:       notifier,
+	}
 }
 
 // GetServers возвращает список серверов

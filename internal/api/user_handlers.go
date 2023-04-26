@@ -13,15 +13,21 @@ import (
 	"github.com/anaxita/wvmc/internal/service"
 	"github.com/anaxita/wvmc/pkg/hasher"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 type UserHandler struct {
+	helperHandler *helperHandler
 	userService   *service.User
 	serverService *service.Server
 }
 
-func NewUserHandler(us *service.User, ss *service.Server) *UserHandler {
-	return &UserHandler{us, ss}
+func NewUserHandler(l *zap.SugaredLogger, us *service.User, ss *service.Server) *UserHandler {
+	return &UserHandler{
+		helperHandler: newHelperHandler(l),
+		userService:   us,
+		serverService: ss,
+	}
 }
 
 // GetUsers возвращает список всех пользователей

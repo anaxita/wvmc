@@ -12,6 +12,7 @@ import (
 	"github.com/anaxita/wvmc/internal/entity"
 	"github.com/anaxita/wvmc/internal/service"
 	"github.com/anaxita/wvmc/pkg/hasher"
+	"go.uber.org/zap"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -26,13 +27,18 @@ type customClaims struct {
 }
 
 type AuthHandler struct {
+	*helperHandler
 	userService *service.User
 	authService *service.Auth
 }
 
 // NewAuthHandler возвращает новый AuthHandler
-func NewAuthHandler(us *service.User, as *service.Auth) *AuthHandler {
-	return &AuthHandler{userService: us, authService: as}
+func NewAuthHandler(l *zap.SugaredLogger, us *service.User, as *service.Auth) *AuthHandler {
+	return &AuthHandler{
+		helperHandler: newHelperHandler(l),
+		userService:   us,
+		authService:   as,
+	}
 }
 
 // SignIn выполняет аутентификацию пользователей и возвращает в ответе токен и роль пользователя

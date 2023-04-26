@@ -13,17 +13,23 @@ import (
 	"github.com/anaxita/wvmc/internal/entity"
 	"github.com/anaxita/wvmc/internal/service"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 
 	"github.com/dgrijalva/jwt-go"
 )
 
 type Middleware struct {
+	*helperHandler
 	userService   *service.User
 	serverService *service.Server
 }
 
-func NewMiddleware(us *service.User, ss *service.Server) *Middleware {
-	return &Middleware{us, ss}
+func NewMiddleware(l *zap.SugaredLogger, us *service.User, ss *service.Server) *Middleware {
+	return &Middleware{
+		helperHandler: newHelperHandler(l),
+		userService:   us,
+		serverService: ss,
+	}
 }
 
 // Auth выполняет проверку токена

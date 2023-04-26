@@ -46,10 +46,10 @@ func main() {
 	controlService := service.NewControlService(cacheService)
 	notifier := notice.NewNoticeService()
 
-	userHandler := api.NewUserHandler(userService, serverService)
-	serverHandler := api.NewServerHandler(serverService, controlService, notifier)
-	authHandler := api.NewAuthHandler(userService, authService)
-	mw := api.NewMiddleware(userService, serverService)
+	userHandler := api.NewUserHandler(l, userService, serverService)
+	serverHandler := api.NewServerHandler(l, serverService, controlService, notifier)
+	authHandler := api.NewAuthHandler(l, userService, authService)
+	mw := api.NewMiddleware(l, userService, serverService)
 
 	s := api.NewServer(c.HTTPPort, userHandler, authHandler, serverHandler, mw)
 
