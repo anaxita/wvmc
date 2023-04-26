@@ -35,8 +35,8 @@ func NewServer(
 
 func setAuthRoutes(r *mux.Router, authHandler *AuthHandler) {
 	auth := r.PathPrefix("/auth").Subrouter()
-	auth.Handle("/signin", authHandler.SignIn()).Methods(http.MethodPost, http.MethodOptions)
-	auth.Handle("/refresh", authHandler.RefreshToken()).Methods(http.MethodPost, http.MethodOptions)
+	auth.HandleFunc("/signin", authHandler.SignIn).Methods(http.MethodPost, http.MethodOptions)
+	auth.HandleFunc("/refresh", authHandler.RefreshToken).Methods(http.MethodPost, http.MethodOptions)
 }
 
 func setUserRoutes(r *mux.Router, userHandler *UserHandler, mw *Middleware) {

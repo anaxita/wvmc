@@ -2,13 +2,14 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"strings"
 
+	"github.com/anaxita/wvmc/internal/api/requests"
+	"github.com/anaxita/wvmc/internal/api/responses"
 	"github.com/anaxita/wvmc/internal/entity"
 	"github.com/anaxita/wvmc/internal/service"
 	"github.com/anaxita/wvmc/pkg/hasher"
@@ -42,97 +43,65 @@ func NewAuthHandler(l *zap.SugaredLogger, us *service.User, as *service.Auth) *A
 }
 
 // SignIn выполняет аутентификацию пользователей и возвращает в ответе токен и роль пользователя
-func (s *AuthHandler) SignIn() http.HandlerFunc {
+func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
+	var resp responses.SignIn
 
-	type request struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-
-	type response struct {
-		AccessToken  string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		req := request{}
-
+	err := func() error {
+		var req requests.SignIn
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			SendErr(w, http.StatusBadRequest, err, "Неверный формат запроса")
-			return
+			return err
 		}
 
-		req.Email = strings.TrimSpace(req.Email)
-		req.Password = strings.TrimSpace(req.Password)
+		// TODO add validateion
 
-		if req.Email == "" || req.Password == "" {
-			SendErr(w, http.StatusBadRequest, errors.New("email or password cannot be empty"),
-				"Поля email или password не могут быть пустыми")
-			return
-		}
-
-		user, err := s.userService.FindByEmail(r.Context(), req.Email)
+		user, err := h.userService.FindByEmail(r.Context(), req.Email)
 		if err != nil {
-			SendErr(w, http.StatusOK, err, "Неверный логин или пароль")
-			return
+			return err
 		}
 
 		err = hasher.Compare(user.Password, req.Password)
 		if err != nil {
-			SendErr(w, http.StatusOK, err, "Неверный логин или пароль")
-			return
+			return err
 		}
 
 		if user.Role == entity.UserRoleAdmin && user.Email != "admin" {
 			addr := strings.Split(r.RemoteAddr, ":")
 			ip := net.ParseIP(addr[0])
 			if !ip.IsPrivate() {
-				SendErr(
-					w, http.StatusBadRequest,
-					entity.ErrAccessDenied,
-					fmt.Sprintf("Доступ разрешен только с локального IP, ваш айпи %v",
-						r.RemoteAddr),
-				)
-
-				return
+				return fmt.Errorf("%w: Доступ разрешен только с локального IP, ваш айпи %v", entity.ErrForbidden, ip)
 			}
 		}
 
 		accessToken := createToken("access", user)
 		refreshToken := createToken("refresh", user)
 
-		err = s.authService.CreateRefreshToken(r.Context(), user.ID, refreshToken)
+		err = h.authService.CreateRefreshToken(r.Context(), user.ID, refreshToken)
 		if err != nil {
-			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
-			return
+			return err
 		}
 
-		resp := response{
-			AccessToken:  accessToken,
-			RefreshToken: refreshToken,
-		}
+		resp = responses.NewSignIn(accessToken, refreshToken)
 
-		SendOK(w, http.StatusOK, resp)
+		return nil
+	}()
+	if err != nil {
+		h.sendError(w, err)
+		return
 	}
+
+	h.sendJson(w, resp)
 }
 
 // RefreshToken выполняет переиздание токена
-func (s *AuthHandler) RefreshToken() http.Handler {
-	type respTokens struct {
-		AccessToken  string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
-	}
+func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	var resp responses.Refresh
 
-	type reqTokens struct {
-		RefreshToken string `json:"refresh_token"`
-	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		req := reqTokens{}
+	err := func() error {
+		var req requests.Refresh
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			SendErr(w, http.StatusBadRequest, err, "Неверный формат запроса")
-			return
+			return err
 		}
 
 		// Парсим токен
@@ -146,8 +115,7 @@ func (s *AuthHandler) RefreshToken() http.Handler {
 		})
 
 		if err != nil {
-			SendErr(w, http.StatusUnauthorized, err, "Ошибка проверки сигнатуры")
-			return
+			return fmt.Errorf("%w: %v", entity.ErrUnauthorized, err)
 		}
 
 		// Проверяем корректность Claims (Данных внутри токена) и проверяем Валидность (не совсем понимаю что это значит) ключа подписи
@@ -159,33 +127,34 @@ func (s *AuthHandler) RefreshToken() http.Handler {
 				userjson, _ := json.Marshal(claims["User"])
 				json.Unmarshal(userjson, &u)
 
-				err = s.authService.RefreshToken(r.Context(), req.RefreshToken)
+				err = h.authService.RefreshToken(r.Context(), req.RefreshToken)
 
 				if err != nil {
-					SendErr(w, http.StatusUnauthorized, err, "Токен уже использовался")
-					return
+					return fmt.Errorf("%w: %v", entity.ErrUnauthorized, err)
 				}
 
 				refreshToken := createToken("refresh", u)
 
-				err = s.authService.CreateRefreshToken(r.Context(), u.ID, refreshToken)
+				err = h.authService.CreateRefreshToken(r.Context(), u.ID, refreshToken)
 				if err != nil {
-					SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
-					return
+					return err
 				}
 
-				tokens := respTokens{
-					AccessToken:  createToken("access", u),
-					RefreshToken: refreshToken,
-				}
+				resp = responses.NewRefresh(createToken("access", u), refreshToken)
 
-				SendOK(w, http.StatusOK, tokens)
-				return
+				return nil
 			}
-			SendErr(w, http.StatusBadRequest, errors.New("token type is not refresh"),
-				"Неверный тип токена")
-			return
+
+			return fmt.Errorf("%w: token is not refresh", entity.ErrUnauthorized)
 		}
-		SendErr(w, http.StatusUnauthorized, errors.New("token is invalid"), "Токен невалидный")
-	})
+
+		return fmt.Errorf("%w: invalid token", entity.ErrUnauthorized)
+	}()
+
+	if err != nil {
+		h.sendError(w, err)
+		return
+	}
+
+	h.sendJson(w, resp)
 }
