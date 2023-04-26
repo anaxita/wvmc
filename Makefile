@@ -25,7 +25,8 @@ deps:
 
 gen:
 	go generate ./...
-	oapi-codegen -generate gorilla -package gen OpenApi.yml > internal/api/gen/server.go
-	oapi-codegen -generate types -package gen OpenApi.yml > internal/api/gen/types.go
-	#mockgen -source=internal/service/bonuses.go -destination=../tests/mocks.go -package=tests
+#	docker run --rm -v "${PWD}:/local" openapitools/openapi-generator-cli generate -i /local/OpenApi.yml -g go-server -o /local/internal/api/gen
+#	oapi-codegen -generate gorilla -package gen OpenApi.yml > internal/api/gen/server.go
+#	oapi-codegen -generate types -package gen OpenApi.yml > internal/api/gen/types.go
+#	mockgen -source=internal/service/bonuses.go -destination=../tests/mocks.go -package=tests
 
