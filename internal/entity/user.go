@@ -1,12 +1,7 @@
 package entity
 
-type CtxUserKey struct{}
-
-type UserRole = int
-
-const (
-	UserRoleUser UserRole = iota
-	UserRoleAdmin
+import (
+	"context"
 )
 
 type User struct {
@@ -16,4 +11,23 @@ type User struct {
 	Company  string   `json:"company" db:"company"`
 	Role     UserRole `json:"role" db:"role"`
 	Password string   `json:"-" db:"password"`
+}
+
+type UserRole = int
+
+const (
+	UserRoleUser UserRole = iota
+	UserRoleAdmin
+)
+
+type CtxUserKey struct{}
+
+// CtxUser returns user from context
+func CtxUser(ctx context.Context) (User, error) {
+	user, ok := ctx.Value(CtxUserKey{}).(User)
+	if !ok {
+		return User{}, ErrUnauthorized
+	}
+
+	return user, nil
 }

@@ -7,21 +7,19 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/anaxita/wvmc/internal/entity"
 	"github.com/anaxita/wvmc/internal/service"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
-
-	"github.com/dgrijalva/jwt-go"
 )
 
 type Middleware struct {
 	*helperHandler
 	userService   *service.User
 	serverService *service.Server
+	authService   *service.Auth
 }
 
 func NewMiddleware(l *zap.SugaredLogger, us *service.User, ss *service.Server) *Middleware {
@@ -35,42 +33,25 @@ func NewMiddleware(l *zap.SugaredLogger, us *service.User, ss *service.Server) *
 // Auth выполняет проверку токена
 func (s *Middleware) Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		authHeader := r.Header.Get("Authorization")
 		tokenString := strings.Split(authHeader, " ")
 
 		if len(tokenString) != 2 || tokenString[0] != "Bearer" {
-			SendErr(w, http.StatusUnauthorized, errors.New("no token in headers"),
-				"Нет токена в заголовке")
+			err := fmt.Errorf("%w: no bearer token in header", entity.ErrUnauthorized)
+			s.sendError(w, err)
 			return
 		}
 
-		token, err := jwt.ParseWithClaims(tokenString[1], &customClaims{},
-			func(token *jwt.Token) (interface{}, error) {
-				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-				}
-				return []byte(os.Getenv("TOKEN")), nil
-			})
-
+		user, err := s.authService.Auth(ctx, tokenString[1])
 		if err != nil {
-			SendErr(w, http.StatusUnauthorized, err, "Токен истёк")
+			s.sendError(w, err)
 			return
 		}
 
-		if claims, ok := token.Claims.(*customClaims); ok && token.Valid {
-			if claims.Type == "access" {
-				ctxUser := CtxString("user")
-
-				next.ServeHTTP(w,
-					r.WithContext(context.WithValue(r.Context(), ctxUser, claims.User)))
-				return
-			}
-
-			SendErr(w, http.StatusUnauthorized, errors.New("token it not 'access'"),
-				"Неверный тип токен")
-			return
-		}
-		SendErr(w, http.StatusUnauthorized, err, "Токен не валиден")
+		ctx = context.WithValue(ctx, entity.CtxUserKey{}, user)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -96,18 +77,20 @@ func (s *Middleware) Cors(next http.Handler) http.Handler {
 func (s *Middleware) RoleMiddleware(roles ...int) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctxUser := r.Context().Value(CtxString("user")).(entity.User)
+			user, err := entity.CtxUser(r.Context())
+			if err != nil {
+				s.sendError(w, err)
+				return
+			}
 
 			for _, v := range roles {
-				if ctxUser.Role == v {
+				if user.Role == v {
 					next.ServeHTTP(w, r)
-
 					return
 				}
 			}
 
-			SendErr(w, http.StatusForbidden, errors.New("user has no permissions"),
-				"Недостаточно прав")
+			s.sendError(w, fmt.Errorf("%w: to do that, you must have one of these roles: %v", entity.ErrForbidden, roles))
 		})
 	}
 }
