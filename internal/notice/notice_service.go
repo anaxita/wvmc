@@ -10,11 +10,11 @@ import (
 
 const botUrl = "http://localhost:8085"
 
-type KMSBOT struct {
+type Service struct {
 }
 
-func NewNoticeService() *KMSBOT {
-	return &KMSBOT{}
+func NewNoticeService() *Service {
+	return &Service{}
 }
 
 type notifyRequest struct {
@@ -27,7 +27,7 @@ type addIPToWLRequest struct {
 	Comment  string `json:"comment"`
 }
 
-func (s *KMSBOT) Notify(text string) error {
+func (s *Service) Notify(text string) error {
 	msg := notifyRequest{text}
 	b, err := json.Marshal(msg)
 	if err != nil {
@@ -48,7 +48,7 @@ func (s *KMSBOT) Notify(text string) error {
 	return nil
 }
 
-func (s *KMSBOT) AddIPToWL(userName, ip4, comment string) {
+func (s *Service) AddIPToWL(userName, ip4, comment string) {
 	msg := addIPToWLRequest{
 		IP4:      ip4,
 		UserName: userName,

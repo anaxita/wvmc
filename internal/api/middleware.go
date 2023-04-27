@@ -71,7 +71,7 @@ func (s *Middleware) Cors(next http.Handler) http.Handler {
 	})
 }
 
-// RoleMiddleware проверяет является ли пользователь админом
+// RoleMiddleware проверяет, является ли пользователь админом
 func (s *Middleware) RoleMiddleware(roles ...int) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

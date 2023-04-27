@@ -16,10 +16,10 @@ type ServerHandler struct {
 	*helperHandler
 	serverService  *service.Server
 	controlService *service.Control
-	notifier       *notice.KMSBOT
+	notifier       *notice.Service
 }
 
-func NewServerHandler(l *zap.SugaredLogger, ss *service.Server, cs *service.Control, notifier *notice.KMSBOT) *ServerHandler {
+func NewServerHandler(l *zap.SugaredLogger, ss *service.Server, cs *service.Control, notifier *notice.Service) *ServerHandler {
 	return &ServerHandler{
 		helperHandler:  newHelperHandler(l),
 		serverService:  ss,
