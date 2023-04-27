@@ -4,9 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
-	entity2 "github.com/anaxita/wvmc/internal/entity"
+	"github.com/anaxita/wvmc/internal/entity"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -19,14 +18,13 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-// Find ищет первое совпадение пользователя с заданным ключом и значением, возвращает модель либо ошибку
-func (r *UserRepository) find(ctx context.Context, key string, value any) (u entity2.User, err error) {
-	q := fmt.Sprintf("SELECT id, name, email, password, company, role FROM users WHERE %s = ? LIMIT 1", key)
+func (r *UserRepository) FindByEmail(ctx context.Context, email string) (u entity.User, err error) {
+	q := "SELECT id, name, email, password, company, role FROM users WHERE email = ? LIMIT 1"
 
-	err = r.db.GetContext(ctx, &u, q, value)
+	err = r.db.GetContext(ctx, &u, q, email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return u, entity2.ErrNotFound
+			return u, entity.ErrNotFound
 		}
 
 		return u, err
@@ -35,16 +33,23 @@ func (r *UserRepository) find(ctx context.Context, key string, value any) (u ent
 	return u, nil
 }
 
-func (r *UserRepository) FindByEmail(ctx context.Context, email string) (u entity2.User, err error) {
-	return r.find(ctx, "email", email)
-}
+func (r *UserRepository) FindByID(ctx context.Context, id int64) (u entity.User, err error) {
+	q := "SELECT id, name, email, company, role FROM users WHERE id = ? LIMIT 1"
 
-func (r *UserRepository) FindByID(ctx context.Context, id int64) (u entity2.User, err error) {
-	return r.find(ctx, "id", id)
+	err = r.db.GetContext(ctx, &u, q, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return u, entity.ErrNotFound
+		}
+
+		return u, err
+	}
+
+	return u, nil
 }
 
 // Create создает пользователя и возвращает его ID, либо ошибку
-func (r *UserRepository) Create(ctx context.Context, user entity2.User) (int64, error) {
+func (r *UserRepository) Create(ctx context.Context, user entity.User) (int64, error) {
 	query := "INSERT INTO users (name, email, company, password, role) VALUES (?, ?, ?, ?, ?)"
 
 	result, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Company, user.Password, user.Role)
@@ -60,7 +65,7 @@ func (r *UserRepository) Create(ctx context.Context, user entity2.User) (int64, 
 }
 
 // Edit обновляет данные пользователя u с паролем или без withPass, возвращает ошибку в случае неудачи
-func (r *UserRepository) Edit(ctx context.Context, u entity2.User, withPass bool) error {
+func (r *UserRepository) Edit(ctx context.Context, u entity.User, withPass bool) error {
 	var query string
 	var err error
 
@@ -85,7 +90,7 @@ func (r *UserRepository) Delete(ctx context.Context, id int64) error {
 }
 
 // Users возвращает массив из пользователей БД или ошибку
-func (r *UserRepository) Users(ctx context.Context) (users []entity2.User, err error) {
+func (r *UserRepository) Users(ctx context.Context) (users []entity.User, err error) {
 	q := "SELECT id, name, email, company, role FROM users"
 
 	err = r.db.SelectContext(ctx, &users, q)
@@ -108,8 +113,8 @@ func (r *UserRepository) CreateRefreshToken(ctx context.Context, userID int64, r
 	return nil
 }
 
-// GetRefreshToken проверяет есть ли в базе токен
-func (r *UserRepository) GetRefreshToken(ctx context.Context, token string) error {
+// RefreshToken проверяет есть ли в базе токен
+func (r *UserRepository) RefreshToken(ctx context.Context, token string) error {
 	var t string
 
 	query := "SELECT user_id FROM refresh_tokens WHERE token = ?"

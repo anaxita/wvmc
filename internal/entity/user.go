@@ -1,16 +1,19 @@
 package entity
 
+type CtxUserKey struct{}
+
+type UserRole = int
+
 const (
-	UserRoleUser  = 0
-	UserRoleAdmin = 1
+	UserRoleUser UserRole = iota
+	UserRoleAdmin
 )
 
-// User ...
 type User struct {
-	ID       int64  `json:"id" db:"id"`
-	Name     string `json:"name" db:"name"`
-	Email    string `json:"email" db:"email"`
-	Company  string `json:"company" db:"company"`
-	Role     int    `json:"role" db:"role"`
-	Password string `json:"password,omitempty" db:"password"`
+	ID       int64    `json:"id" db:"id"`
+	Name     string   `json:"name" db:"name"`
+	Email    string   `json:"email" db:"email"`
+	Company  string   `json:"company" db:"company"`
+	Role     UserRole `json:"role" db:"role"`
+	Password string   `json:"-" db:"password"`
 }
