@@ -21,8 +21,8 @@ func NewServerService(repo *dal.ServerRepository, control *Control) *Server {
 	}
 }
 
-// FindByUserID get servers by user id.
-func (s *Server) FindByUserID(ctx context.Context, id uuid.UUID) ([]entity.Server, error) {
+// UserServers get servers by user id.
+func (s *Server) UserServers(ctx context.Context, id uuid.UUID) ([]entity.Server, error) {
 	servers, err := s.repo.FindByUser(ctx, id)
 	if err != nil {
 		return servers, fmt.Errorf("get servers with user id %s: %w", id, err)
@@ -31,9 +31,9 @@ func (s *Server) FindByUserID(ctx context.Context, id uuid.UUID) ([]entity.Serve
 	return servers, nil
 }
 
-// AddServersToUser add servers to user.
-func (s *Server) AddServersToUser(ctx context.Context, userID uuid.UUID, serversIDs []int64) error {
-	if err := s.repo.AddServersToUser(ctx, userID, serversIDs); err != nil {
+// SetUserServers add servers to user.
+func (s *Server) SetUserServers(ctx context.Context, userID uuid.UUID, serversIDs []string) error {
+	if err := s.repo.SetUserServers(ctx, userID, serversIDs); err != nil {
 		return fmt.Errorf("add servers to user: %w", err)
 	}
 
@@ -60,36 +60,14 @@ func (s *Server) Servers(ctx context.Context) (servers []entity.Server, err erro
 	return servers, nil
 }
 
-// FindByTitle get server by title.
-func (s *Server) FindByTitle(ctx context.Context, title string) (entity.Server, error) {
-	server, err := s.repo.FindByTitle(ctx, title)
-	if err != nil {
-		return server, fmt.Errorf("get server with title %s: %w", title, err)
-	}
-
-	return server, nil
-}
-
-// FindByHvAndTitle get server by hv and title.
-func (s *Server) FindByHvAndTitle(ctx context.Context, hv, title string) (entity.Server, error) {
-	server, err := s.repo.FindByHvAndTitle(ctx, hv, title)
-	if err != nil {
-		return server, fmt.Errorf("get server with hv id %s and title %s: %w", hv, title, err)
-	}
-
-	return server, nil
-}
-
 // CreateOrUpdate creates server.
-func (s *Server) CreateOrUpdate(ctx context.Context, server entity.Server) (entity.Server, error) {
-	id, err := s.repo.Upsert(ctx, server)
+func (s *Server) CreateOrUpdate(ctx context.Context, server entity.Server) error {
+	err := s.repo.Upsert(ctx, server)
 	if err != nil {
-		return server, fmt.Errorf("create server: %w", err)
+		return fmt.Errorf("upsert server: %w", err)
 	}
 
-	server.ID = id
-
-	return server, nil
+	return nil
 }
 
 // FindByID get server by id.
@@ -102,7 +80,7 @@ func (s *Server) FindByID(ctx context.Context, id int64) (entity.Server, error) 
 	return server, nil
 }
 
-// Control control server.
+// Control controls server.
 func (s *Server) Control(ctx context.Context, serverID int64, command entity.Command) error {
 	server, err := s.repo.FindByID(ctx, serverID)
 	if err != nil {
@@ -114,6 +92,21 @@ func (s *Server) Control(ctx context.Context, serverID int64, command entity.Com
 	}
 
 	// TODO add notification
+
+	return nil
+}
+
+// LoadServersFromHVs servers data.
+func (s *Server) LoadServersFromHVs(ctx context.Context) error {
+	servers, err := s.control.Servers(ctx)
+	if err != nil {
+		return fmt.Errorf("load servers from hvs: %w", err)
+	}
+
+	err = s.repo.Upsert(ctx, servers...)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

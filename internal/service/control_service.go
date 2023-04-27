@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/anaxita/wvmc/internal/dal"
 	"github.com/anaxita/wvmc/internal/entity"
 )
 
@@ -48,36 +47,12 @@ type WinRDPSesion struct {
 	Processes []WinProcess `json:"processes"`
 }
 
-// Commander описывает метод который запускает команду powershell,возвращает вывод и ошибку
-type Commander interface {
-	run(args ...string) ([]byte, error)
-}
-
-// Command содержит методы Run для запуска powershell команд
-type Command struct{}
-
-// run запускает команду powershell,возвращает вывод и ошибку // TODO DEPRECATED
-func (c *Command) run(args ...string) ([]byte, error) {
-	command := strings.Join(args, " ")
-
-	e := exec.Command("pwsh", "-NoLogo", "-Mta", "-NoProfile", "-NonInteractive", "-Command",
-		command)
-
-	out, err := e.Output()
-	if err != nil {
-		return nil, err
-	}
-
-	return out, nil
-}
-
 // Control содержит структуру, которая реализует интерфейс Commander
 type Control struct {
-	cache *dal.Cache
 }
 
-func NewControlService(cache *dal.Cache) *Control {
-	return &Control{cache: cache}
+func NewControlService() *Control {
+	return &Control{}
 }
 
 func (s *Control) ControlServer(ctx context.Context, server entity.Server, command entity.Command) (err error) {
@@ -101,49 +76,8 @@ func (s *Control) ControlServer(ctx context.Context, server entity.Server, comma
 	return err
 }
 
-// GetServersDataForUsers получает статус работы и сети ВМ servers по их Name
-func (s *Control) GetServersDataForUsers(servers []entity.Server) ([]entity.Server, error) {
-	var uniqHVs = make(map[string]bool)
-	var ids string
-	var hvs string
-	var vms = make([]entity.Server, 0)
-	var scriptPath = "./powershell/GetVmForUsers.ps1"
-
-	for _, v := range servers {
-		uniqHVs[v.HV] = false
-
-		if ids == "" {
-			ids = fmt.Sprintf("'%s'", v.VMID)
-		} else {
-			ids = fmt.Sprintf("%s, '%s'", ids, v.VMID)
-		}
-	}
-
-	for k := range uniqHVs {
-		if hvs == "" {
-			hvs = fmt.Sprintf("'%v'", k)
-		} else {
-			hvs = fmt.Sprintf("%s, '%v'", hvs, k)
-		}
-	}
-
-	out, err := s.run(scriptPath, "-hvList", hvs, "-idList", ids)
-	if err != nil {
-		return vms, err
-	}
-
-	if err = json.Unmarshal(out, &vms); err != nil {
-		return vms, err
-	}
-	return vms, nil
-}
-
-// GetServersDataForAdmins получает статус работы всех ВМ servers
-func (s *Control) GetServersDataForAdmins() ([]entity.Server, error) {
-	if s.cache.Servers() != nil {
-		return s.cache.Servers(), nil
-	}
-
+// Servers получает статус работы всех ВМ servers
+func (s *Control) Servers(ctx context.Context) ([]entity.Server, error) {
 	hvs := os.Getenv("HV_LIST")
 
 	scriptPath := "./powershell/GetVmForAdmins.ps1"
@@ -159,70 +93,63 @@ func (s *Control) GetServersDataForAdmins() ([]entity.Server, error) {
 		return nil, err
 	}
 
-	s.cache.SetServers(servers)
-
 	return servers, nil
 }
 
 // stopServer выключает сервер
 func (s *Control) stopServer(server entity.Server) ([]byte, error) {
-	command := fmt.Sprintf("Stop-VM -Name %s -ComputerName '%s'", server.Name, server.HV)
+	command := fmt.Sprintf("Stop-VM -Title %s -ComputerName '%s'", server.Title, server.HV)
 	out, err := s.run(command)
 	if err != nil {
 		return nil, err
 	}
 
-	s.cache.SetServerState(server, entity.ServerStateStopped)
 	return out, nil
 }
 
 // stopServerForce принудительно выключает сервер
 func (s *Control) stopServerForce(server entity.Server) ([]byte, error) {
-	command := fmt.Sprintf("Stop-VM -Name %s -Force -ComputerName '%s'", server.Name, server.HV)
+	command := fmt.Sprintf("Stop-VM -Title %s -Force -ComputerName '%s'", server.Title, server.HV)
 	out, err := s.run(command)
 	if err != nil {
 		return nil, err
 	}
 
-	s.cache.SetServerState(server, entity.ServerStateStopped)
 	return out, nil
 }
 
 // startServer включает сервер
 func (s *Control) startServer(server entity.Server) ([]byte, error) {
-	command := fmt.Sprintf("Start-VM -Name %s -ComputerName '%s'", server.Name, server.HV)
+	command := fmt.Sprintf("Start-VM -Title %s -ComputerName '%s'", server.Title, server.HV)
 	out, err := s.run(command)
 	if err != nil {
 		return nil, err
 	}
 
-	s.cache.SetServerState(server, entity.ServerStateRunning)
 	return out, nil
 }
 
 // startServerNetwork включает сеть на сервере
 func (s *Control) startServerNetwork(server entity.Server) ([]byte, error) {
 	command := fmt.Sprintf("Connect-VMNetworkAdapter -VMName %s -SwitchName \"DMZ - Virtual Switch\" -ComputerName '%s'",
-		server.Name, server.HV)
+		server.Title, server.HV)
 	out, err := s.run(command)
 	if err != nil {
 		return nil, err
 	}
 
-	s.cache.SetServerNetwork(server, entity.ServerNetworkRunning)
 	return out, nil
 }
 
 // stopServerNetwork выключает сеть на сервере
 func (s *Control) stopServerNetwork(server entity.Server) ([]byte, error) {
-	command := fmt.Sprintf("Disconnect-VMNetworkAdapter -VMName %s -ComputerName '%s'", server.Name,
+	command := fmt.Sprintf("Disconnect-VMNetworkAdapter -VMName %s -ComputerName '%s'", server.Title,
 		server.HV)
 	out, err := s.run(command)
 	if err != nil {
 		return nil, err
 	}
 
-	s.cache.SetServerNetwork(server, entity.ServerNetworkStopped)
 	return out, nil
 }
 

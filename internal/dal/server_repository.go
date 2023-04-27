@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
-	entity2 "github.com/anaxita/wvmc/internal/entity"
+	"github.com/anaxita/wvmc/internal/entity"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -21,43 +22,13 @@ func NewServerRepository(db *sqlx.DB) *ServerRepository {
 	}
 }
 
-func (r *ServerRepository) FindByTitle(ctx context.Context, title string) (s entity2.Server, err error) {
-	query := "SELECT id, vmid, title, ip4, hv, company, out_addr, description, user_name, user_password FROM servers WHERE title = ?"
-
-	err = r.db.GetContext(ctx, &s, query, title)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return s, entity2.ErrNotFound
-		}
-
-		return s, err
-	}
-
-	return s, nil
-}
-
-func (r *ServerRepository) FindByID(ctx context.Context, id int64) (s entity2.Server, err error) {
+func (r *ServerRepository) FindByID(ctx context.Context, id int64) (s entity.Server, err error) {
 	q := "SELECT id, vmid, title, ip4, hv, company, out_addr, description, user_name, user_password FROM servers WHERE id = ?"
 
 	err = r.db.GetContext(ctx, &s, q, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return s, entity2.ErrNotFound
-		}
-
-		return s, err
-	}
-
-	return s, nil
-}
-
-// FindByHvAndTitle ищет сервер по местоположению и имени, возвращает модель либо ошибку.
-func (r *ServerRepository) FindByHvAndTitle(ctx context.Context, hv, name string) (s entity2.Server, err error) {
-	query := "SELECT id, vmid, title, ip4, hv, company, out_addr, description, user_name, user_password FROM servers WHERE hv = ? AND title = ?"
-	err = r.db.GetContext(ctx, &s, query, hv, name)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return s, entity2.ErrNotFound
+			return s, entity.ErrNotFound
 		}
 
 		return s, err
@@ -67,24 +38,27 @@ func (r *ServerRepository) FindByHvAndTitle(ctx context.Context, hv, name string
 }
 
 // Upsert создает сервер и возвращает его ID, либо ошибку.
-func (r *ServerRepository) Upsert(ctx context.Context, s entity2.Server) (int64, error) {
-	query := `INSERT INTO servers (vmid, title, ip4, hv, company, user_name, user_password) 
+func (r *ServerRepository) Upsert(ctx context.Context, s ...entity.Server) error {
+	query := `INSERT INTO servers (id, title, hv, state, status) 
     VALUES (?, ?, ?, ?, ?, ?, ?) 
-    ON CONFLICT (title, hv) 
-        DO UPDATE SET title = ?, ip4 = ?, hv = ?`
+    ON CONFLICT (id) 
+        DO UPDATE SET title = ?, ip4 = ?, hv = ?, state = ?, status = ?`
 
-	result, err := r.db.ExecContext(
-		ctx, query, s.VMID, s.Name, s.IP, s.HV, s.Company, s.User, s.Password, s.Name, s.IP, s.HV)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
+	defer stmt.Close()
+
+	for _, s := range s {
+		_, err := stmt.ExecContext(ctx, query, s.ID, s.Title, s.HV, s.State, s.Status)
+		if err != nil {
+			return err
+		}
 	}
 
-	return id, nil
+	return nil
 }
 
 // DeleteByUser удаляет доступ к серверам у определенного пользователя, возвращает ошибку в случае неудачи.
@@ -98,8 +72,8 @@ func (r *ServerRepository) DeleteByUser(ctx context.Context, userID string) erro
 }
 
 // Servers возвращает массив из серверов БД или ошибку.
-func (r *ServerRepository) Servers(ctx context.Context) (s []entity2.Server, err error) {
-	q := "SELECT id, vmid, title, ip4, hv, company, user_name, user_password FROM servers"
+func (r *ServerRepository) Servers(ctx context.Context) (s []entity.Server, err error) {
+	q := "SELECT id, title, hv, state, status FROM servers ORDER BY title"
 
 	err = r.db.SelectContext(ctx, &s, q)
 	if err != nil {
@@ -110,23 +84,8 @@ func (r *ServerRepository) Servers(ctx context.Context) (s []entity2.Server, err
 }
 
 // FindByUser возвращает массив серверов пользователя по его ID.
-func (r *ServerRepository) FindByUser(ctx context.Context, userID uuid.UUID) (s []entity2.Server, err error) {
-	q := `
-	SELECT 
-		s.id, 
-		s.vmid,
-		s.title,
-		s.ip4, 
-		s.hv, 
-		s.company, 
-		s.description, 
-		s.out_addr,
-		s.user_name,
-		s.user_password 
-	FROM servers AS s 
-	INNER JOIN users_servers AS us 
-		ON (s.id = us.server_id) 
-	WHERE us.user_id = ?`
+func (r *ServerRepository) FindByUser(ctx context.Context, userID uuid.UUID) (s []entity.Server, err error) {
+	q := "SELECT server_id FROM users_servers WHERE user_id = ?"
 
 	err = r.db.SelectContext(ctx, &s, q, userID)
 	if err != nil {
@@ -136,28 +95,36 @@ func (r *ServerRepository) FindByUser(ctx context.Context, userID uuid.UUID) (s 
 	return s, err
 }
 
-// AddServersToUser добавляет сервера пользователю по его айди
-func (r *ServerRepository) AddServersToUser(ctx context.Context, userID uuid.UUID, serversIDs []int64) error {
-	// TODO remove old servers in tx
-
-	query := "INSERT INTO users_servers (user_id, server_id) VALUES(?, ?)"
-
-	stmt, err := r.db.PrepareContext(ctx, query)
+// SetUserServers добавляет сервера пользователю по его айди
+func (r *ServerRepository) SetUserServers(ctx context.Context, userID uuid.UUID, serversIDs []string) error {
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback()
+
+	query := "DELETE FROM users_servers WHERE user_id = ?"
+
+	_, err = tx.ExecContext(ctx, query, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete user's servers: %w", err)
+	}
+
+	query = "INSERT INTO users_servers (user_id, server_id) VALUES(?, ?)"
+
+	stmt, err := tx.PrepareContext(ctx, query)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+
+	defer stmt.Close()
 
 	for _, id := range serversIDs {
 		_, err := stmt.ExecContext(ctx, userID, id)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to insert user's server: %w", err)
 		}
 	}
 
-	err = stmt.Close()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return tx.Commit()
 }

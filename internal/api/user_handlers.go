@@ -131,7 +131,7 @@ func (h *UserHandler) AddServers(w http.ResponseWriter, r *http.Request) {
 			return fmt.Errorf("%w: %s", entity.ErrValidate, err)
 		}
 
-		err = h.serverService.AddServersToUser(r.Context(), id, req.ServerIDs)
+		err = h.serverService.SetUserServers(r.Context(), id, req.ServerIDs)
 		if err != nil {
 			return err
 		}
@@ -157,7 +157,7 @@ func (h *UserHandler) GetUserServers(w http.ResponseWriter, r *http.Request) {
 			return fmt.Errorf("%w: %s", entity.ErrValidate, err)
 		}
 
-		servers, err = h.serverService.FindByUserID(r.Context(), id)
+		servers, err = h.serverService.UserServers(r.Context(), id)
 		if err != nil {
 			return err
 		}

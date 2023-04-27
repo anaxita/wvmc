@@ -54,12 +54,5 @@ func setServerRoutes(r *mux.Router, serverHandler *ServerHandler, mw *Middleware
 	servers := r.PathPrefix("/servers").Subrouter()
 	servers.Use(mw.Auth)
 	servers.HandleFunc("", serverHandler.GetServers).Methods(http.MethodGet, http.MethodOptions)
-	// servers.Handle("/{hv}/{name}", serverHandler.GetServer()).Methods(http.MethodGet, http.MethodOptions)
-	// servers.Handle("/{hv}/{name}/disks", serverHandler.GetServerDisks()).Methods(http.MethodGet, http.MethodOptions)
-	// servers.Handle("/{hv}/{name}/services", serverHandler.getServerServices()).Methods(http.MethodGet, http.MethodOptions)
-	// servers.Handle("/{hv}/{name}/services", serverHandler.ControlServerServices()).Methods(http.MethodPost, http.MethodOptions)
-	// servers.Handle("/{hv}/{name}/manager", serverHandler.GetServerManager()).Methods(http.MethodGet, http.MethodOptions)
-	// servers.Handle("/{hv}/{name}/manager", serverHandler.ControlServerManager()).Methods(http.MethodPost, http.MethodOptions)
-	servers.HandleFunc("/update", serverHandler.UpdateAllServersInfo).Methods(http.MethodPost, http.MethodOptions)
 	servers.HandleFunc("/control", serverHandler.ControlServer).Methods(http.MethodPost, http.MethodOptions)
 }

@@ -1,16 +1,21 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"log"
 	"net/http"
-	"net/http/httptest"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/anaxita/wvmc/internal/api"
 	"github.com/anaxita/wvmc/internal/app"
 	"github.com/anaxita/wvmc/internal/dal"
 	"github.com/anaxita/wvmc/internal/notice"
+	"github.com/anaxita/wvmc/internal/scheduler"
 	"github.com/anaxita/wvmc/internal/service"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -33,40 +38,57 @@ func main() {
 
 	err = app.UpMigrations(db.DB, c.DB.Name, "migrations")
 	if err != nil {
-		l.Fatalf("failed to run migrations: %v", err)
+		l.Fatalf("failed to run migrations: %s", err)
 	}
 
 	userRepo := dal.NewUserRepository(db)
 	serverRepo := dal.NewServerRepository(db)
-	cacheService := dal.NewCache()
 
 	userService := service.NewUserService(userRepo)
-	controlService := service.NewControlService(cacheService)
+	controlService := service.NewControlService()
 	serverService := service.NewServerService(serverRepo, controlService)
 	authService := service.NewAuthService(userRepo)
-	notifier := notice.NewNoticeService()
+	notifierService := notice.NewNoticeService()
 
 	userHandler := api.NewUserHandler(l, userService, serverService)
-	serverHandler := api.NewServerHandler(l, serverService, controlService, notifier)
+	serverHandler := api.NewServerHandler(l, serverService, controlService, notifierService)
 	authHandler := api.NewAuthHandler(l, userService, authService)
 	mw := api.NewMiddleware(l, userService, serverService)
 
-	s := api.NewServer(c.HTTPPort, userHandler, authHandler, serverHandler, mw)
-
+	server := api.NewServer(c.HTTPPort, userHandler, authHandler, serverHandler, mw)
 	go func() {
-		serverHandler.UpdateAllServersInfo(httptest.NewRecorder(), &http.Request{})
+		l.Info("starting http server on port: ", c.HTTPPort)
 
-		for {
-			time.Sleep(time.Minute * 1)
-
-			_, err := controlService.GetServersDataForAdmins()
-			if err != nil {
-				log.Println("update cache servers: ", err)
-			}
+		err = server.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			l.Panicw("failed to start server", zap.Error(err))
 		}
 	}()
 
-	if err = s.ListenAndServe(); err != nil {
-		log.Fatal("failed to start server: ", err)
+	schedulerCtx, schedulerCancel := context.WithCancel(context.Background())
+	defer schedulerCancel()
+
+	// Scheduler.
+	{
+		scheduler.NewScheduler(l).
+			AddJob("update servers info", time.Minute, true, serverService.LoadServersFromHVs).
+			Start(schedulerCtx)
+	}
+
+	// Graceful shutdown.
+	{
+		notifyCh := make(chan os.Signal, 1)
+		signal.Notify(notifyCh, os.Interrupt)
+
+		s := <-notifyCh
+		l.Info("shutting down server due to signal: ", s)
+		schedulerCancel()
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := server.Shutdown(ctx); err != nil {
+			l.Panicw("failed to shutdown server", zap.Error(err))
+		}
 	}
 }
