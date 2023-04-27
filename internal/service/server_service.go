@@ -9,11 +9,15 @@ import (
 )
 
 type Server struct {
-	repo *dal.ServerRepository
+	repo    *dal.ServerRepository
+	control *Control
 }
 
-func NewServerService(repo *dal.ServerRepository) *Server {
-	return &Server{repo: repo}
+func NewServerService(repo *dal.ServerRepository, control *Control) *Server {
+	return &Server{
+		repo:    repo,
+		control: control,
+	}
 }
 
 // FindByUserID get servers by user id.
@@ -27,8 +31,8 @@ func (s *Server) FindByUserID(ctx context.Context, userID int64) ([]entity.Serve
 }
 
 // AddServersToUser add servers to user.
-func (s *Server) AddServersToUser(ctx context.Context, userID int64, servers []entity.Server) error {
-	if err := s.repo.AddServersToUser(ctx, userID, servers); err != nil {
+func (s *Server) AddServersToUser(ctx context.Context, userID int64, serversIDs []int64) error {
+	if err := s.repo.AddServersToUser(ctx, userID, serversIDs); err != nil {
 		return fmt.Errorf("add servers to user: %w", err)
 	}
 
@@ -36,10 +40,20 @@ func (s *Server) AddServersToUser(ctx context.Context, userID int64, servers []e
 }
 
 // Servers return all servers.
-func (s *Server) Servers(ctx context.Context) ([]entity.Server, error) {
-	servers, err := s.repo.Servers(ctx)
+func (s *Server) Servers(ctx context.Context) (servers []entity.Server, err error) {
+	user, err := entity.CtxUser(ctx)
 	if err != nil {
-		return servers, fmt.Errorf("get servers: %w", err)
+		return nil, fmt.Errorf("get user from context: %w", err)
+	}
+
+	if user.Role == entity.RoleAdmin {
+		servers, err = s.repo.Servers(ctx)
+	} else {
+		servers, err = s.repo.FindByUser(ctx, user.ID)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("get servers: %w", err)
 	}
 
 	return servers, nil
@@ -85,4 +99,20 @@ func (s *Server) FindByID(ctx context.Context, id int64) (entity.Server, error) 
 	}
 
 	return server, nil
+}
+
+// Control control server.
+func (s *Server) Control(ctx context.Context, serverID int64, command entity.Command) error {
+	server, err := s.repo.FindByID(ctx, serverID)
+	if err != nil {
+		return fmt.Errorf("get server with id %d: %w", serverID, err)
+	}
+
+	if err := s.control.ControlServer(ctx, server, command); err != nil {
+		return fmt.Errorf("control server: %w", err)
+	}
+
+	// TODO add notification
+
+	return nil
 }

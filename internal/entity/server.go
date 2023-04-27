@@ -1,5 +1,16 @@
 package entity
 
+type Command = string
+
+const (
+	CommandStartPower     Command = "start_power"
+	CommandStopPower      Command = "stop_power"
+	CommandStopPowerForce Command = "stop_power_force"
+
+	CommandStartNetwork Command = "start_network"
+	CommandStopNetwork  Command = "stop_network"
+)
+
 type ServerState string
 
 const (

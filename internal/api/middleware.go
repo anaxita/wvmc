@@ -2,11 +2,9 @@ package api
 
 import (
 	"context"
-	"database/sql"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
+	"runtime/debug"
 	"strings"
 
 	"github.com/anaxita/wvmc/internal/entity"
@@ -95,82 +93,16 @@ func (s *Middleware) RoleMiddleware(roles ...int) mux.MiddlewareFunc {
 	}
 }
 
-// CheckControlPermissions проверяет права на сервер у пользователя
-func (s *Middleware) CheckControlPermissions(next http.Handler) http.Handler {
-	type controlRequest struct {
-		ServerID int64  `json:"server_id"`
-		Command  string `json:"command"`
-	}
-
+// Recover middleware recovers from panics and logs the error.
+func (s *Middleware) Recover(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var req controlRequest
-		var err error
-
-		if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
-			SendErr(w, http.StatusBadRequest,
-				errors.New("server_id and command fields cannot be empty"),
-				"server_id и command не могут быть пустыми")
-
-			return
-		}
-
-		if req.ServerID == 0 || req.Command == "" {
-			SendErr(w, http.StatusBadRequest, errors.New("fields cannot be empty"),
-				"Все поля должны быть заполнены")
-
-			return
-		}
-
-		ctxUser := r.Context().Value(CtxString("user")).(entity.User)
-
-		server, err := s.serverService.FindByID(r.Context(), req.ServerID)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				SendErr(w, http.StatusBadRequest, err, "Сервер не найден")
-
-				return
+		defer func() {
+			if err := recover(); err != nil {
+				s.l.Errorw("panic", "error", err, "error_stack", string(debug.Stack()))
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
+		}()
 
-			SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
-
-			return
-		}
-
-		if ctxUser.Role != entity.UserRoleAdmin {
-			serversByUser, err := s.serverService.FindByUserID(r.Context(), ctxUser.ID)
-			if err != nil {
-				if err == sql.ErrNoRows {
-					SendErr(w, http.StatusBadRequest, err, "Сервер не найден")
-					return
-				}
-
-				SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
-				return
-			}
-
-			for _, srv := range serversByUser {
-				if srv.ID == req.ServerID {
-					ctxServer := CtxString("server")
-					ctxCommand := CtxString("command")
-					newCtx := context.WithValue(r.Context(), ctxServer, srv)
-					newCtx = context.WithValue(newCtx, ctxCommand, req.Command)
-
-					next.ServeHTTP(w, r.WithContext(newCtx))
-
-					return
-				}
-			}
-
-			SendErr(w, http.StatusForbidden, err, "Доступ запрещен")
-
-			return
-		}
-
-		ctxServer := CtxString("server")
-		ctxCommand := CtxString("command")
-		newCtx := context.WithValue(r.Context(), ctxServer, server)
-		newCtx = context.WithValue(newCtx, ctxCommand, req.Command)
-
-		next.ServeHTTP(w, r.WithContext(newCtx))
+		next.ServeHTTP(w, r)
 	})
 }

@@ -49,7 +49,7 @@ func (r *UserRepository) FindByID(ctx context.Context, id int64) (u entity.User,
 }
 
 // Create создает пользователя и возвращает его ID, либо ошибку
-func (r *UserRepository) Create(ctx context.Context, user entity.User) (int64, error) {
+func (r *UserRepository) Create(ctx context.Context, user entity.UserCreate) (int64, error) {
 	query := "INSERT INTO users (name, email, company, password, role) VALUES (?, ?, ?, ?, ?)"
 
 	result, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Company, user.Password, user.Role)
@@ -65,16 +65,16 @@ func (r *UserRepository) Create(ctx context.Context, user entity.User) (int64, e
 }
 
 // Edit обновляет данные пользователя u с паролем или без withPass, возвращает ошибку в случае неудачи
-func (r *UserRepository) Edit(ctx context.Context, u entity.User, withPass bool) error {
+func (r *UserRepository) Edit(ctx context.Context, id int64, u entity.UserEdit, withPass bool) error {
 	var query string
 	var err error
 
 	if withPass {
 		query = "UPDATE users SET name = ?, company = ?, role = ?, password = ? WHERE id = ? "
-		_, err = r.db.ExecContext(ctx, query, u.Name, u.Company, u.Role, u.Password, u.ID)
+		_, err = r.db.ExecContext(ctx, query, u.Name, u.Company, u.Role, u.Password, id)
 	} else {
 		query = "UPDATE users SET name = ?, company = ?, role = ? WHERE id = ? "
-		_, err = r.db.ExecContext(ctx, query, u.Name, u.Company, u.Role, u.ID)
+		_, err = r.db.ExecContext(ctx, query, u.Name, u.Company, u.Role, id)
 	}
 	if err != nil {
 		return err

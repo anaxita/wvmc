@@ -136,7 +136,9 @@ func (r *ServerRepository) FindByUser(ctx context.Context, userID int64) (s []en
 }
 
 // AddServersToUser добавляет сервера пользователю по его айди
-func (r *ServerRepository) AddServersToUser(ctx context.Context, userID int64, servers []entity2.Server) error {
+func (r *ServerRepository) AddServersToUser(ctx context.Context, userID int64, serversIDs []int64) error {
+	// TODO remove old servers in tx
+
 	query := "INSERT INTO users_servers (user_id, server_id) VALUES(?, ?)"
 
 	stmt, err := r.db.PrepareContext(ctx, query)
@@ -144,8 +146,8 @@ func (r *ServerRepository) AddServersToUser(ctx context.Context, userID int64, s
 		return err
 	}
 
-	for _, v := range servers {
-		_, err := stmt.ExecContext(ctx, userID, v.ID)
+	for _, id := range serversIDs {
+		_, err := stmt.ExecContext(ctx, userID, id)
 		if err != nil {
 			return err
 		}

@@ -5,9 +5,9 @@ import (
 )
 
 type PostSignIn struct {
-	AccessToken  string          `json:"access_token"`
-	RefreshToken string          `json:"refresh_token"`
-	Role         entity.UserRole `json:"role"`
+	AccessToken  string      `json:"access_token"`
+	RefreshToken string      `json:"refresh_token"`
+	Role         entity.Role `json:"role"`
 }
 
 func NewPostSignIn(data entity.SignIn) PostSignIn {

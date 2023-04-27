@@ -62,33 +62,43 @@ func (s *User) Delete(ctx context.Context, id int64) error {
 }
 
 // Create creates user.
-func (s *User) Create(ctx context.Context, user entity.User) (entity.User, error) {
-	hashedPassword, err := hasher.Hash(user.Password)
+func (s *User) Create(ctx context.Context, uc entity.UserCreate) (user entity.User, err error) {
+	// TODO add normalize and validation
+
+	hashedPassword, err := hasher.Hash(uc.Password)
 	if err != nil {
 		return user, fmt.Errorf("hash password: %w", err)
 	}
 
-	user.Password = string(hashedPassword)
+	uc.Password = string(hashedPassword)
 
-	id, err := s.repo.Create(ctx, user)
+	id, err := s.repo.Create(ctx, uc)
 	if err != nil {
 		return user, fmt.Errorf("create user: %w", err)
 	}
 
-	user.ID = id
+	user = entity.User{
+		ID:      id,
+		Email:   uc.Email,
+		Name:    uc.Name,
+		Company: uc.Company,
+		Role:    uc.Role,
+	}
 
 	return user, nil
 }
 
 // Edit edits user.
-func (s *User) Edit(ctx context.Context, user entity.User, withPass bool) error {
-	_, err := s.repo.FindByID(ctx, user.ID)
+func (s *User) Edit(ctx context.Context, id int64, user entity.UserEdit) error {
+	_, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return fmt.Errorf("get user with id %d: %w", user.ID, err)
+		return fmt.Errorf("get user with id %d: %w", id, err)
 	}
 
-	if err = s.repo.Edit(ctx, user, withPass); err != nil {
-		return fmt.Errorf("edit user with id %d: %w", user.ID, err)
+	withPass := user.Password != ""
+
+	if err = s.repo.Edit(ctx, id, user, withPass); err != nil {
+		return fmt.Errorf("edit user with id %d: %w", id, err)
 	}
 
 	return nil
