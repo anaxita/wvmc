@@ -231,17 +231,8 @@ func (s *UserRepositoryTestSuite) TestUsers() {
 	s.Require().Len(got, 10)
 }
 
-type userOpt func(user *entity.UserCreate)
-
-// withUserRole is a userOpt that sets the role to user.
-func withUserRole() userOpt {
-	return func(user *entity.UserCreate) {
-		user.Role = entity.RoleUser
-	}
-}
-
-func generateUserCreate(opts ...userOpt) entity.UserCreate {
-	user := entity.UserCreate{
+func generateUserCreate() entity.UserCreate {
+	return entity.UserCreate{
 		ID:       uuid.New(),
 		Name:     "test_name_",
 		Email:    "test_email" + uuid.New().String(),
@@ -249,12 +240,6 @@ func generateUserCreate(opts ...userOpt) entity.UserCreate {
 		Role:     entity.RoleAdmin,
 		Password: "test_password",
 	}
-
-	for _, opt := range opts {
-		opt(&user)
-	}
-
-	return user
 }
 
 func generateUsersCreate(count int) []entity.UserCreate {
