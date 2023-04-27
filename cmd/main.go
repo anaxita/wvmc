@@ -31,19 +31,19 @@ func main() {
 	}
 	defer db.Close()
 
-	err = app.UpMigrations(db.DB, c.DB.Name, c.DB.MigrationsPath)
+	err = app.UpMigrations(db.DB, c.DB.Name, "migrations")
 	if err != nil {
 		l.Fatalf("failed to run migrations: %v", err)
 	}
 
 	userRepo := dal.NewUserRepository(db)
 	serverRepo := dal.NewServerRepository(db)
+	cacheService := dal.NewCache()
 
 	userService := service.NewUserService(userRepo)
-	serverService := service.NewServerService(serverRepo)
-	authService := service.NewAuthService(userRepo)
-	cacheService := dal.NewCache()
 	controlService := service.NewControlService(cacheService)
+	serverService := service.NewServerService(serverRepo, controlService)
+	authService := service.NewAuthService(userRepo)
 	notifier := notice.NewNoticeService()
 
 	userHandler := api.NewUserHandler(l, userService, serverService)
@@ -54,7 +54,7 @@ func main() {
 	s := api.NewServer(c.HTTPPort, userHandler, authHandler, serverHandler, mw)
 
 	go func() {
-		serverHandler.UpdateAllServersInfo()(httptest.NewRecorder(), &http.Request{})
+		serverHandler.UpdateAllServersInfo(httptest.NewRecorder(), &http.Request{})
 
 		for {
 			time.Sleep(time.Minute * 1)
@@ -67,6 +67,6 @@ func main() {
 	}()
 
 	if err = s.ListenAndServe(); err != nil {
-		log.Fatal("Ошибка запуска сервер", err)
+		log.Fatal("failed to start server: ", err)
 	}
 }

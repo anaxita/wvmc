@@ -6,6 +6,7 @@ import (
 
 	"github.com/anaxita/wvmc/internal/dal"
 	"github.com/anaxita/wvmc/internal/entity"
+	"github.com/google/uuid"
 )
 
 type Server struct {
@@ -21,17 +22,17 @@ func NewServerService(repo *dal.ServerRepository, control *Control) *Server {
 }
 
 // FindByUserID get servers by user id.
-func (s *Server) FindByUserID(ctx context.Context, userID int64) ([]entity.Server, error) {
-	servers, err := s.repo.FindByUser(ctx, userID)
+func (s *Server) FindByUserID(ctx context.Context, id uuid.UUID) ([]entity.Server, error) {
+	servers, err := s.repo.FindByUser(ctx, id)
 	if err != nil {
-		return servers, fmt.Errorf("get servers with user id %d: %w", userID, err)
+		return servers, fmt.Errorf("get servers with user id %s: %w", id, err)
 	}
 
 	return servers, nil
 }
 
 // AddServersToUser add servers to user.
-func (s *Server) AddServersToUser(ctx context.Context, userID int64, serversIDs []int64) error {
+func (s *Server) AddServersToUser(ctx context.Context, userID uuid.UUID, serversIDs []int64) error {
 	if err := s.repo.AddServersToUser(ctx, userID, serversIDs); err != nil {
 		return fmt.Errorf("add servers to user: %w", err)
 	}
@@ -79,8 +80,8 @@ func (s *Server) FindByHvAndTitle(ctx context.Context, hv, title string) (entity
 	return server, nil
 }
 
-// Create creates server.
-func (s *Server) Create(ctx context.Context, server entity.Server) (entity.Server, error) {
+// CreateOrUpdate creates server.
+func (s *Server) CreateOrUpdate(ctx context.Context, server entity.Server) (entity.Server, error) {
 	id, err := s.repo.Upsert(ctx, server)
 	if err != nil {
 		return server, fmt.Errorf("create server: %w", err)

@@ -85,25 +85,23 @@ func (h *ServerHandler) ControlServer(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateAllServersInfo обновляет данные в БД по серверам
-func (h *ServerHandler) UpdateAllServersInfo() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user := os.Getenv("SERVER_USER_NAME")
-		password := os.Getenv("SERVER_USER_PASSWORD")
+func (h *ServerHandler) UpdateAllServersInfo(w http.ResponseWriter, r *http.Request) {
+	user := os.Getenv("SERVER_USER_NAME")
+	password := os.Getenv("SERVER_USER_PASSWORD")
 
-		servers, err := h.controlService.GetServersDataForAdmins()
+	servers, err := h.controlService.GetServersDataForAdmins()
+	if err != nil {
+		h.sendError(w, err)
+		return
+	}
+
+	for _, server := range servers {
+		server.User = user
+		server.Password = password
+		_, err := h.serverService.CreateOrUpdate(r.Context(), server)
 		if err != nil {
-			SendErr(w, http.StatusInternalServerError, err, "Ошибка powershell")
+			h.sendError(w, err)
 			return
-		}
-
-		for _, server := range servers {
-			server.User = user
-			server.Password = password
-			_, err := h.serverService.Create(r.Context(), server)
-			if err != nil {
-				SendErr(w, http.StatusInternalServerError, err, "Ошибка БД")
-				return
-			}
 		}
 	}
 }

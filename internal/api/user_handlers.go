@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/anaxita/wvmc/internal/api/requests"
 	"github.com/anaxita/wvmc/internal/entity"
 	"github.com/anaxita/wvmc/internal/service"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
@@ -67,7 +67,7 @@ func (h *UserHandler) EditUser(w http.ResponseWriter, r *http.Request) {
 
 	err := func() (err error) {
 		userID := mux.Vars(r)["id"]
-		id, err := strconv.ParseInt(userID, 10, 64)
+		id, err := uuid.Parse(userID)
 		if err != nil {
 			return fmt.Errorf("%w: %s", entity.ErrValidate, err)
 		}
@@ -96,7 +96,7 @@ func (h *UserHandler) EditUser(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	err := func() (err error) {
 		userID := mux.Vars(r)["id"]
-		id, err := strconv.ParseInt(userID, 10, 64)
+		id, err := uuid.Parse(userID)
 		if err != nil {
 			return fmt.Errorf("%w: %s", entity.ErrValidate, err)
 		}
@@ -121,7 +121,7 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) AddServers(w http.ResponseWriter, r *http.Request) {
 	err := func() (err error) {
 		userID := mux.Vars(r)["id"]
-		id, err := strconv.ParseInt(userID, 10, 64)
+		id, err := uuid.Parse(userID)
 		if err != nil {
 			return fmt.Errorf("%w: %s", entity.ErrValidate, err)
 		}
@@ -152,7 +152,7 @@ func (h *UserHandler) GetUserServers(w http.ResponseWriter, r *http.Request) {
 
 	err := func() (err error) {
 		userID := mux.Vars(r)["id"]
-		id, err := strconv.ParseInt(userID, 10, 64)
+		id, err := uuid.Parse(userID)
 		if err != nil {
 			return fmt.Errorf("%w: %s", entity.ErrValidate, err)
 		}

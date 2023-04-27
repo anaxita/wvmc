@@ -30,3 +30,6 @@ gen:
 #	oapi-codegen -generate types -package gen OpenApi.yml > internal/api/gen/types.go
 #	mockgen -source=internal/service/bonuses.go -destination=../tests/mocks.go -package=tests
 
+# tests
+tests:
+	go test -v -race -count 1 ./...

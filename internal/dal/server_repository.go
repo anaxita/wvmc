@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	entity2 "github.com/anaxita/wvmc/internal/entity"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -109,7 +110,7 @@ func (r *ServerRepository) Servers(ctx context.Context) (s []entity2.Server, err
 }
 
 // FindByUser возвращает массив серверов пользователя по его ID.
-func (r *ServerRepository) FindByUser(ctx context.Context, userID int64) (s []entity2.Server, err error) {
+func (r *ServerRepository) FindByUser(ctx context.Context, userID uuid.UUID) (s []entity2.Server, err error) {
 	q := `
 	SELECT 
 		s.id, 
@@ -136,7 +137,7 @@ func (r *ServerRepository) FindByUser(ctx context.Context, userID int64) (s []en
 }
 
 // AddServersToUser добавляет сервера пользователю по его айди
-func (r *ServerRepository) AddServersToUser(ctx context.Context, userID int64, serversIDs []int64) error {
+func (r *ServerRepository) AddServersToUser(ctx context.Context, userID uuid.UUID, serversIDs []int64) error {
 	// TODO remove old servers in tx
 
 	query := "INSERT INTO users_servers (user_id, server_id) VALUES(?, ?)"

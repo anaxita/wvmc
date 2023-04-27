@@ -9,21 +9,20 @@ import (
 )
 
 type Config struct {
-	HTTPPort string `env:"HTTP_PORT"`
-	LogFile  string `env:"LOG_FILE"`
+	HTTPPort string `env:"HTTP_PORT" envDefault:"80"`
+	LogFile  string `env:"LOG_FILE" envDefault:"wvmc_default.log"`
 	DB       DBConfig
 }
 type DBConfig struct {
-	Name           string `env:"SQLITE_DB"`
-	User           string `env:"SQLITE_USER"`
-	Password       string `env:"SQLITE_PASSWORD"`
-	MigrationsPath string `env:"SQLITE_MIGRATIONS_PATH"`
+	Name     string `env:"SQLITE_DB"`
+	User     string `env:"SQLITE_USER"`
+	Password string `env:"SQLITE_PASSWORD"`
 }
 
-func NewConfig() (*Config, error) {
+func NewConfig(envFiles ...string) (*Config, error) {
 	var c Config
 
-	err := godotenv.Load()
+	err := godotenv.Load(envFiles...)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return nil, err

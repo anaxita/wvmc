@@ -38,7 +38,7 @@ func UpMigrations(conn *sql.DB, dbName, migrationsPath string) error {
 }
 
 func NewSQLite3Client(c DBConfig) (*sqlx.DB, error) {
-	dsn := fmt.Sprintf("file:%s.db?_auth&_auth_user=%s&_auth_pass=%s&_auth_crypt=sha512",
+	dsn := fmt.Sprintf("file:%s?_auth&_auth_user=%s&_auth_pass=%s&_auth_crypt=sha512",
 		c.Name, c.User, c.Password)
 
 	db, err := sqlx.Connect("sqlite3", dsn)

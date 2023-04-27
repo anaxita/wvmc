@@ -1,5 +1,5 @@
 CREATE TABLE `users` (
-	`id`       INTEGER PRIMARY KEY AUTOINCREMENT,
+	`id`       VARCHAR(36) PRIMARY KEY, -- UUID
 	`name`     TEXT NOT NULL,
 	`email`    TEXT NOT NULL,
 	`company`  TEXT NOT NULL,

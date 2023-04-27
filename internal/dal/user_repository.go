@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/anaxita/wvmc/internal/entity"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -33,8 +34,8 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (u entit
 	return u, nil
 }
 
-func (r *UserRepository) FindByID(ctx context.Context, id int64) (u entity.User, err error) {
-	q := "SELECT id, name, email, company, role FROM users WHERE id = ? LIMIT 1"
+func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (u entity.User, err error) {
+	q := "SELECT id, name, email, company, password, role FROM users WHERE id = ? LIMIT 1"
 
 	err = r.db.GetContext(ctx, &u, q, id)
 	if err != nil {
@@ -49,33 +50,10 @@ func (r *UserRepository) FindByID(ctx context.Context, id int64) (u entity.User,
 }
 
 // Create создает пользователя и возвращает его ID, либо ошибку
-func (r *UserRepository) Create(ctx context.Context, user entity.UserCreate) (int64, error) {
-	query := "INSERT INTO users (name, email, company, password, role) VALUES (?, ?, ?, ?, ?)"
+func (r *UserRepository) Create(ctx context.Context, u entity.UserCreate) error {
+	query := "INSERT INTO users (id, name, email, company, password, role) VALUES (?, ?, ?, ?, ?, ?)"
 
-	result, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Company, user.Password, user.Role)
-	if err != nil {
-		return 0, err
-	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-	return id, nil
-}
-
-// Edit обновляет данные пользователя u с паролем или без withPass, возвращает ошибку в случае неудачи
-func (r *UserRepository) Edit(ctx context.Context, id int64, u entity.UserEdit, withPass bool) error {
-	var query string
-	var err error
-
-	if withPass {
-		query = "UPDATE users SET name = ?, company = ?, role = ?, password = ? WHERE id = ? "
-		_, err = r.db.ExecContext(ctx, query, u.Name, u.Company, u.Role, u.Password, id)
-	} else {
-		query = "UPDATE users SET name = ?, company = ?, role = ? WHERE id = ? "
-		_, err = r.db.ExecContext(ctx, query, u.Name, u.Company, u.Role, id)
-	}
+	_, err := r.db.ExecContext(ctx, query, u.ID, u.Name, u.Email, u.Company, u.Password, u.Role)
 	if err != nil {
 		return err
 	}
@@ -83,9 +61,43 @@ func (r *UserRepository) Edit(ctx context.Context, id int64, u entity.UserEdit, 
 	return nil
 }
 
+// Update обновляет данные пользователя u с паролем или без withPass, возвращает ошибку в случае неудачи
+func (r *UserRepository) Update(ctx context.Context, id uuid.UUID, u entity.UserEdit) error {
+	q := "UPDATE users SET name = ?, company = ?, role = ? WHERE id = ? "
+
+	result, err := r.db.ExecContext(ctx, q, u.Name, u.Company, u.Role, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return entity.ErrNotFound
+	}
+
+	return nil
+}
+
 // Delete удаляет пользователя, возвращает ошибку в случае неудачи
-func (r *UserRepository) Delete(ctx context.Context, id int64) error {
-	_, err := r.db.ExecContext(ctx, "DELETE FROM users WHERE id = ? ", id)
+func (r *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	result, err := r.db.ExecContext(ctx, "DELETE FROM users WHERE id = ? ", id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return entity.ErrNotFound
+	}
+
 	return err
 }
 
@@ -102,7 +114,7 @@ func (r *UserRepository) Users(ctx context.Context) (users []entity.User, err er
 }
 
 // CreateRefreshToken добавляет запись о токене или обновляет, если запись уже есть
-func (r *UserRepository) CreateRefreshToken(ctx context.Context, userID int64, refreshToken string) error {
+func (r *UserRepository) CreateRefreshToken(ctx context.Context, userID uuid.UUID, refreshToken string) error {
 	query := "INSERT INTO refresh_tokens (user_id, token) VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE SET user_id = user_id, token = ? "
 
 	_, err := r.db.ExecContext(ctx, query, userID, refreshToken, refreshToken)

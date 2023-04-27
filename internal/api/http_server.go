@@ -60,6 +60,6 @@ func setServerRoutes(r *mux.Router, serverHandler *ServerHandler, mw *Middleware
 	// servers.Handle("/{hv}/{name}/services", serverHandler.ControlServerServices()).Methods(http.MethodPost, http.MethodOptions)
 	// servers.Handle("/{hv}/{name}/manager", serverHandler.GetServerManager()).Methods(http.MethodGet, http.MethodOptions)
 	// servers.Handle("/{hv}/{name}/manager", serverHandler.ControlServerManager()).Methods(http.MethodPost, http.MethodOptions)
-	servers.Handle("/update", serverHandler.UpdateAllServersInfo()).Methods(http.MethodPost, http.MethodOptions)
-	servers.Handle("/control", serverHandler.ControlServer()).Methods(http.MethodPost, http.MethodOptions)
+	servers.HandleFunc("/update", serverHandler.UpdateAllServersInfo).Methods(http.MethodPost, http.MethodOptions)
+	servers.HandleFunc("/control", serverHandler.ControlServer).Methods(http.MethodPost, http.MethodOptions)
 }
