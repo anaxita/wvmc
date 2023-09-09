@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/anaxita/wvmc/internal/api"
@@ -78,7 +79,7 @@ func main() {
 	// Graceful shutdown.
 	{
 		notifyCh := make(chan os.Signal, 1)
-		signal.Notify(notifyCh, os.Interrupt)
+		signal.Notify(notifyCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 		s := <-notifyCh
 		l.Info("shutting down server due to signal: ", s)
@@ -87,8 +88,11 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
+		l.Info("shutting down server...")
 		if err := server.Shutdown(ctx); err != nil {
 			l.Panicw("failed to shutdown server", zap.Error(err))
 		}
+
+		l.Info("server stopped")
 	}
 }
