@@ -27,7 +27,12 @@ type Job struct {
 
 type JobFunc func(ctx context.Context) error
 
+// AddJob adds a job to the scheduler. Interval must be greater than 0.
 func (s *Scheduler) AddJob(name string, interval time.Duration, isStartNow bool, fn JobFunc) *Scheduler {
+	if interval <= 0 {
+		s.lg.Panicw("interval must be greater than 0", "job_name", name)
+	}
+
 	job := Job{
 		Name:       name,
 		Interval:   interval,
@@ -47,14 +52,11 @@ func (s *Scheduler) Start(ctx context.Context) {
 }
 
 func (s *Scheduler) startJob(ctx context.Context, job Job) {
-	t := time.NewTicker(job.Interval)
+	t := time.NewTimer(job.Interval)
 	defer t.Stop()
 
 	if job.IsStartNow {
-		err := job.Func(ctx)
-		if err != nil {
-			s.lg.Errorw("job failed", "job_name", job.Name, zap.Error(err))
-		}
+		t.Reset(0)
 	}
 
 	for range t.C {
@@ -62,5 +64,7 @@ func (s *Scheduler) startJob(ctx context.Context, job Job) {
 		if err != nil {
 			s.lg.Errorw("job failed", "job_name", job.Name, zap.Error(err))
 		}
+
+		t.Reset(job.Interval)
 	}
 }
