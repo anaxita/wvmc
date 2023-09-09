@@ -1,5 +1,8 @@
 -include .env
 
+lint:
+	golangci-lint run
+
 # install a migrate tool
 migrate-install:
 	go install -tags 'sqlite3' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.15.2
