@@ -59,12 +59,20 @@ func (s *Scheduler) startJob(ctx context.Context, job Job) {
 		t.Reset(0)
 	}
 
-	for range t.C {
-		err := job.Func(ctx)
-		if err != nil {
-			s.lg.Errorw("job failed", "job_name", job.Name, zap.Error(err))
-		}
+	for {
+		select {
+		case <-ctx.Done():
+			s.lg.Info("scheduler stopped")
+			return
+		case <-t.C:
+			s.lg.Infow("start job", "job_name", job.Name)
 
-		t.Reset(job.Interval)
+			err := job.Func(ctx)
+			if err != nil {
+				s.lg.Errorw("job failed", "job_name", job.Name, "err", err)
+			}
+
+			t.Reset(job.Interval)
+		}
 	}
 }

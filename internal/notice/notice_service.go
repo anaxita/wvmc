@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"log"
+	"fmt"
 	"net/http"
 )
 
-const botUrl = "http://localhost:8085"
+const botUrl = "http://localhost:8085" // TODO: move to config.
 
 type Service struct {
 }
@@ -48,7 +48,7 @@ func (s *Service) Notify(text string) error {
 	return nil
 }
 
-func (s *Service) AddIPToWL(userName, ip4, comment string) {
+func (s *Service) AddIPToWL(userName, ip4, comment string) error {
 	msg := addIPToWLRequest{
 		IP4:      ip4,
 		UserName: userName,
@@ -57,17 +57,19 @@ func (s *Service) AddIPToWL(userName, ip4, comment string) {
 
 	b, err := json.Marshal(msg)
 	if err != nil {
-		return
+		return fmt.Errorf("marshal request: %w", err)
 	}
 
-	body := bytes.NewReader(b)
-
-	w, err := http.Post(botUrl+"/wl", "application/json", body)
+	w, err := http.Post(botUrl+"/wl", "application/json", bytes.NewReader(b))
 	if err != nil {
-		return
+		return fmt.Errorf("post request: %w", err)
 	}
+
+	defer w.Body.Close()
 
 	if w.StatusCode != http.StatusOK {
-		log.Println("failed to add ip to wl, status code: ", w.StatusCode)
+		return fmt.Errorf("error send message: %s", w.Status)
 	}
+
+	return nil
 }

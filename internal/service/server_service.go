@@ -105,7 +105,7 @@ func (s *Server) LoadServersFromHVs(ctx context.Context) error {
 
 	err = s.repo.Upsert(ctx, servers...)
 	if err != nil {
-		return err
+		return fmt.Errorf("upsert servers: %w", err)
 	}
 
 	return nil

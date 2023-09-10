@@ -18,7 +18,7 @@ const (
 )
 
 type Auth struct {
-	repo *dal.UserRepository // TODO: user auth repo here.
+	repo *dal.UserRepository // TODO: use auth repo here.
 }
 
 func NewAuthService(repo *dal.UserRepository) *Auth {

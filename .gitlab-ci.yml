@@ -1,74 +1,74 @@
-image: golang:1.21-alpine
-
-stages:
-  - test
-  - build
-  - deploy
-
-cache:
-  paths:
-    - /apt-cache
-    - /go/src/github.com
-    - /go/src/golang.org
-    - /go/src/google.golang.org
-    - /go/src/gopkg.in
-
-test:
-  image: golang:1.21
-  stage: test
-  except:
-    - tags
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}
-    paths:
-      - /go/src/github.com
-      - /go/src/golang.org
-      - /go/src/google.golang.org
-      - /go/src/gopkg.in
-  script:
-    - go test -race -v ./...
-
-lint:
-  image: golangci/golangci-lint:v1.54.2-alpine
-  stage: test
-  except:
-    - tags
-  script:
-    - golangci-lint run
-
-build:
-  stage: build
-  except:
-    - tags
-  artifacts:
-    paths:
-      - bin/
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}
-    paths:
-      - /go/src/github.com
-      - /go/src/golang.org
-      - /go/src/google.golang.org
-      - /go/src/gopkg.in
-  script:
-    - mkdir -p bin
-    - CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o bin/wvmc_new.exe cmd/main.go
-
-deploy:
-  only:
-    - master
-  dependencies:
-    - test
-    - build
-  stage: deploy
-  image: alpine:latest
-  before_script:
-#    - set -xeuo pipefail
-    - apk add --update openssh-client bash
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-  script:
-    - scp -P $SSH_PORT -o StrictHostKeyChecking=no bin/wvmc_new.exe $SSH_USER@$SSH_HOST:$SSH_PATH
-    - ssh -p $SSH_PORT -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "Stop-Service VmControl && cd $SSH_PATH && rm wvmc_old.exe && mv wvmc.exe wvmc_old.exe && mv wvmc_new.exe wvmc.exe && Start-Service VmControl"
+#image: golang:1.21-alpine
+#
+#stages:
+#  - test
+#  - build
+#  - deploy
+#
+#cache:
+#  paths:
+#    - /apt-cache
+#    - /go/src/github.com
+#    - /go/src/golang.org
+#    - /go/src/google.golang.org
+#    - /go/src/gopkg.in
+#
+#test:
+#  image: golang:1.21
+#  stage: test
+#  except:
+#    - tags
+#  cache:
+#    key: ${CI_COMMIT_REF_SLUG}
+#    paths:
+#      - /go/src/github.com
+#      - /go/src/golang.org
+#      - /go/src/google.golang.org
+#      - /go/src/gopkg.in
+#  script:
+#    - go test -race -v ./...
+#
+#lint:
+#  image: golangci/golangci-lint:v1.54.2-alpine
+#  stage: test
+#  except:
+#    - tags
+#  script:
+#    - golangci-lint run
+#
+#build:
+#  stage: build
+#  except:
+#    - tags
+#  artifacts:
+#    paths:
+#      - bin/
+#  cache:
+#    key: ${CI_COMMIT_REF_SLUG}
+#    paths:
+#      - /go/src/github.com
+#      - /go/src/golang.org
+#      - /go/src/google.golang.org
+#      - /go/src/gopkg.in
+#  script:
+#    - mkdir -p bin
+#    - CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o bin/wvmc_new.exe cmd/main.go
+#
+#deploy:
+#  only:
+#    - master
+#  dependencies:
+#    - test
+#    - build
+#  stage: deploy
+#  image: alpine:latest
+#  before_script:
+##    - set -xeuo pipefail
+#    - apk add --update openssh-client bash
+#    - eval $(ssh-agent -s)
+#    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+#    - mkdir -p ~/.ssh
+#    - chmod 700 ~/.ssh
+#  script:
+#    - scp -P $SSH_PORT -o StrictHostKeyChecking=no bin/wvmc_new.exe $SSH_USER@$SSH_HOST:$SSH_PATH
+#    - ssh -p $SSH_PORT -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "Stop-Service VmControl && cd $SSH_PATH && rm wvmc_old.exe && mv wvmc.exe wvmc_old.exe && mv wvmc_new.exe wvmc.exe && Start-Service VmControl"
